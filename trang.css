@@ -105,16 +105,45 @@ html, body {
 
 /* ══ ĐIỆN THOẠI DỌC: BỎ khung cứng, cho trang cuộn dọc (§41.7 — bài học §32.24) ═══════════ */
 @media (max-width: 700px) {
-  .san { align-items: flex-start; padding: 0; }
+  /* CẢ TRANG cuộn dọc như trang web thường; thanh trên/dưới DÍNH mép để nút Nộp bài luôn thấy.
+     KHÔNG cuộn bên trong .san — cách đó làm vùng cuộn lồng nhau, rất khó dùng trên cảm ứng. */
+  #manBai { display: block; min-height: 100dvh; }
+  .dau { position: sticky; top: 0; z-index: 10; }
+  .chan { position: sticky; bottom: 0; z-index: 10; }
+  .san { display: block; overflow: visible; padding: 0; }
+
   .san .sl {
     width: 100% !important; height: auto !important; min-height: 0 !important;
     max-width: 100%; transform: none !important;   /* ⚠ BỎ scale — nếu không chữ nhỏ không đọc nổi */
-    border-radius: 0; box-shadow: none;
+    border-radius: 0; box-shadow: none; display: block;
   }
-  /* Vùng nội dung bên trong slide vốn có chiều cao cố định tính cho 540px — thả tự do */
-  .san .sl .mcql, .san .sl .questions-panel, .san .sl .passage-panel, .san .sl .qp-rs3 {
-    height: auto !important; max-height: none !important; overflow: visible !important;
+
+  /* ⚠⚠ MẤU CHỐT — PHẢI GỠ `flex:1`, KHÔNG CHỈ `height:auto`.
+     baigiang.css khai `.sl .mcql{flex:1;min-height:0;overflow-y:auto}` = "chiếm phần DƯ của khung
+     cao 540px". Bỏ chiều cao cố định đi thì phần dư thành 0 ⇒ vùng câu hỏi CO VỀ 0, các câu biến
+     mất và không cuộn được (đã gặp trên điện thoại 2026-09-01). `height:auto` KHÔNG cứu được vì
+     flex-basis:0 vẫn thắng. Phải đặt `flex:0 0 auto` để vùng cao đúng bằng nội dung. */
+  .san .sl .mcql,
+  .san .sl .questions-panel,
+  .san .sl .passage-panel,
+  .san .sl .qp-rs3,
+  .san .sl .sl-body,
+  .san .sl .sl-col {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
   }
+
+  /* Header slide khai `flex:0 0 15%; height:10%` — tính theo khung 540px, vô nghĩa khi cao tự do */
+  .san .sl .sl-head { flex: 0 0 auto !important; height: auto !important; }
+
+  /* 4 lựa chọn xếp 4 cột ngang (opts-c4) thì trên màn hẹp phải xuống thành 1 cột */
+  .san .sl .options-container { display: block !important; }
+  .san .sl .option-item { width: auto !important; margin-bottom: 6px; }
+
   /* Bảng / lưới rộng: nhốt cuộn ngang vào RIÊNG nó, không cho tràn cả trang.
      ⚠ min-width:0 là mấu chốt — thiếu nó flex item không co xuống dưới bề rộng nội dung. */
   .san .sl table, .san .sl .cw-left { display: block; min-width: 0; max-width: 100%; overflow-x: auto; }
