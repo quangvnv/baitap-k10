@@ -80,3 +80,16 @@ body.gv { background: var(--xam); }
   .the-ma { font-size: 24px; letter-spacing: 4px; }
   .bang { font-size: 12px; }
 }
+
+/* ── Trang quản trị tài khoản (admin.html) ────────────────────────────────────────────────── */
+.bt-nho { height: 26px; padding: 0 8px; font-size: 12px; margin: 0 2px; }
+.bt-do { color: var(--do); border-color: #f5c2c0; }
+.bt-do:hover:not(:disabled) { background: #fdecea; }
+.hop-rong { max-width: 420px; text-align: left; }
+.hop-rong h1 { text-align: center; }
+.lop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9600;
+  display: flex; align-items: center; justify-content: center; padding: 10px;
+}
+.hang-nut { display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; }
+.tb .bt { flex: 0 0 auto; }
