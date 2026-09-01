@@ -1,0 +1,1390 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* baigiang.css — style cho trang Soạn bài giảng (tách từ baigiang-soan.html).
+   Nạp TRƯỚC buttons.css/table.css/alert.css để 3 file đó vẫn override như cũ.
+   Mirror (mirror-host) gom qua document.styleSheets.cssRules như buttons.css. */
+/* ── Palette lấy từ app (lich-giang.css / buttons.css) ─────────────────── */
+:root{
+  --blue-primary:#1A6FBF; --blue-hover:#155EA3; --blue-light:#EBF4FF;
+  --green-primary:#1E8A5E; --orange-primary:#D4740A; --accent:#D97706;
+  --bg-page:#F4F7FB; --bg-white:#FFFFFF; --border:#DDE4EE;
+  --text-primary:#1A2332; --text-muted:#5A6472;
+  --radius:6px; --font-base:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --bar-h:40px;
+  /* Hệ số ZOOM cỡ chữ TEXT BÀI GIẢNG (§12/§32) — JS (bgZoomInit ở baigiang-soan.js) ghi đè trên :root
+     theo localStorage['app_baigiang_zoom']; Ctrl+cuộn trên slide để đổi, Ctrl+0 về 1.
+     CHỈ nhân vào font-size của TEXT trong .sl (đoạn văn/câu hỏi/đáp án/tiêu đề slide…),
+     KHÔNG áp cho toolbar/nút/panel editor/thanh header slide. */
+  --bgz:1;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
+  background:var(--bg-page);color:var(--text-primary);font-size:15px}
+
+/* ── Nút + Toolbar TB1/TB2/TB3: DÙNG CHUẨN APP qua css/buttons.css (nạp SAU style này ở <head>, §8) ── */
+.kq-navbtn{width:92px}                 /* Trang chủ + Quay lại bằng nhau, bo 6px (§8) */
+
+/* ── Khung trang ───────────────────────────────────────────────────────── */
+.app{display:flex;flex-direction:column;height:100vh}
+.spacer{margin-left:auto}
+.home-ico{width:14px;height:14px}
+.hide{display:none !important}
+/* Liên kết Question Bank — đẩy sát mép phải TB1, tách khỏi nhóm tab (§8). */
+#bgGotoQbank{margin-left:auto}
+
+/* ── LANDING: danh sách bài giảng đã lưu ───────────────────────────────── */
+.bg-landing{flex:1;min-height:0;display:flex;flex-direction:column;padding:10px;background:var(--bg-page)}
+.bgl-inner{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;
+  border:1.5px solid var(--border);border-radius:8px;overflow:hidden}
+
+/* ── Editor 3 cột ──────────────────────────────────────────────────────── */
+.editor{flex:1;display:flex;min-height:0}
+.slides-col{width:186px;flex-shrink:0;background:#FAFBFD;border-right:1px solid var(--border);
+  display:flex;flex-direction:column;transition:width .15s}
+.slides-col.collapsed{width:30px}
+/* header cột dùng chung + nút thu gọn / mở rộng */
+.col-hd{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--border);letter-spacing:.4px}
+.col-hd-title{flex:1;white-space:nowrap;overflow:hidden}
+.col-collapse{border:1px solid var(--border);background:#fff;border-radius:4px;width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);
+  font-size:14px;line-height:1;flex-shrink:0}
+.col-collapse:hover{border-color:var(--blue-primary);color:var(--blue-primary)}
+.col-expand{display:none;flex:1;border:none;background:none;cursor:pointer;color:var(--text-muted);
+  writing-mode:vertical-rl;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+  align-items:center;justify-content:center;gap:8px;padding:8px 0}
+.col-expand:hover{color:var(--blue-primary)}
+.slides-col.collapsed .col-hd,.slides-col.collapsed .slides-list{display:none}
+.slides-col.collapsed .col-expand{display:flex}
+.props-col.collapsed .props-hd,.props-col.collapsed .props-body{display:none}
+.props-col.collapsed .col-expand{display:flex}
+.slides-list{flex:1;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:6px}
+.slides-list::-webkit-scrollbar,.props-body::-webkit-scrollbar{width:4px}
+.slides-list::-webkit-scrollbar-thumb,.props-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.slide-thumb{border:1.5px solid var(--border);border-radius:var(--radius);background:#fff;
+  cursor:pointer;overflow:hidden;position:relative;transition:.12s;flex-shrink:0}
+.slide-thumb.sel{border-color:var(--blue-primary);box-shadow:0 0 0 2px var(--blue-light)}
+/* Chọn NHIỀU slide (Ctrl+click) → viền cam; slide đang mở trong vùng chọn vẫn giữ viền xanh đậm hơn */
+.slide-thumb.multi-sel{border-color:var(--orange-primary);box-shadow:0 0 0 2px rgba(212,116,10,.22)}
+.slide-thumb.multi-sel.sel{border-color:var(--blue-primary);box-shadow:0 0 0 2px var(--blue-light),0 0 0 4px rgba(212,116,10,.35)}
+.slide-thumb .th-num{position:absolute;top:2px;left:4px;font-size:10px;font-weight:700;
+  color:var(--text-muted);z-index:2}
+/* §title-warn: dấu ⚠ góc phải-trên thumbnail khi slide thiếu tiêu đề */
+.slide-thumb .th-warn{position:absolute;top:1px;right:3px;font-size:12px;line-height:1;z-index:2;
+  color:var(--orange-primary,#d4740a);text-shadow:0 0 2px #fff}
+/* thumb CỐ ĐỊNH 160×90 (không co giãn theo panel) */
+.slide-thumb .th-stage{width:160px;height:90px;margin:0 auto;pointer-events:none;overflow:hidden;background:#fff}
+.slide-thumb .th-scaler{transform-origin:top left;width:960px;height:540px;transform:scale(.16667)}
+/* Kéo-thả sắp xếp slide */
+.slide-thumb{cursor:grab}
+.slide-thumb.dragging{opacity:.4;cursor:grabbing}
+.slide-thumb.drag-over{box-shadow:0 -3px 0 0 var(--blue-primary)}
+.add-slide.drag-over{border-color:var(--blue-primary);color:var(--blue-primary);background:var(--blue-light)}
+.add-slide{border:1.5px dashed var(--border);border-radius:var(--radius);background:#fff;
+  color:var(--text-muted);padding:6px;cursor:pointer;font-weight:600;font-size:12px}
+.add-slide:hover{border-color:var(--blue-primary);color:var(--blue-primary)}
+
+.preview-col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;background:var(--bg-page);padding:8px;gap:8px;overflow:hidden}
+/* Kích thước khung xem trước do JS (fitScaler) cấp = 960×540 × hệ số lấp tối đa chỗ trống của cột giữa
+   (theo cả bề ngang lẫn chiều cao) → thu gọn panel Slide/Thuộc tính là khung to ra ngay.
+   ⚠ KHÔNG đặt lại width/max-width/aspect-ratio ở đây, sẽ khoá cứng khung như bug cũ (max-width:920px). */
+.stage-wrap{flex:0 0 auto;background:#fff;border:1.5px solid var(--border);
+  border-radius:var(--radius);box-shadow:0 4px 18px rgba(20,40,80,.08);overflow:hidden;position:relative}
+.stage-scaler{transform-origin:top left;width:960px;height:540px}
+.preview-hint{font-size:12px;color:var(--text-muted); display: none;}
+
+.props-col{width:270px;flex-shrink:0;background:#fff;border-left:1px solid var(--border);
+  display:flex;flex-direction:column;transition:width .15s}
+.props-col.collapsed{width:30px}
+.props-hd{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);letter-spacing:.4px}
+.props-body{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:700;color:var(--text-muted)}
+.field select,.field input,.field textarea{border:1.5px solid var(--border);border-radius:0px;
+  padding:5px 8px;font-family:var(--font-base);font-size:13px;color:var(--text-primary);background:#fff;width:100%}
+.field textarea{resize:vertical;min-height:60px;line-height:1.4}
+.field select:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue-primary);
+  box-shadow:0 0 0 3px rgba(26,111,191,.12)}
+.slot-group{border:1px solid var(--border);border-radius:0px;padding:8px;display:flex;
+  flex-direction:column;gap:6px;background:#FAFBFD}
+.slot-group .slot-title{font-size:11px;font-weight:700;color:var(--blue-primary);text-transform:uppercase}
+/* Card GẬP/MỞ ở panel phải (mẫu: "Layout mẫu") — bấm header để gập. Khi gập chỉ còn 1 dòng header,
+   phần .pcard-body ẩn; header vẫn ghi giá trị đang chọn (.pcard-val) để GV liếc là biết. */
+.pcard{border:1px solid var(--border);border-radius:0px;background:#FAFBFD;display:flex;flex-direction:column}
+.pcard-hd{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;background:none;border:0;
+  font-family:var(--font-base);text-align:left;width:100%}
+.pcard-hd:hover{background:#F1F5FA}
+.pcard-hd .pcard-caret{font-size:9px;color:var(--text-muted);transition:transform .12s;flex-shrink:0}
+.pcard.open .pcard-hd .pcard-caret{transform:rotate(90deg)}
+.pcard-hd .pcard-title{font-size:11px;font-weight:700;color:var(--blue-primary);text-transform:uppercase;flex-shrink:0}
+.pcard-hd .pcard-val{font-size:11px;color:var(--text-muted);margin-left:auto;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.pcard.open .pcard-hd .pcard-val{display:none}          /* mở rồi thì select bên dưới đã ghi rõ */
+/* §title-warn: card "Tiêu đề slide" khi trống → tiêu đề card + ⚠ chuyển cam để nhắc (kể cả lúc gập) */
+.pcard.pcard-warn .pcard-hd .pcard-title{color:var(--orange-primary,#d4740a)}
+.bg-title-warn{font-size:11px;line-height:1.4;color:var(--orange-primary,#d4740a);
+  background:rgba(212,116,10,.08);border:1px solid rgba(212,116,10,.3);border-radius:6px;padding:4px 6px}
+.pcard-body{display:none;padding:0 8px 8px;flex-direction:column;gap:6px}
+.pcard.open .pcard-body{display:flex}
+/* Card "Phông chữ" trong panel Thuộc tính (§32.33). Chữ nhỏ như mọi dòng chú thích của panel;
+   KHÔNG dùng .hint-tiny (class đó bị display:none toàn trang — xem §32.13). */
+.bgf-sel{width:100%;height:26px;padding:0 6px;border:1px solid var(--border);border-radius:6px;
+  font-family:var(--font-base);font-size:12px;color:var(--text-primary);background:#fff}
+.bgf-info{font-size:11px;line-height:1.4;color:var(--text-muted)}
+.bgf-info.bgf-warn{color:var(--orange-primary,#d4740a);background:rgba(212,116,10,.08);
+  border:1px solid rgba(212,116,10,.3);border-radius:6px;padding:4px 6px}
+.bgf-note{font-size:10.5px;line-height:1.4;color:var(--text-muted)}
+/* Checkbox trong panel Thuộc tính (vd "Ẩn header" ở card Tiêu đề slide — §32.16) */
+.bg-chk{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-main,#1F2937);cursor:pointer;user-select:none}
+.bg-chk input{width:13px;height:13px;margin:0;flex-shrink:0;cursor:pointer}
+.block-add{display:flex;gap:4px;flex-wrap:wrap}
+.block-add .btn{height:24px;padding:2px 8px;font-size:11px}
+.hint-tiny{font-size:11px;color:var(--text-muted);line-height:1.4; display:none;}
+/* (Popup Nhập PowerPoint đã bỏ 2026-07-21 — chọn file là nhập luôn, báo bằng toast/uiAlert.) */
+
+/* ── Nội dung SLIDE (dùng chung preview + player) ──────────────────────── */
+.sl{width:960px;height:540px;padding:10px 10px;background:#fff;display:flex;flex-direction:column;
+  font-family:var(--font-base);position:relative}
+.sl-title{font-size:calc(38px * var(--bgz,1));font-weight:800;color:var(--blue-primary);line-height:1.15;margin-bottom:6px}
+.sl-body{flex:1;min-height:0;display:flex;font-size:calc(24px * var(--bgz,1));line-height:1.5;gap:34px}
+/* min-height:0 + overflow-y:auto → khi ZOOM to (§32) text dài tự cuộn trong cột,
+   KHÔNG tràn ra ngoài khung slide 960×540 (trước đây không zoom nên không cần). */
+.sl-col{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;min-width:0;
+  overflow-y:auto;scrollbar-gutter:stable}
+.sl-col::-webkit-scrollbar{width:4px}
+.sl-col::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sl p{margin:0 0 10px}
+.sl ul{margin:0 0 10px 26px;display:flex;flex-direction:column;gap:8px}
+.sl b{color:var(--orange-primary)}
+.sl-img{border-radius:8px;overflow:hidden;flex:1;display:flex;align-items:center;justify-content:center;
+  background:var(--blue-light)}
+.sl-img img,.sl-img svg{width:100%;height:100%;object-fit:cover}
+.sl-media{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  background:#0d1826;color:#fff;border-radius:8px}
+.sl-media .play{width:74px;height:74px;border-radius:50%;background:rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:center;font-size:30px}
+.sl-media .cap{font-size:calc(16px * var(--bgz,1));opacity:.85}
+.sl-audio{display:flex;align-items:center;gap:12px;background:var(--blue-light);border-radius:30px;
+  padding:12px 22px;font-size:calc(20px * var(--bgz,1));color:var(--blue-primary);font-weight:600}
+/* ── NHÚNG iSpring (layout 'ispring') ──────────────────────────────────────────────────────
+   Deck lấp đầy TOÀN slide; header (nếu có) NỔI ĐÈ mép trên — xem .sl.lay-ispring.has-head.
+   .isp-guard = lớp chặn input phủ kín deck: iSpring KHÔNG bao giờ nhận chuột trực tiếp, mọi cú bấm
+   do app nhận rồi chuyển thành 1 lệnh play() (xem khối iSpring trong js/baigiang-soan.js). */
+.sl.lay-ispring{padding:0;overflow:hidden}
+.isp-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
+.isp-guard{position:absolute;inset:0;z-index:4;background:transparent;cursor:pointer}
+/* Thẻ mô tả tĩnh dùng cho khung xem trước trong editor + thumbnail (editor KHÔNG dựng iframe). */
+.isp-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:6px;background:#0d1826;color:#fff;font-size:22px;text-align:center;padding:0 24px}
+.isp-ph-nm{font-size:16px;font-weight:600;word-break:break-word}
+.isp-ph-sub{font-size:12px;opacity:.7}
+/* Title layout */
+.sl.lay-title{align-items:center;justify-content:center;text-align:center}
+.sl.lay-title .sl-title{font-size:calc(54px * var(--bgz,1));margin-bottom:14px}
+.sl.lay-title .sub{font-size:calc(26px * var(--bgz,1));color:var(--text-muted);font-weight:500}
+/* Header cố định 2 thanh ở mép trên slide — áp cho MỌI layout; ngoại lệ DUY NHẤT: slide ĐẦU TIÊN (index 0).
+   Kích thước theo % chiều cao slide (KHÔNG px) → giữ đúng tỉ lệ ở mọi độ phân giải:
+     mỗi thanh = 50%/40% của header; phần dư được `space-evenly` chia đều thành các gap
+     (mép trên · giữa 2 thanh · tới nội dung).
+   Border đáy 1px xanh nhạt. Header tràn 2 mép trái/phải (margin âm bù padding 10px của .sl). */
+.sl.has-head{padding-top:0}
+.sl.lay-reading-mcq.has-head{padding-top:0}
+.sl-head{flex:0 0 15%;height:10%;box-sizing:border-box;align-self:stretch;
+  margin:0 -10px 5px;padding:10px 10px 0px;display:flex;flex-direction:column;justify-content:space-evenly;
+  border-bottom:1px solid var(--blue-light)}
+/* margin-bottom:5px = GAP CHUẨN 5px giữa border-bottom header và nội dung/ảnh bên dưới (áp MỌI layout in-flow;
+   embed/pptx tự override margin:0 vì header nổi đè). Các layout trước đây tự chèn margin-top:5px để giả gap
+   này đã được gỡ (gfi-region, .illus-scroll .mcql/.ws-box Trái/Phải, .ws-wrap, .mt-rows) để không thành 10px. */
+/* Layout 'title' căn giữa mọi thứ (align-items:center) → header phải tự kéo hết bề ngang: đã có align-self:stretch ở trên,
+   thêm text-align:left để chữ tiêu đề/phụ đề trong header không bị căn giữa theo slide. */
+.sl.lay-title .sl-head{text-align:left}
+/* CHẾ ĐỘ OVERLAY: deck iSpring lấp đầy TOÀN slide, header NỔI ĐÈ lên mép trên (z-index 5 — trên
+   .isp-guard z4 nên bấm vào header không tính là 1 nhịp tiến bước). GV chủ động chừa ~15% trắng ở
+   đầu slide iSpring để header không che nội dung. Muốn ẩn hẳn header thì dùng checkbox "Ẩn header"
+   (§32.16) của chính slide đó. */
+.sl.lay-ispring.has-head{padding:0;overflow:hidden}
+.sl.lay-ispring.has-head .sl-head{position:absolute;top:0;left:0;right:0;height:15%;margin:0;z-index:5}
+/* ── Slide NHẬP TỪ POWERPOINT (layout='pptx', js/baigiang-pptx-import.js) ────────────────
+   CHẾ ĐỘ OVERLAY giống 'ispring': canvas lấp đầy TOÀN slide, header NỔI ĐÈ mép trên — GV soạn
+   PowerPoint chủ động chừa khoảng trống ở đầu slide (đã chốt với người dùng, KHÔNG tự động
+   né header). Không header (slide đầu) → canvas tràn mép. */
+.sl.lay-pptx{padding:0;overflow:hidden}
+.sl.lay-pptx.has-head{padding:0;overflow:hidden}
+.sl.lay-pptx.has-head .sl-head{position:absolute;top:0;left:0;right:0;height:15%;margin:0;z-index:5}
+.pptx-canvas{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
+.pptx-shape{position:absolute;box-sizing:border-box;transform-origin:center center}
+.pptx-sp{display:flex}
+.pptx-ellipse{border-radius:50%}
+.pptx-round{border-radius:12%}
+/* object-fit:fill — ảnh KÉO lấp đầy khung ĐÚNG như PowerPoint (blipFill <a:stretch><a:fillRect/>).
+   KHÔNG dùng 'contain' (letterbox giữ tỉ lệ gốc → ảnh đã resize trên PowerPoint bị "về kích cỡ gốc"). */
+.pptx-pic img{width:100%;height:100%;object-fit:fill;display:block;pointer-events:none}
+.pptx-pic-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  background:#eee;color:#888;font-size:11px;text-align:center;padding:4px}
+/* overflow-y:auto → khi zoom (--bgz) chữ tràn cao hơn khung text thì hiện thanh cuộn dọc
+   (thay overflow:hidden cắt chữ cũ). Scrollbar mảnh 4px + gutter stable theo §7. */
+.pptx-text{width:100%;height:100%;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
+  scrollbar-gutter:stable;padding:2px 4px;box-sizing:border-box;line-height:1.5}
+.pptx-text::-webkit-scrollbar{width:4px;height:4px}
+.pptx-text::-webkit-scrollbar-thumb{background:rgba(0,0,0,.28);border-radius:2px}
+/* Đang có đoạn BAY VÀO/BAY RA (float-in/out dùng translateY 28px) → clip tạm để transform của <p>
+   KHÔNG bị tính vào vùng cuộn ⇒ không nháy thanh scroll; chữ trượt lên từ mép khung. Bước tĩnh
+   (không còn class float) vẫn overflow-y:auto để zoom §32.1 cuộn được. */
+.pptx-text:has(> p.pptx-anim-float-in),
+.pptx-text:has(> p.pptx-anim-float-out){overflow:hidden}
+/* Giữ ký tự TAB (\t trong <a:t>) mà PowerPoint dùng để thụt dòng ví dụ: HTML mặc định gộp khoảng
+   trắng nên tab biến mất. pre-wrap giữ tab (vẫn wrap dòng dài bình thường); tab-size 72px = 1 inch
+   = defTabSz mặc định PowerPoint (914400 EMU) trong hệ toạ độ slide 960px → tự scale theo slide. */
+.pptx-text p{margin:0 0 2px;white-space:pre-wrap;tab-size:72px}
+.pptx-bullet{margin-right:5px}
+/* HƯỚNG CHỮ DỌC (PowerPoint a:bodyPr[@vert]) — writing-mode xoay chữ, GIỮ khung. Đoạn = cột dọc → xếp theo
+   HÀNG (flex-direction:row), cuộn theo trục X. vert270 = đọc DƯỚI→TRÊN (sideways-lr, Chromium 128+); nếu
+   trình duyệt cũ không hỗ trợ sideways-* thì rơi về vertical-rl (vẫn dọc, chỉ khác chiều đọc). */
+.pptx-text.pv-vert270{writing-mode:vertical-rl;writing-mode:sideways-lr}
+.pptx-text.pv-vert{writing-mode:vertical-rl;writing-mode:sideways-rl}
+.pptx-text.pv-eavert,.pptx-text.pv-mongolianvert{writing-mode:vertical-rl}
+.pptx-text.pv-vert270,.pptx-text.pv-vert,.pptx-text.pv-eavert,.pptx-text.pv-mongolianvert{
+  flex-direction:row;overflow-x:auto;overflow-y:hidden}
+.pptx-tbl-el{width:100%;height:100%;border-collapse:collapse;table-layout:fixed}
+.pptx-tbl-el td{border:1px solid #ccc;padding:2px 4px;overflow:hidden;vertical-align:middle}
+.pptx-tbl-el p{margin:0}
+/* Ô bảng có HƯỚNG CHỮ DỌC (a:tcPr[@vert]) — CHỈ writing-mode, KHÔNG height:100%/flex/overflow như .pptx-text:
+   dùng .pptx-text trong <td> làm <table> phình cao vọt, tràn khỏi khung (bug đã gặp 2026-07-19). */
+.pptx-tbl-el td > .pptx-cell-vert{writing-mode:vertical-rl}                                         /* eaVert/mongolianVert */
+.pptx-tbl-el td > .pptx-cell-vert.pv-vert270{writing-mode:vertical-rl;writing-mode:sideways-lr}     /* đọc dưới→trên */
+.pptx-tbl-el td > .pptx-cell-vert.pv-vert{writing-mode:vertical-rl;writing-mode:sideways-rl}        /* đọc trên→dưới */
+.pptx-tbl-el td > .pptx-cell-vert p{margin:0}
+/* Editor: kéo di chuyển/resize CHỈ shape cấp 1 (wirePptxShapes, baigiang-soan.js) */
+.pptx-shape-edit{cursor:move;outline:1px dashed transparent}
+.pptx-shape-edit:hover{outline-color:var(--blue-primary)}
+/* Tay cầm resize: góc SE (cả 2 chiều) + mép phải E (rộng) + mép dưới S (cao).
+   Ẩn mặc định, hiện khi hover/chọn khối. */
+.pptx-rh{position:absolute;background:var(--blue-primary);display:none;z-index:8}
+.pptx-rh-se{right:-6px;bottom:-6px;width:10px;height:10px;border-radius:10px;cursor:nwse-resize}
+.pptx-rh-e{right:-6px;top:50%;transform:translateY(-50%);height:10px;width:10px;border-radius:10px;cursor:ew-resize}   /* translateY để TÂM chấm nằm giữa cạnh (không phải mép trên) */
+.pptx-rh-s{bottom:-6px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:10px;cursor:ns-resize}  /* translateX để TÂM chấm nằm giữa cạnh (không phải mép trái) */
+.pptx-shape-edit:hover .pptx-rh,.pptx-shape.pptx-sel .pptx-rh{display:block}
+/* Nút Hoàn tác/Làm lại TB2 — mờ khi hết bước (buttons.css chưa có rule :disabled chung) */
+#bgUndoBtn:disabled,#bgRedoBtn:disabled{opacity:.45;cursor:not-allowed}
+/* Thanh 4 nút Căn chỉnh — nút vuông đều nhau, icon ở giữa */
+.pptx-alignbar{gap:4px}
+/* CHỈ 4 nút căn chỉnh (con TRỰC TIẾP) bị ép vuông 32px — nút Xóa ở cuối hàng (bọc .pptx-align-trail) GIỮ cỡ btn-sm */
+.pptx-alignbar > .btn{flex:0 0 auto;width:32px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.pptx-alignbar > .btn:disabled{opacity:.45;cursor:not-allowed}
+.pptx-align-trail{margin-left:auto;display:inline-flex;align-items:center}   /* đẩy nút Xóa bám mép phải cùng hàng căn chỉnh */
+/* BATCH định dạng/hiệu ứng (nhiều khối / nhiều dòng) — panel Thuộc tính pptx */
+.pptx-biu{width:28px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.pptx-biu--on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pptx-sw{width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0;flex:0 0 auto}
+.pptx-linebatch{border:1px solid var(--border);border-radius:6px;padding:6px 8px;margin:6px 0;background:var(--bg-page,#f6f8fb)}
+.pptx-lrow{display:flex;align-items:center;gap:5px;margin-top:0px}
+.pptx-lrow-lb{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  cursor:pointer;padding:2px 5px;border:1px solid transparent;border-radius:4px}
+.pptx-lrow-lb:hover{background:rgba(0,0,0,.05)}
+.pptx-lrow--on .pptx-lrow-lb{background:rgba(255,138,0,.16);border-color:var(--accent);color:var(--text-primary)}
+.pptx-lrow select{flex:0 0 auto;width:96px}
+/* LƯỚI 2.5cm NÉT ĐỨT (chỉ editor) — vẽ ở NỀN canvas, shape phủ lên trên (như PowerPoint).
+   background-image/-size do JS đặt INLINE (SVG data-URI 1 ô lưới) — xem pptxGridStyle() ở
+   baigiang-soan.js. Không đặt ở đây vì cỡ ô phụ thuộc cỡ slide thật của từng file. */
+.pptx-canvas.pptx-grid{ background-repeat:repeat }   /* background-position do JS đặt inline (căn giữa lưới — xem pptxGridStyle) */
+/* Khối đang chọn (bấm để chọn → chỉnh cỡ chữ / hiệu ứng ở panel Thuộc tính) */
+.pptx-shape.pptx-sel{outline:2px solid var(--orange-primary)!important;outline-offset:0}
+.pptx-shape.pptx-sel .pptx-resize-handle{display:block}
+/* Huy hiệu hiệu ứng (chỉ hiện trong editor) — số thứ tự bấm + loại vào/ra */
+.pptx-anim-badge{position:absolute;left:-6px;top:-6px;z-index:9;min-width:15px;height:15px;padding:0 3px;
+  border-radius:8px;background:var(--blue-primary);color:#fff;font-size:9px;font-weight:700;line-height:15px;
+  text-align:center;pointer-events:none}
+.pptx-anim-badge.exit{background:var(--red-primary,#DC2626)}
+/* Dòng bảng có hiệu ứng (chỉ hiện trong editor) — viền trái báo hiệu */
+.pptx-tbl-el tr.pptx-row-anim > td:first-child{box-shadow:inset 3px 0 0 var(--blue-primary)}
+.pptx-tbl-el tr.pptx-row-anim.exit > td:first-child{box-shadow:inset 3px 0 0 var(--red-primary,#DC2626)}
+/* ── Hiệu ứng CSS thuần (appear/float-in/disappear/float-out) — @keyframes chạy 1 lần khi phần
+   tử được VẼ ở đúng bước hiện tại. Vì mirror đẩy nguyên HTML, máy học viên tự chạy y hệt. ── */
+@keyframes pptxFloatIn{ from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pptxFloatOut{ from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(28px)} }
+.pptx-anim-float-in{animation:pptxFloatIn .45s ease both}
+.pptx-anim-float-out{animation:pptxFloatOut .45s ease forwards}
+/* Dòng bảng float: transform trên <tr> (Chromium mới hỗ trợ transform table-row) */
+.pptx-tbl-el tr.pptx-anim-float-in{animation:pptxFloatIn .45s ease both}
+.pptx-tbl-el tr.pptx-anim-float-out{animation:pptxFloatOut .45s ease forwards}
+/* Đoạn (dòng chữ) trong text box: hiệu ứng + gợi ý editor (viền trái) */
+.pptx-text p.pptx-anim-float-in{animation:pptxFloatIn .45s ease both}
+.pptx-text p.pptx-anim-float-out{animation:pptxFloatOut .45s ease forwards}
+.pptx-text p.pptx-para-anim{box-shadow:inset 3px 0 0 var(--blue-primary);padding-left:5px}
+.pptx-text p.pptx-para-anim.exit{box-shadow:inset 3px 0 0 var(--red-primary,#DC2626)}
+/* Thanh trên: nền gradient đỏ → trắng, chữ tiêu đề + ĐỒNG HỒ hh:mm ở đầu phải */
+.sl-head-title{flex:0 0 50%;height:50%;display:flex;align-items:center;gap:8px;padding:0 12px;
+  background:linear-gradient(90deg,#F41B1B 0%,#F93636 14%,#FB7E7E 44%,#FDC9C9 66%,#FFFFFF 88%,#FFFFFF 100%);
+  font-size:20px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#FFFFFF;
+
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Thanh dưới: nền trắng, phụ đề + NÚT Chấm điểm/Kiểm tra ở đầu phải */
+.sl-head-sub{flex:0 0 40%;height:40%;display:flex;align-items:center;gap:8px;padding:0 12px;background:#fff;
+  font-size:17px;font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Chữ của 2 thanh: co giãn + cắt bằng "…" để đồng hồ/nút luôn giữ được chỗ ở đầu phải */
+.sl-head-txt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Đồng hồ: kế thừa font của thanh tiêu đề, chỉ đổi màu (số đều bề ngang → không giật khi đổi phút) */
+.sl-clock{flex:0 0 auto;color:#F41B1B;font-variant-numeric:tabular-nums;letter-spacing:0}
+/* Nút Chấm điểm/Kiểm tra trong thanh phụ đề — cao 80% thanh ⇒ KHÔNG làm thanh cao thêm.
+   Selector 3 lớp (.sl .sl-head-sub .sl-check) để THẮNG .btn/.btn-primary của buttons.css (nạp sau). */
+.sl .sl-head-sub .sl-check{flex:0 0 auto;height:80%;min-height:0;padding:0 10px;
+  font-size:12px;font-weight:700;line-height:1;border-radius:5px;white-space:nowrap}
+/* ── ẨN HEADER (§32.16, cờ S.hideHead RIÊNG từng slide; slide bìa không áp) ───────────────
+   2 thanh header biến mất → nội dung tràn 100% chiều cao slide (.sl.no-head giữ padding-top 10px
+   mặc định). ĐỒNG HỒ + nút Chấm điểm KHÔNG mất theo: gom vào cụm NỔI (absolute) góc trên-phải,
+   nền trắng mờ để đọc được trên mọi nền slide, KHÔNG chiếm chỗ trong luồng.
+   z-index 6 = trên header nổi của embed/pptx (z 5) và trên lớp bút vẽ trong-luồng. */
+.sl .sl-nohead{position:absolute;top:6px;right:10px;z-index:6;display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.88);border:1px solid var(--blue-light);border-radius:6px;padding:3px 8px}
+.sl .sl-nohead .sl-clock{font-size:16px;font-weight:800;letter-spacing:0}
+.sl .sl-nohead .sl-check{flex:0 0 auto;height:22px;min-height:0;padding:0 10px;
+  font-size:12px;font-weight:700;line-height:1;border-radius:5px;white-space:nowrap}
+/* ── STYLE CÂU HỎI TRẮC NGHIỆM — NGUỒN DUY NHẤT (§32) ────────────────────────────────────
+   Dùng CHUNG cho MỌI layout trắc nghiệm: 'reading-mcq' (.qp-rs3) · 'mcq-list' (.mcql) ·
+   'quiz' (1 câu, cũng render trong .mcql). Chuẩn = dạng bài đọc hiểu MCQ:
+     · câu hỏi: xanh #1976D2 đậm, có đánh số "1." do JS sinh;
+     · đáp án: khung trắng bo 6px + radio, KHÔNG chữ cái A/B/C/D;
+     · chọn = xanh dương nhạt · đúng = xanh lá · sai = đỏ.
+   THÊM layout trắc nghiệm mới → dùng lại đúng markup .question-item/.question-text/
+   .options-container/.option-item, KHÔNG viết style đáp án riêng cho layout đó. */
+.sl .question-text{font-weight:600;color:#1976D2;margin-bottom:6px;line-height:1.45;
+  font-size:calc(15px * var(--bgz,1))}
+.sl .options-container{display:flex;flex-direction:column;gap:6px;padding:0 5px}
+/* BỐ CỤC ĐÁP ÁN (layout 'mcq-list', chọn ở panel Thuộc tính — slot S.optCols):
+   mặc định (không class) = mỗi đáp án 1 dòng · .opts-c2 = "2 hàng" (2 cột) · .opts-c4 = "1 hàng".
+   "1 hàng" (opts-c4): grid-auto-flow:column → xếp TẤT CẢ đáp án trên 1 dòng, CHIA ĐỀU theo SỐ đáp án
+   của từng câu (KHÔNG cố định 4 cột). minmax(0,1fr) → các cột rộng đều, đáp án dài tự xuống dòng trong ô. */
+.sl .options-container.opts-c2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.sl .options-container.opts-c4{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.sl .option-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #e0e0e0;
+  border-radius:6px;cursor:pointer;transition:.15s;background:#fff;color:#333;line-height:1.4;
+  font-size:calc(14px * var(--bgz,1))}
+.sl .option-item:hover{background:#f5f9ff}
+.sl .option-item.selected{background:#e3f2fd;border-color:#2196F3}
+.sl .option-item.correct{background:#d4edda;border-color:#28a745;color:#155724}
+.sl .option-item.incorrect{background:#f8d7da;border-color:#dc3545;color:#721c24}
+.sl .option-item input[type="radio"]{margin:0;cursor:pointer;flex-shrink:0}
+.sl .explanation-section{margin-top:6px;padding:6px 8px;background:#f3f4f6;
+  border-left:4px solid #2196F3;border-radius:4px;display:none;font-style:italic;font-size:.92em}
+.sl .explanation-section.show{display:block}
+.sl .explanation-section strong,.sl .explanation-section b{color:#1976D2;font-style:normal}
+
+/* ── Reading MCQ (layout='reading-mcq') — PORT 1:1 từ English app
+   ReadingS3Renderer + reading-s3-custom.css (.qp-rs3 passage-panel/questions-panel),
+   BỎ quiz-navigation panel (chỉ 2 panel + nút Chấm điểm riêng). ─────────── */
+.sl.lay-reading-mcq{padding:10px}
+.sl .qp-rs3{flex:1;display:flex;flex-direction:row;gap:8px;width:100%;height:100%;
+  overflow:hidden;font-family:var(--font-base)}
+.sl .qp-rs3 .passage-panel{flex:1;background:#fff;border-radius:0px;border:1px solid #ccc;
+  overflow-y:auto;padding:5px 10px;line-height:1.6;text-align:justify;font-size:calc(15px * var(--bgz,1))}
+.sl .qp-rs3 .passage-title{font-size:1.2em;font-weight:700;color:#1976D2;margin-bottom:0px;
+  text-align:center;border-bottom:0px solid #eee;padding-bottom:8px}
+.sl .qp-rs3 .passage-content{line-height:1.6;color:#333}
+.sl .qp-rs3 .passage-content::after{content:"";display:table;clear:both}
+/* (Ảnh đoạn văn của reading-mcq nay dùng CHUNG .passage-image.p3-img.p3-float — §32.18; class riêng
+   .passage-image-float cỡ cứng 180px đã BỎ.) */
+.sl .qp-rs3 .questions-panel{flex:1;background:#fff;border-radius:0px;border:1px solid #ccc;
+  overflow-y:auto;padding:10px;display:flex;flex-direction:column}
+/* (câu hỏi/đáp án/giải thích: xem khối "STYLE CÂU HỎI TRẮC NGHIỆM — NGUỒN DUY NHẤT" ở trên) */
+.sl .qp-rs3 .question-item{border-bottom:1px solid #eee;margin:0 0 8px 0;padding:0 0 8px 0}
+.sl .qp-rs3 .question-item:last-child{border-bottom:none;margin-bottom:0}
+.sl .qp-rs3 .passage-panel::-webkit-scrollbar,.sl .qp-rs3 .questions-panel::-webkit-scrollbar{width:4px}
+.sl .qp-rs3 .passage-panel::-webkit-scrollbar-thumb,.sl .qp-rs3 .questions-panel::-webkit-scrollbar-thumb{
+  background:var(--border);border-radius:2px}
+/* Pattern highlight đoạn văn (port HighlightModule) — [N]…[N] tô màu theo số câu, ẨN tới khi Chấm điểm.
+   Rule .hl.hidden đặt SAU màu để thắng specificity ngang → khi ẩn không tô nền. */
+.sl .qp-rs3 .hl{padding:0 2px;border-radius:3px}
+.sl .qp-rs3 .hl.hl-1{background:#fff3a0}
+.sl .qp-rs3 .hl.hl-2{background:#b3e5fc}
+.sl .qp-rs3 .hl.hl-3{background:#c8e6c9}
+.sl .qp-rs3 .hl.hl-4{background:#f8bbd0}
+.sl .qp-rs3 .hl.hl-5{background:#d1c4e9}
+.sl .qp-rs3 .hl.hidden{background:transparent}
+.rmcq-submit-row{margin-top:auto;padding-top:8px;display:flex;justify-content:center;flex-shrink:0}
+.rmcq-submit{padding:8px 20px;font-size:14px}
+
+/* Đọc hiểu Đúng/Sai (layout='spk-reading-part3') — DÙNG CHUNG khung .qp-rs3 (passage-panel/questions-panel).
+   Mỗi nhận định: chữ bên trái + DROPDOWN Chọn…/Đúng/Sai bên phải (như English App); chấm = p3Submit
+   (GV+HV). Ảnh đoạn văn: 'center' (mặc định) = khối căn giữa 2 chiều + kéo nhích vị trí · 'float' = chữ quấn. */
+.sl.lay-spk-reading-part3{padding:10px}
+.sl.lay-spk-reading-part3.has-head{padding-top:0}   /* BẮT BUỘC: cùng độ ưu tiên với .sl.has-head nên phải viết lại padding-top:0, nếu không header bị đẩy xuống 10px (như reading-mcq/word-web/pic-match/matching) */
+.sl .qp-rs3 .p3-row{display:flex;align-items:center;gap:12px}
+.sl .qp-rs3 .p3-row .question-text{flex:1;min-width:0;margin-bottom:0}
+/* Dropdown Đúng/Sai — nền trắng, viền xanh, bo góc (đồng bộ ô Select… English App) */
+.sl .qp-rs3 .p3-select{flex:0 0 auto;width:132px;font-size:calc(14px * var(--bgz,1));padding:6px 8px;
+  border:1.5px solid var(--blue-primary);border-radius:6px;background:#fff;color:#111;cursor:pointer}
+.sl .qp-rs3 .p3-select:disabled{opacity:1}
+.sl .qp-rs3 .p3-select.p3-correct{border-color:#28a745;background:#d4edda;color:#155724}
+.sl .qp-rs3 .p3-select.p3-incorrect{border-color:#dc3545;background:#f8d7da;color:#721c24}
+.sl .qp-rs3 .p3-select.p3-reveal{border-color:#28a745;background:#eafaf0;color:#155724}
+/* ẢNH ĐOẠN VĂN — §32.18: DÙNG CHUNG cho 'reading-mcq' + 'spk-reading-part3' (cùng khung .qp-rs3).
+   MỘT chế độ duy nhất: CHỮ QUẤN — float TRÁI trong .passage-content, chữ chạy quanh; bề rộng do GV
+   kéo góc (.p3-img-resize → S.p3ImgW), trần = hết bề rộng panel trái. Ảnh co vừa khung, không méo.
+   (Chế độ "Căn giữa" cũ — .p3-pcenter/.p3-center + kéo thân ảnh nhích vị trí — ĐÃ BỎ theo yêu cầu
+   2026-07-21, kèm mọi quirk position:relative của bút vẽ mà nó từng dính.) */
+.sl .qp-rs3 .passage-image.p3-img{position:relative;box-sizing:border-box;max-width:100%;
+  background:#fff;padding:5px}
+.sl .qp-rs3 .passage-image.p3-img img{display:block;width:100%;height:auto;object-fit:contain}
+.sl .qp-rs3 .passage-image.p3-float{float:left;margin:0 5px 5px 0;border:0px solid #e0e0e0;border-radius:6px}
+.sl .qp-rs3 .passage-image.p3-edit{outline:1.5px dashed var(--blue-primary)}
+.sl .qp-rs3 .p3-img-resize{position:absolute;bottom:-6px;right:-6px;width:14px;height:14px;border-radius:3px;
+  background:var(--blue-primary);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:ew-resize}
+
+/* Điền chỗ trống (layout='reading-cloze') — Reading S4: đoạn văn 1 cột, dropdown tại (1)(2)…,
+   ảnh (nếu có) float góc trên-phải, text bao quanh. */
+.sl .qp-rs4{flex:1;min-height:0;width:100%;display:flex;font-family:var(--font-base)}
+.sl .qp-rs4 .cloze-panel{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;
+  border:1px solid #ccc;padding:10px;overflow:hidden}
+.sl .qp-rs4 .passage-title{font-size:calc(18px * var(--bgz,1));font-weight:700;color:#1976D2;margin-bottom:8px;
+  text-align:center;border-bottom:1px solid #eee;padding-bottom:4px;flex-shrink:0}
+.sl .qp-rs4 .cloze-content{flex:1;min-height:0;overflow-y:auto;line-height:2.1;
+  font-size:calc(17px * var(--bgz,1));color:#333;text-align:justify}
+.sl .qp-rs4 .cloze-content::after{content:"";display:table;clear:both}
+.sl .qp-rs4 .cloze-image-float{float:right;width:220px;margin:0 0 8px 12px;border:0px solid #e0e0e0;
+  border-radius:0px;background:#fff;padding:0px;position:relative}   /* width có thể bị inline style ghi đè; position:relative để đặt góc kéo */
+.sl .qp-rs4 .cloze-image-float.cloze-left{float:left;margin:0 12px 8px 0}
+.sl .qp-rs4 .cloze-image-float img{max-width:100%;height:auto;display:block;object-fit:contain}
+/* Soạn: viền + góc kéo đổi bề rộng (đặt phía đoạn văn — float phải→góc dưới-TRÁI, float trái→góc dưới-PHẢI) */
+.sl .qp-rs4 .cloze-image-edit{outline:1.5px dashed var(--blue-primary)}
+.sl .qp-rs4 .cloze-img-resize{position:absolute;bottom:-6px;left:-6px;width:14px;height:14px;border-radius:3px;
+  background:var(--blue-primary);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:ew-resize}
+.sl .qp-rs4 .cloze-image-edit.cloze-left .cloze-img-resize{left:auto;right:-6px}
+.sl .qp-rs4 .cloze-blank{font-size:calc(15px * var(--bgz,1));padding:1px 6px;margin:0 2px;max-width:200px;vertical-align:baseline;
+  border:1.5px solid var(--blue-primary);border-radius:5px;background:#f5f9ff;color:#111;cursor:pointer}
+.sl .qp-rs4 .cloze-blank.cloze-correct{border-color:#28a745;background:#d4edda;color:#155724}
+.sl .qp-rs4 .cloze-blank.cloze-incorrect{border-color:#dc3545;background:#f8d7da;color:#721c24}
+.sl .qp-rs4 .cloze-blank.cloze-reveal{border-color:#28a745;background:#eafaf0;color:#155724}
+.sl .qp-rs4 .cloze-content::-webkit-scrollbar{width:4px}
+.sl .qp-rs4 .cloze-content::-webkit-scrollbar-thumb{background:#c8ced8;border-radius:2px}
+
+/* MCQ danh sách (layout='mcq-list' + layout='quiz' 1 câu) — khung chứa danh sách câu hỏi ĐỘC LẬP,
+   không đoạn văn/ảnh. (câu hỏi/đáp án/giải thích: xem khối "STYLE CÂU HỎI TRẮC NGHIỆM" ở trên) */
+.sl .mcql{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
+.sl .mcql .question-item{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:5px;
+  box-shadow:0 2px 4px rgba(0,0,0,.05)}
+.sl .mcql::-webkit-scrollbar{width:4px}
+.sl .mcql::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* ══ ẢNH MINH HỌA DÙNG CHUNG cho mcq-list / gap-fill / matching / spk / reorder / word-choice / crossword
+   (wrap có thêm class .illus-wrap) ═══════════════════════════════════════════════════════════════════
+   Box = .gfi-box (soạn: +.gfi-edit; handle .gfi-resize). Nay CHỨA NHIỀU ẢNH cùng cỡ (multi-image, xem
+   khối "NHIỀU ẢNH minh họa cùng cỡ" bên dưới):
+     • Trên/Dưới (.gfi-row) = hàng NGANG cùng chiều cao, khối căn giữa ≤940px, CỐ ĐỊNH ở mép — nội dung
+       bám mép còn lại và tự cuộn (§32.17).
+     • Trái/Phải (.gfi-side) = cột DỌC cùng bề rộng, BÁM MÉP, cao lấp đầy; nội dung FLEX phần còn lại.
+   (Cơ chế cũ 1 ảnh + vùng ¼ .gfi-region/.gfi-float kéo di chuyển tự do ĐÃ BỎ — 2026-07-24.) */
+.sl .illus-wrap{flex:1;min-height:0;display:flex;gap:8px}
+.sl .illus-wrap.pos-left{flex-direction:row;align-items:stretch}
+.sl .illus-wrap.pos-right{flex-direction:row-reverse;align-items:stretch}
+.sl .illus-wrap.pos-top{flex-direction:column}
+.sl .illus-wrap.pos-bottom{flex-direction:column-reverse}
+.sl .gfi-box{border:0px solid #e0e0e0;border-radius:6px;background:#fff;padding:0px;position:relative}
+.sl .gfi-box img{max-width:100%;height:auto;display:block;object-fit:contain}
+.sl .gfi-edit{outline:1.5px dashed var(--blue-primary)}
+.sl .gfi-resize{position:absolute;bottom:-6px;right:-6px;width:14px;height:14px;border-radius:3px;
+  background:var(--blue-primary);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:ew-resize}
+.sl .illus-wrap.pos-top > .gfi-box,.sl .illus-wrap.pos-bottom > .gfi-box{flex:0 0 auto;margin:0 auto;max-width:940px}
+/* Wrap chứa .mcql (mcq-list + spk-dialogue) mang thêm class .illus-scroll.
+   §32.17 (2026-07-21) — CHUẨN gap-fill cho MỌI vị trí ảnh: wrap KHÔNG cuộn, ẢNH CỐ ĐỊNH ở mép
+   (Trên/Dưới/Trái/Phải), chỉ VÙNG CHỮ tự cuộn ⇒ nội dung luôn BÁM MÉP TRÊN và ảnh không trôi đi khi zoom.
+   (Kiểu CUỘN CHUNG cũ ở Trên/Dưới đã bỏ: với pos-bottom = column-reverse, chỗ trống dồn về mép trên
+   nên câu hỏi bị đẩy xuống đáy slide — bug 2026-07-21.) */
+.sl .illus-scroll{padding:2px}
+.sl .illus-scroll .mcql{flex:1 1 auto;min-width:0;min-height:0;overflow-y:auto;padding:0}   /* gap header 5px lo bởi .sl-head margin-bottom */
+/* .ws-box trong .illus-scroll: HIỆN CHƯA layout nào dùng (word-select dùng .ws-wrap, kp7 dùng .kp7-wrap —
+   cả hai KHÔNG có .illus-scroll). Giữ lại cho layout sau; box từ luôn flex:0 0 auto theo §32.15 (co theo
+   nội dung, KHÔNG giãn) nên không áp rule flex:1 như .mcql. KHÔNG ép padding:0 — box từ giữ padding 6px 10px. */
+.sl .illus-scroll .ws-box{flex:0 0 auto;min-width:0;min-height:0}
+/* ẢNH BÁM MÉP Trái/Phải — NGUỒN CHUNG cho gap-fill · spk-dialogue · matching · reorder.
+   Ảnh .gfi-side: cách mép 10px (padding .sl), CAO LẤP ĐẦY, RỘNG kéo tới SÁT MÉP SLIDE (trần = wireIllusImg
+   kẹp theo wrap); nội dung FLEX phần còn lại, cách ảnh 10px. Thay hệ vùng ¼ + kéo di chuyển tự do. */
+.sl .gf-imgwrap.pos-left,.sl .gf-imgwrap.pos-right,
+.sl .spk-imgwrap.pos-left,.sl .spk-imgwrap.pos-right,
+.sl .mt-imgwrap.pos-left,.sl .mt-imgwrap.pos-right,
+.sl .ro-imgwrap.pos-left,.sl .ro-imgwrap.pos-right,
+.sl .mcql-imgwrap.pos-left,.sl .mcql-imgwrap.pos-right,
+.sl .cloze-imgwrap.pos-left,.sl .cloze-imgwrap.pos-right{gap:10px;align-items:stretch}
+.sl .spk-imgwrap.pos-left,.sl .spk-imgwrap.pos-right,
+.sl .mcql-imgwrap.pos-left,.sl .mcql-imgwrap.pos-right{padding:0}   /* có .illus-scroll padding 2px → bỏ để bám mép */
+.sl .illus-wrap.pos-left > .gfi-box.gfi-side,
+.sl .illus-wrap.pos-right > .gfi-box.gfi-side{flex:0 0 auto;align-self:stretch;display:flex;min-height:0;max-height:100%}
+.sl .illus-wrap.pos-left > .gfi-box.gfi-side img,
+.sl .illus-wrap.pos-right > .gfi-box.gfi-side img{height:100%;width:auto;max-width:100%;object-fit:contain;margin:auto}
+.sl .spk-imgwrap.pos-left .mcql,.sl .spk-imgwrap.pos-right .mcql,
+.sl .mcql-imgwrap.pos-left .mcql,.sl .mcql-imgwrap.pos-right .mcql{margin-top:0}
+/* ── NHIỀU ẢNH minh họa cùng cỡ (multi-image strip) — dùng chung mcq/spk/gf/mt/ro/wc/cw ─────────────
+   Trái/Phải (.gfi-side): xếp DỌC cùng bề rộng (= width box, kéo handle đổi) · Trên/Dưới (.gfi-row): xếp NGANG
+   cùng chiều cao (= height box). Ảnh nằm trong .gfi-strip (vùng cuộn) → handle .gfi-resize KHÔNG bị cắt. */
+.sl .gfi-box.gfi-multi{display:flex;position:relative;padding:0}
+.sl .gfi-box.gfi-multi .gfi-strip{display:flex;gap:8px;flex:1 1 auto;width:100%;height:100%;min-width:0;min-height:0}
+.sl .gfi-box.gfi-multi .gfi-strip::-webkit-scrollbar{width:4px;height:4px}
+.sl .gfi-box.gfi-multi .gfi-strip::-webkit-scrollbar-thumb{background:rgba(0,0,0,.25);border-radius:2px}
+/* Trái/Phải — khung .gfi-side BÁM MÉP, cao lấp đầy; dải ảnh xếp DỌC cùng bề rộng và CĂN GIỮA khung
+   (margin:auto). Bề rộng dải do illusStripFit kẹp = min(bề rộng khung, cỡ làm chồng ảnh căng hết chiều cao)
+   ⇒ kéo handle rộng thêm sau khi ảnh hết cỡ cao thì ảnh THÔI TO, chỉ TRƯỢT SANG; nội dung bài tập tự co. */
+.sl .illus-wrap > .gfi-box.gfi-side.gfi-multi{align-self:stretch;max-height:100%}
+.sl .illus-wrap > .gfi-box.gfi-side.gfi-multi .gfi-strip{flex-direction:column;align-items:center;
+  flex:0 0 auto;height:auto;max-width:100%;margin:auto;overflow:visible}   /* width ghi INLINE (ImgFitW) */
+.sl .illus-wrap > .gfi-box.gfi-side.gfi-multi .gfi-strip > img{width:100%;height:auto;max-width:100%;flex:0 0 auto;object-fit:contain;margin:0;display:block}
+/* Trên/Dưới — hàng NGANG, cùng chiều cao (ảnh height:100% của box); box co theo nội dung, cuộn ngang nếu quá rộng */
+.sl .illus-wrap > .gfi-box.gfi-multi.gfi-row{width:max-content;max-width:940px}
+.sl .illus-wrap > .gfi-box.gfi-multi.gfi-row .gfi-strip{flex-direction:row;align-items:center;justify-content:flex-start;overflow-x:auto;overflow-y:hidden}
+.sl .illus-wrap > .gfi-box.gfi-multi.gfi-row .gfi-strip > img{height:100%;width:auto;max-width:none;flex:0 0 auto;object-fit:contain;margin:0;display:block}
+.sl .gfi-box.gfi-multi.gfi-row .gfi-resize{cursor:ns-resize}
+/* Thumbnail ảnh trong panel Thuộc tính (mỗi ảnh 1 ô, có nút ✕ xóa riêng) */
+.illus-thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.illus-th{position:relative;width:56px;height:56px;border:1px solid var(--blue-light);border-radius:4px;overflow:hidden;background:#fff}
+.illus-th img{width:100%;height:100%;object-fit:cover;display:block}
+.illus-th .illus-th-del{position:absolute;top:2px;right:2px;width:18px;height:18px;padding:0;line-height:1;
+  font-size:11px;border-radius:3px;display:flex;align-items:center;justify-content:center}
+/* HOÀN THÀNH HỘI THOẠI (layout='spk-dialogue', English app Speakout Reading Exercise 2) — mỗi câu là 1
+   thẻ 2 cột: TRÁI = hội thoại 2 dòng (dòng 2 có chỗ trống điền đáp án đã chọn) · PHẢI = đáp án.
+   Dùng CHUNG vùng cuộn .mcql + màu .option-item (§32.2). Text 15px × --bgz (§32.1); icon người nói KHÔNG zoom. */
+.sl .spk-list .spk-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0px;align-items:start}
+.sl .spk-card .explanation-section{grid-column:1/-1;margin-top:2px}
+.sl .spk-dialog{background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:8px}
+.sl .spk-qnum{font-weight:700;color:#1976D2;font-size:calc(15px * var(--bgz,1));margin-bottom:4px;line-height:1.2}
+.sl .spk-line{display:flex;align-items:flex-start;gap:6px;margin-bottom:6px}
+.sl .spk-line:last-child{margin-bottom:0}
+.sl .spk-ico{font-size:15px;flex-shrink:0;line-height:1.4}
+.sl .spk-say{flex:1;min-width:0;font-size:calc(15px * var(--bgz,1));line-height:1.45;color:#2c3e50;padding:2px 0}
+.sl .spk-blank{color:#9aa4ae;font-style:italic}
+.sl .spk-blank.filled{color:#1976D2;font-weight:600;font-style:normal}
+/* Đáp án do GV HÉ LỘ theo bước (§32.27) — xanh lá để phân biệt với chữ HV tự chọn (xanh dương) */
+.sl .spk-blank.spk-reveal{color:#2e7d32}
+.sl .spk-opts{gap:6px}
+.sl .spk-opt{cursor:pointer;font-size:calc(15px * var(--bgz,1))}   /* text bài giảng mặc định 15px (§32.1) */
+/* Popup báo điểm (theme dialog app §13 — nút "Đóng", không phím ×) */
+.rmcq-overlay{position:fixed;inset:0;background:rgba(20,30,50,.42);z-index:9850;display:none;
+  align-items:center;justify-content:center}
+.rmcq-overlay.on{display:flex}
+.rmcq-box{width:300px;max-width:90vw;background:#fff;border:1.5px solid var(--border);border-radius:8px;
+  box-shadow:0 20px 60px rgba(20,40,80,.28);overflow:hidden}
+.rmcq-head{height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;
+  border-bottom:1px solid var(--border);font-weight:700;font-size:14px;color:var(--text-primary)}
+.rmcq-head .btn{margin-left:auto}
+.rmcq-body{padding:22px;text-align:center}
+.rmcq-score{font-size:34px;font-weight:800;color:var(--blue-primary)}
+.rmcq-pct{font-size:13px;color:var(--text-muted);margin-top:4px}
+
+/* ── Player (fullscreen overlay) ───────────────────────────────────────── */
+.player{position:fixed;inset:0;background:#0b1220;z-index:9000;display:none;
+  align-items:center;justify-content:center;overflow:hidden}
+.player.on{display:flex}
+.player-stage{position:relative;background:#fff;box-shadow:0 10px 60px rgba(0,0,0,.6)}
+.player-scaler{transform-origin:top left;width:960px;height:540px}
+.ink{position:absolute;inset:0;z-index:5;touch-action:none;pointer-events:none}  /* chỉ preview nét đang vẽ */
+.ink.off{pointer-events:none}
+/* ── Chú thích khi trình chiếu (tạm thời, xoá khi chuyển slide) ─────────── */
+.player{user-select:none;-webkit-user-select:none}   /* kéo để vẽ, không bôi đen text */
+/* TẮT KÉO ẢNH NATIVE (HTML5 drag) trên MỌI ảnh slide → khi bấm-rê chuột để vẽ (§32.3), trình duyệt KHÔNG
+   hiểu nhầm là kéo ảnh (làm hỏng/lệch nét — bug đã gặp ở spk-reading-part3). Áp CẢ editor + trình chiếu +
+   máy HV (đều là .sl). TRỪ pptx (xml) + ispring (deck nhúng) theo yêu cầu. KHÔNG ảnh hưởng thao tác KÉO ẢNH khi
+   SOẠN vì các layout đó kéo bằng Pointer Events trên KHUNG bao (wireP3Img/wireGfImg/wireIllusImg…), không
+   phải native drag của thẻ <img>. */
+.sl:not(.lay-pptx):not(.lay-ispring) img{-webkit-user-drag:none;user-drag:none}
+/* Đa điểm/hoặc bật bút → panel text KHÔNG cuộn 1 ngón (1 ngón vẽ, 2 ngón cuộn tự cài).
+   Danh sách panel text = ANNO_TEXT_SEL trong js/baigiang-anno.js — GIỮ KHỚP khi thêm layout mới.
+   + các VÙNG CUỘN khác không phải anno-host (.illus-scroll, .mt-rows) — cũng phải chặn cuộn 1 ngón,
+   nếu không nét vẽ và thao tác cuộn chạy song song gây giật. */
+.player.anno-draw .passage-panel,.player.anno-draw .questions-panel,.player.anno-draw .mcql,
+.player.anno-draw .illus-scroll,.player.anno-draw .mt-rows,
+.player.anno-draw .cloze-content,.player.anno-draw .sl-col,.player.anno-draw .gf-col,
+.player.anno-draw .gf-foot-block,.player.anno-draw .pptx-text,.player.anno-draw .ws-box,
+.player.anno-draw .kp7-passage,.player.anno-draw .kp7-bank,.player.anno-draw .cw-side,.player.anno-draw .cw-left,
+.player.anno-draw .pptx-tbl-el td,.player.anno-draw .mt-body,.player.anno-draw .ro-list,
+.player.anno-draw .wc-body,.player.anno-draw .vf-body,.player.anno-draw .sw9-body{touch-action:none}
+.bg-anno-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:6}
+.bg-anno-shape{fill:none}
+/* Lớp bắt nét trên deck iSpring khi BẬT BÚT — z6 để nằm TRÊN .isp-guard (z4): bật bút thì nét vẽ
+   thắng, tắt bút thì cú bấm rơi xuống .isp-guard = 1 nhịp tiến bước. */
+.bg-anno-cap{position:absolute;inset:0;z-index:6;background:transparent}
+/* Slide iSpring CÓ HEADER (overlay): deck lấp đầy toàn slide → lớp bắt nét phủ trọn bề ngang, chỉ
+   chừa 15% mép trên để KHÔNG trùm lên header đang nổi đè (xem .sl-head). */
+.sl.lay-ispring.has-head > .bg-anno-cap{inset:15% 0 0 0}
+.bg-anno-text{text-decoration-thickness:2px}
+.bg-anno-text.strike{text-decoration-line:line-through}
+.bg-anno-text.underline{text-decoration-line:underline}
+/* ── HOST lớp mirror — panel địa chỉ + danh sách (chỉ slide đầu) ─────────── */
+.host-panel{position:fixed;top:3vh;left:50%;transform:translateX(-50%);z-index:9650;
+  display:none;flex-direction:column;align-items:center;gap:8px;max-width:80vw;
+  padding:14px 22px;border-radius:12px;background:rgba(15,23,42,.92);color:#e2e8f0;
+  border:1px solid #334155;box-shadow:0 12px 40px rgba(0,0,0,.45);text-align:center}
+.host-panel.on{display:flex}
+.host-panel .host-title{font-size:14px;color:#94a3b8}
+.host-panel .host-addr{font-size:30px;font-weight:800;letter-spacing:.5px;color:#fff;
+  font-family:'Consolas','Segoe UI',monospace}
+.host-panel .host-list{margin-top:4px;font-size:13px;color:#64748b;border-top:1px solid #334155;
+  padding-top:8px;min-width:280px}
+/* ── Popup DANH SÁCH ĐĂNG NHẬP (mở bằng nút 👥 trên dock) — NỔI TRÊN dock (z9700), dưới dialog (z9950) ── */
+.ll-overlay{position:fixed;inset:0;z-index:9750;background:rgba(10,20,40,.5);
+  display:none;align-items:center;justify-content:center;
+  font-family:'Segoe UI',system-ui,Arial,sans-serif}
+.ll-overlay.on{display:flex}
+.ll-box{width:75vw;height:75vh;display:flex;flex-direction:column;background:#0f172a;color:#e2e8f0;
+  border:1px solid #334155;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
+.ll-head{height:40px;flex:0 0 40px;display:flex;align-items:center;padding:0 14px;font-size:15px;
+  font-weight:700;border-bottom:1px solid #334155}
+.ll-addr-row{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:10px 14px;border-bottom:1px solid #334155}
+.ll-addr{font-size:40px;font-weight:800;letter-spacing:.4px;color:#fff;
+  font-family:'Consolas','Segoe UI',monospace}
+/* Hàng chọn LỚP đang dạy (trên 2 card) — nguồn của "Đã đăng nhập x/y" */
+.ll-lop-row{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 14px;
+  border-bottom:1px solid #334155}
+.ll-lop-lbl{font-size:13px;font-weight:700;color:#cbd5e1}
+.ll-lop-sel{flex:1 1 auto;min-width:0;height:28px;padding:0 8px;font-size:13px;
+  background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px}
+.ll-cards{flex:1 1 auto;min-height:0;display:flex;gap:10px;padding:10px}
+.ll-card{flex:1 1 0;min-width:0;display:flex;flex-direction:column;background:#1e293b;
+  border:1px solid #334155;border-radius:8px;overflow:hidden}
+.ll-card.off{display:none}
+.ll-card-head{flex:0 0 auto;padding:8px 10px;font-size:13px;font-weight:700;color:#cbd5e1;
+  border-bottom:1px solid #334155;display:flex;align-items:center;gap:6px}
+.ll-count{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#334155;color:#e2e8f0;
+  font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.ll-card-body{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:4px 0}
+.ll-card-body::-webkit-scrollbar{width:4px;height:4px}
+.ll-card-body::-webkit-scrollbar-thumb{background:#475569;border-radius:2px}
+.ll-row{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:14px;border-bottom:1px solid #26324a}
+.ll-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ll-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:#475569}
+.ll-dot.online{background:#22c55e}
+.ll-dot.away{background:#F59E0B}                         /* VÀNG = đang rời bài giảng (máy HV mất focus) */
+/* Hàng HV ĐANG RỜI: bấm được → popup "Cho phép học viên rời bài giảng?" (§32.14) */
+.ll-row--act{cursor:pointer}
+.ll-row--act:hover{background:#1e293b}
+.ll-foot{height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:flex-end;
+  padding:0 14px;border-top:1px solid #334155}
+.laser{position:fixed;width:22px;height:22px;border-radius:50%;pointer-events:none;z-index:9600;
+  background:radial-gradient(circle,rgba(255,40,40,.95) 0%,rgba(255,40,40,.55) 45%,transparent 70%);
+  transform:translate(-50%,-50%);display:none}
+.black-veil{position:fixed;inset:0;background:#000;z-index:9500;display:none}
+/* ── Popup KẾT QUẢ LỚP (nút 📊 trên dock) — cùng tầng/nền với popup Danh sách đăng nhập (z9750).
+   85%×85% theo §18. Bảng con dùng lại tông màu .ll-* để 2 popup của màn trình chiếu đồng bộ. ── */
+.kr-overlay{position:fixed;inset:0;z-index:9750;background:rgba(10,20,40,.5);
+  display:none;align-items:center;justify-content:center;
+  font-family:'Segoe UI',system-ui,Arial,sans-serif}
+.kr-overlay.on{display:flex}
+.kr-box{width:85vw;height:85vh;display:flex;flex-direction:column;background:#0f172a;color:#e2e8f0;
+  border:1px solid #334155;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
+.kr-head{height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:0 14px;font-size:15px;font-weight:700;border-bottom:1px solid #334155}
+.kr-cards{flex:1 1 auto;min-height:0;display:flex;gap:10px;padding:10px}
+.kr-card{flex:1 1 0;min-width:0;display:flex;flex-direction:column;background:#1e293b;
+  border:1px solid #334155;border-radius:8px;overflow:hidden}
+.kr-card-head{flex:0 0 auto;padding:8px 10px;font-size:13px;font-weight:700;color:#cbd5e1;
+  border-bottom:1px solid #334155;display:flex;align-items:center;gap:6px}
+.kr-count{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#334155;color:#e2e8f0;
+  font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.kr-card-body{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:4px 0}
+.kr-card-body::-webkit-scrollbar{width:4px;height:4px}
+.kr-card-body::-webkit-scrollbar-thumb{background:#475569;border-radius:2px}
+/* Một học viên: tên (co giãn) + điểm n/tổng. Đã nộp → bấm được để bung chi tiết từng câu. */
+.kr-row{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:14px;border-bottom:1px solid #26324a}
+.kr-row--act{cursor:pointer}
+.kr-row--act:hover{background:#243045}
+.kr-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:#475569}   /* xám = chưa nộp */
+.kr-dot.done{background:#22c55e}
+.kr-name{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kr-score{flex:0 0 auto;font-weight:700;font-variant-numeric:tabular-nums}
+.kr-score.low{color:#f87171}          /* < 50% đúng — GV liếc là thấy ai cần chữa bài */
+.kr-score.mid{color:#fbbf24}
+.kr-score.high{color:#4ade80}
+.kr-score.none{color:#64748b;font-weight:400;font-size:13px}
+.kr-sep{padding:6px 10px 4px;font-size:11px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;color:#94a3b8;background:#182236;border-bottom:1px solid #26324a}
+/* Chi tiết từng câu của 1 HV — ô vuông xanh/đỏ, hiện khi bấm vào dòng (§ popup Kết quả lớp). */
+.kr-detail{display:none;gap:4px;flex-wrap:wrap;padding:4px 10px 8px 26px;border-bottom:1px solid #26324a}
+.kr-detail.on{display:flex}
+.kr-q{min-width:22px;height:20px;padding:0 4px;border-radius:4px;font-size:11px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;color:#fff;background:#ef4444}
+.kr-q.ok{background:#22c55e}
+/* Biểu đồ % đúng từng câu: div/CSS thuần (app offline, KHÔNG thư viện). */
+.kr-bar-row{display:flex;align-items:center;gap:8px;padding:4px 10px;font-size:13px}
+.kr-bar-lbl{flex:0 0 56px;color:#cbd5e1;font-weight:600}
+.kr-bar-track{flex:1 1 auto;min-width:0;height:16px;background:#0f172a;border-radius:8px;overflow:hidden}
+.kr-bar-fill{height:100%;border-radius:8px;background:#22c55e;transition:width .25s}
+.kr-bar-fill.low{background:#ef4444}     /* <50% lớp đúng → câu cần giảng lại */
+.kr-bar-fill.mid{background:#f59e0b}
+.kr-bar-val{flex:0 0 78px;text-align:right;font-variant-numeric:tabular-nums;color:#e2e8f0;font-weight:600}
+.kr-empty{padding:14px;font-size:13px;color:#94a3b8;text-align:center}
+/* Điều khiển player = DOCK OVERLAY ở CẢ 2 MÉP (trái + phải), CANH GIỮA chiều cao màn hình.
+   Gọi bằng nút BÁN NGUYỆT: cạnh THẲNG ốp sát mép màn hình, nửa tròn hướng vào trong.
+   Nút mờ 50% để không che bài giảng; rê chuột vào thì rõ hẳn. KHÔNG chiếm layout, KHÔNG tự ẩn. */
+.pbar-dock{position:fixed;top:50%;transform:translateY(-50%);z-index:9700;display:flex;align-items:center}
+.pbar-dock--right{right:0}
+.pbar-dock--left{left:0;flex-direction:row-reverse}      /* panel bung ra bên phải nút */
+.pbar-dock.is-hidden{display:none}
+/* Bán nguyệt: cao gấp đôi rộng + bo tròn TOÀN BỘ 2 góc phía trong → nửa hình tròn */
+.pbar-toggle{width:20px;height:40px;border:0;background:#121a28;color:#fff;opacity:.5;
+  cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:opacity .15s,background .15s}
+.pbar-dock--right .pbar-toggle{border-radius:26px 0 0 26px;box-shadow:-3px 0 12px rgba(0,0,0,.3)}
+.pbar-dock--left  .pbar-toggle{border-radius:0 26px 26px 0;box-shadow:3px 0 12px rgba(0,0,0,.3)}
+.pbar-toggle:hover{background:#1c2740;opacity:1}
+.pbar-dock.open .pbar-toggle{opacity:1}                  /* panel đang mở → nút rõ luôn */
+/* ĐÈN BÁO "có HV rời bài giảng" (§32.14): CẢ HAI nút bán nguyệt chuyển ĐỎ + rõ hẳn (bỏ mờ 50%)
+   → GV quay xuống lớp, chỉ cần liếc mép màn là thấy, không phải bắt kịp alert 15s. */
+.pbar-dock.has-away .pbar-toggle{background:#DC2626;opacity:1}
+.pbar-dock.has-away .pbar-toggle:hover{background:#B91C1C}
+/* Nút 👥 trong panel: nền đỏ + kèm SỐ học viên đang rời (do JS ghi vào textContent). */
+.pbar .btn.ll-btn.away{background:#DC2626;color:#fff;border-color:#DC2626}
+.pbar{display:none;flex-direction:column;align-items:center;gap:6px;padding:8px;background:#121a28}
+.pbar-dock--right .pbar{border-radius:8px 0 0 8px;box-shadow:-4px 0 18px rgba(0,0,0,.4)}
+.pbar-dock--left  .pbar{border-radius:0 8px 8px 0;box-shadow:4px 0 18px rgba(0,0,0,.4)}
+.pbar-dock.open .pbar{display:flex}
+.pbar .btn:disabled{opacity:.4;cursor:not-allowed}       /* nút ✔ khi slide không có gì để chấm */
+.pbar .btn{min-width:36px;padding:5px 8px}
+.pbar .btn.act{background:var(--blue-primary);color:#fff;border-color:var(--blue-primary)}
+/* Nút .btn có vệt bóng ::after (buttons.css §8). Trên dock nền ĐEN lúc đang chiếu
+   lên lớp, vệt bóng ở nút trạng thái (đang bật / HV rời) bị loá → hạ xuống 25%. */
+.pbar .btn.act::after,
+.pbar .btn.ll-btn.away::after{opacity:.25}
+.pcount{color:#cdd6ea;font-size:12px;font-weight:600;text-align:center;user-select:none}
+.pdiv{width:22px;height:1px;background:#2a3550;margin:2px 0}
+.pen-colors{display:none;flex-direction:column;gap:4px}
+.pen-colors.on{display:flex}
+.swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.swatch.sel{border-color:var(--text-primary);box-shadow:0 0 0 2px var(--bg-white)}
+/* ── AUDIOBAR (mép ĐÁY) — cùng ngôn ngữ với .pbar-dock: nút bán nguyệt + panel trượt ──────
+   Bán nguyệt ở đây NẰM NGANG (rộng gấp đôi cao) vì ốp mép dưới, khác dock trái/phải (cao gấp đôi rộng).
+   Panel mặc định THU (màn GV chiếu lên màn chung của lớp — xem chú thích ở baigiang-soan.html). */
+.abar-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:9700;
+  display:flex;flex-direction:column;align-items:center}
+.abar-dock.is-hidden{display:none}                        /* slide không có audio → giấu luôn nút gọi */
+.abar-toggle{width:52px;height:20px;border:0;background:#121a28;color:#fff;opacity:.5;
+  cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.3px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  border-radius:26px 26px 0 0;box-shadow:0 -3px 12px rgba(0,0,0,.3);
+  transition:opacity .15s,background .15s}
+.abar-toggle:hover{background:#1c2740;opacity:1}
+.abar-dock.open .abar-toggle{opacity:1}
+.abar-dock.playing .abar-toggle{background:var(--blue-primary);opacity:1}   /* ĐÈN BÁO: đang phát */
+.abar{display:none;align-items:center;gap:8px;padding:6px 10px;background:#121a28;
+  border-radius:8px 8px 0 0;box-shadow:0 -4px 18px rgba(0,0,0,.4)}
+.abar-dock.open .abar{display:flex}
+.abar-audio{height:32px;width:420px;flex-shrink:0}
+/* Nút MỐC (bookmark): nhảy nhanh trong track, nằm BÊN TRÁI thanh. Mốc của đoạn đang phát tự sáng (.on).
+   Không có mốc → ẩn hẳn, thanh tự dồn trái (dock canh giữa nên bar vẫn cân). */
+.abar-bmks{display:none;gap:4px;align-items:center}
+.abar-bmks.on{display:flex}
+.abar-bmk{min-width:26px;height:22px;padding:0 6px;border:1px solid #2a3550;border-radius:4px;
+  background:#1c2740;color:#cdd6ea;font-size:11px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
+.abar-bmk:hover{background:#26355c;border-color:#3d4d78}
+.abar-bmk.on{background:var(--blue-primary);border-color:var(--blue-primary);color:#fff}
+/* Nút CHUYỂN TRACK (⏮ ⏭) ở ĐẦU BÊN PHẢI thanh — chỉ hiện khi slide có ≥2 audio (class .on do
+   syncAudioBar bật). Cùng ngôn ngữ với nút mốc, chỉ rộng hơn cho dễ bấm khi đứng lớp. */
+.abar-trk{display:none;gap:4px;align-items:center}
+.abar-trk.on{display:flex}
+.abar-tbtn{width:28px;height:22px;border:1px solid #2a3550;border-radius:4px;
+  background:#1c2740;color:#cdd6ea;font-size:11px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
+.abar-tbtn:hover:not(:disabled){background:#26355c;border-color:#3d4d78}
+.abar-tbtn:disabled{opacity:.35;cursor:not-allowed}
+.phelp{position:fixed;top:14px;right:16px;z-index:9700;color:#7b88a5;font-size:12px;
+  background:rgba(18,26,40,.85);padding:8px 12px;border-radius:8px;line-height:1.6; display: none;}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:9800;
+  background:#1A2332;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;
+  transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+
+/* ── Popup Nạp bank (theme dialog app §13) ─────────────────────────────── */
+.bk-overlay{position:fixed;inset:0;background:rgba(20,30,50,.42);z-index:9200;
+  display:none;align-items:center;justify-content:center}
+.bk-overlay.on{display:flex}
+.bk-box{width:640px;max-width:94vw;max-height:86vh;background:#fff;border:1.5px solid var(--border);
+  border-radius:8px;box-shadow:0 20px 60px rgba(20,40,80,.28);display:flex;flex-direction:column;overflow:hidden}
+.bk-head{height:40px;min-height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;
+  border-bottom:1px solid var(--border);font-weight:700;font-size:14px;color:var(--text-primary)}
+.bk-head .btn{margin-left:auto}
+.bk-src{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);
+  background:#FAFBFD;flex-wrap:wrap}
+.bk-src select{border:1.5px solid var(--border);border-radius:var(--radius);padding:5px 8px;font-size:13px}
+.bk-body{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.bk-sec-title{font-size:11px;font-weight:700;color:var(--blue-primary);text-transform:uppercase;letter-spacing:.4px}
+.bk-passage{font-size:12.5px;color:var(--text-muted);background:var(--blue-light);border-radius:6px;
+  padding:8px 10px;line-height:1.5;max-height:88px;overflow:auto}
+.bk-q{border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;display:flex;gap:8px;
+  align-items:flex-start;cursor:pointer;transition:.12s}
+.bk-q:hover{border-color:var(--blue-primary);background:#F7FAFF}
+.bk-q input{margin-top:3px}
+.bk-q .stem{font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:2px}
+.bk-q .opts{font-size:12.5px;color:var(--text-muted);line-height:1.5}
+.bk-q .opts .ok{color:var(--green-primary);font-weight:700}
+.bk-foot{height:44px;min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;
+  border-top:1px solid var(--border);background:#FAFBFD}
+.bk-foot .count{font-size:12.5px;color:var(--text-muted)}
+.bk-foot .grow{margin-left:auto}
+
+/* ── Popup Lưu bài giảng (theme dialog app §13, chung khung .bg-*) ─────────── */
+.bg-overlay{position:fixed;inset:0;background:rgba(20,30,50,.42);z-index:9300;
+  display:none;align-items:center;justify-content:center}
+.bg-overlay.on{display:flex}
+.bg-box{background:#fff;border:1.5px solid var(--border);border-radius:8px;
+  box-shadow:0 20px 60px rgba(20,40,80,.28);display:flex;flex-direction:column;overflow:hidden}
+.bg-box--sm{width:360px;max-width:92vw}
+.bg-box--lg{width:760px;max-width:92vw;height:70vh}
+.bg-head{height:40px;min-height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;
+  border-bottom:1px solid var(--border);font-weight:700;font-size:14px;color:var(--text-primary)}
+.bg-head .btn{margin-left:auto}
+.bg-body{padding:16px;display:flex;flex-direction:column;gap:10px}
+.bg-body--table{flex:1;min-height:0;padding:0;display:flex;flex-direction:column}
+.bg-foot{height:44px;min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;
+  border-top:1px solid var(--border);background:#FAFBFD}
+.bg-foot .grow{margin-left:auto}
+#bgLandTable{table-layout:fixed;width:100%}
+#bgLandBody td[onclick]{cursor:pointer}
+/* Nút Sửa/Xóa dòng — style theo chuẩn .btn-edit/.btn-del app (§5/§7), định nghĩa LOCAL vì trang
+   này không nạp quan-tri.css (chỉ buttons.css+table.css) — cùng SVG icon, không đụng file khác. */
+.btn-edit,.btn-del{width:24px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:5px;background:#fff;cursor:pointer;color:var(--text-muted)}
+.btn-edit:hover{color:var(--blue-primary);background:var(--blue-light);border-color:var(--blue-primary)}
+.btn-del:hover{color:#dc3545;background:#fdecec;border-color:#dc3545}
+.btn-edit+.btn-del{margin-left:4px}
+/* Nút 🔗 Gán chủ đề (cột Thao tác bảng Landing) — cùng khuôn với .btn-edit/.btn-del */
+.btn-chude{width:24px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:5px;background:#fff;cursor:pointer;color:var(--text-muted)}
+.btn-chude:hover{color:var(--blue-primary);background:var(--blue-light);border-color:var(--blue-primary)}
+.btn-chude+.btn-edit{margin-left:4px}
+/* Bảng Landing có 3 nút thao tác (Gán chủ đề/Sửa/Xóa) → nới cột 80px chuẩn (§7) lên 110px */
+#bgLandTable .td-actions{width:140px}   /* 4 nút: Xuất gói · Gán chủ đề · Sửa · Xóa */
+.btn-chude+.btn-chude{margin-left:4px}
+/* Ô "Chủ đề" ở bảng Landing: chưa gán → mờ đi cho dễ quét mắt */
+#bgLandBody .bgl-cd{text-align:center;cursor:default}
+#bgLandBody .bgl-cd.none{color:var(--text-muted);opacity:.55}
+
+/* ── Popup Gán chủ đề — danh sách checkbox chủ đề (vỏ .bg-overlay/.bg-box) ────
+   ⚠ KHÔNG đặt danh sách này trong .field: rule .field input{width:100%} (panel Thuộc
+   tính) sẽ kéo giãn checkbox chiếm hết dòng, đẩy chữ sang phải → layout vỡ. Vẫn khai
+   width/padding cho checkbox ở đây để miễn nhiễm nếu sau này có rule input chung khác. */
+.bgcd-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:4px}
+.bgcd-label{font-size:11px;font-weight:700;color:var(--text-muted)}
+.bgcd-label span{font-weight:400;text-transform:none}
+.bgcd-list{flex:1;min-height:0;overflow-y:auto;border:1.5px solid var(--border);
+  padding:4px;display:flex;flex-direction:column}
+.bgcd-list::-webkit-scrollbar{width:4px;height:4px}
+.bgcd-list::-webkit-scrollbar-thumb{background:#c7cdd8;border-radius:2px}
+.bgcd-item{display:flex;align-items:center;gap:8px;padding:4px 6px;cursor:pointer;border-radius:4px;
+  font-size:13px;font-weight:400;color:var(--text-primary);text-align:left}
+.bgcd-item:hover{background:var(--blue-light)}
+.bgcd-item input[type=checkbox]{flex:0 0 auto;width:14px;height:14px;margin:0;padding:0;
+  border:none;background:none;cursor:pointer}
+.bgcd-item span{flex:1;min-width:0}
+.bgcd-empty{padding:10px;font-size:13px;color:var(--text-muted)}
+
+/* ── Popup "Mốc & cắt audio" (§32.6) — vỏ dùng chung .bg-overlay/.bg-box ──────
+   Mở từ panel Thuộc tính khi SOẠN (không mở lúc trình chiếu) nên z9300 của
+   .bg-overlay là đủ; hộp uiConfirm (z9950) vẫn nổi trên (§31).
+   Width CỘT của bảng mốc nằm ở table.css (§7), không viết ở đây. */
+.bg-box--md{width:640px;max-width:94vw;height:min(80vh,540px)}
+.bmkp-body{flex:1;min-height:0;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+/* Thanh phát tự vẽ: nền xám = cả file · dải XANH = đoạn giữa điểm đầu–điểm cuối (đoạn sẽ phát khi
+   giảng) · lớp phủ tối = phần đã nghe · chấm tròn LUÔN hiện, kéo được để tua. */
+.bmkp-tp{display:flex;align-items:center;gap:8px;height:32px;flex-shrink:0}
+.bmkp-tp-btn{width:28px;height:28px;padding:0;flex-shrink:0;border:1px solid var(--border);
+  border-radius:5px;background:#fff;color:var(--blue-primary);cursor:pointer;font-size:11px;line-height:1}
+.bmkp-tp-btn:hover{background:var(--blue-light);border-color:var(--blue-primary)}
+.bmkp-tp-time{font-size:12px;color:var(--text-muted);white-space:nowrap;min-width:82px;text-align:right}
+.bmkp-bar{position:relative;flex:1;height:22px;cursor:pointer;touch-action:none}
+.bmkp-bar-track,.bmkp-bar-trim,.bmkp-bar-done{position:absolute;top:50%;height:6px;
+  border-radius:3px;transform:translateY(-50%);pointer-events:none}
+.bmkp-bar-track{left:0;right:0;background:var(--border)}
+.bmkp-bar-trim{background:var(--blue-primary);display:none}
+.bmkp-bar-done{left:0;width:0;background:rgba(26,35,50,.26)}
+.bmkp-bar-thumb{position:absolute;top:50%;left:0;width:13px;height:13px;border-radius:50%;
+  background:#fff;border:2px solid var(--blue-primary);box-shadow:0 1px 3px rgba(20,40,80,.35);
+  transform:translate(-50%,-50%);pointer-events:none}
+.bmkp-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--text-muted);flex-shrink:0}
+.bmkp-row .grow{margin-left:auto}
+.bmkp-row .btn:disabled{opacity:.45;cursor:not-allowed}   /* buttons.css chưa có rule :disabled */
+.bmkp-trim{font-weight:700;color:var(--text-primary);margin-right:4px}
+.bmkp-body .tbl-region{margin:0}                 /* popup đã có padding riêng → bỏ gap 5px của vùng bảng */
+.bmkp-name{width:100%;height:26px;border:1px solid var(--border);border-radius:5px;
+  padding:0 6px;font-size:12.5px;color:var(--text-primary);background:#fff}
+.bmkp-name:focus{outline:none;border-color:var(--blue-primary)}
+.bmkp-t{display:inline-flex;align-items:center;gap:4px;justify-content:center}
+.bmkp-play{width:22px;height:22px;padding:0;border:1px solid var(--border);border-radius:4px;
+  background:#fff;color:var(--blue-primary);cursor:pointer;font-size:10px;line-height:1}
+.bmkp-play:hover{background:var(--blue-light);border-color:var(--blue-primary)}
+
+/* ── Popup soạn thảo WYSIWYG khối Text (16:9, sửa trực tiếp vùng nội dung của slide).
+   z9300 (dưới uiConfirm 9950 để hộp "bỏ thay đổi" nổi trên — §31). ── */
+.tw-overlay{position:fixed;inset:0;background:rgba(10,20,40,.5);z-index:9300;display:none;
+  align-items:center;justify-content:center}
+.tw-overlay.on{display:flex}
+.tw-box{background:#fff;border:1.5px solid var(--border);border-radius:8px;
+  box-shadow:0 20px 60px rgba(20,40,80,.3);display:flex;flex-direction:column;overflow:hidden;
+  width:min(96vw,1120px);height:min(94vh,780px)}
+.tw-head{height:40px;min-height:40px;display:flex;align-items:center;padding:0 12px;
+  border-bottom:1px solid var(--border);font-weight:700;font-size:14px;color:var(--text-primary)}
+.tw-head .tw-hbtns{margin-left:auto;display:flex;gap:6px}
+.tw-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 10px;
+  border-bottom:1px solid var(--border);background:#FAFBFD}
+.tw-toolbar .tw-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.tw-tb{min-width:28px;height:28px;padding:0 7px;border:1px solid var(--border);border-radius:5px;
+  background:#fff;cursor:pointer;font-size:14px;color:var(--text-primary);
+  display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.tw-tb:hover{background:var(--blue-light);border-color:var(--blue-primary)}
+.tw-tb b{font-weight:800}
+.tw-sw{width:20px;height:20px;border-radius:4px;border:1px solid rgba(0,0,0,.15);cursor:pointer;padding:0}
+.tw-stagewrap{flex:1;min-height:0;background:#0f172a;display:flex;align-items:center;justify-content:center;
+  overflow:auto;padding:14px}
+.tw-stagebox{position:relative;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.tw-stage{width:960px;height:540px;transform-origin:top left}
+.tw-stage .tw-edit-active{outline:2px dashed var(--accent);outline-offset:2px;cursor:text}
+
+/* ── Theme .dialog-* cho window.uiConfirm (js/ui-dialog.js, §13/§4) — trang này
+   không nạp css riêng nào định nghĩa sẵn class này (khác các trang khác), nên
+   định nghĩa LOCAL. z-index PHẢI NỔI TRÊN mọi popup khác của trang (§31). ─── */
+.dialog-overlay{position:fixed;inset:0;z-index:9950;background:rgba(10,20,40,.45);
+  display:flex;align-items:center;justify-content:center}
+.dialog-overlay.hidden{display:none}
+.dialog-box{background:#fff;border-radius:10px;border:1.5px solid var(--border);
+  box-shadow:0 8px 32px rgba(10,20,40,.18);padding:16px;width:360px;max-width:92vw}
+.dialog-title{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px}
+.dialog-sub{font-size:13px;color:var(--text-muted);margin-bottom:14px}
+.dialog-footer{display:flex;justify-content:flex-end;gap:8px}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Sơ đồ mạng từ (layout='word-web') — ngân hàng từ TRÊN, các web DƯỚI (2/hàng),
+   kéo-thả chip vào 4 ô drop quanh mỗi web. CÓ header 2 thanh như mọi layout khác
+   (padding-top:0 phải viết lại ở đây vì .sl.lay-word-web cùng độ ưu tiên với .sl.has-head
+   nhưng khai báo SAU → nếu không sẽ đè mất padding-top:0 của header).
+   ══════════════════════════════════════════════════════════════════════ */
+.sl.lay-word-web{padding:10px}
+.sl.lay-word-web.has-head{padding-top:0}
+/* NGOẠI LỆ ZOOM (§32): word-web KHÔNG nhân --bgz — chữ nằm trong ô/nhãn ghim theo ảnh sơ đồ
+   (.ww-web aspect-ratio cố định, .ww-cell max-width 48%) → phóng chữ sẽ tràn ô, lệch khỏi 4 chân sơ đồ. */
+.ww-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+/* (.ww-instr đã bỏ 2026-07-14 — lời dẫn của MỌI layout dùng PHỤ ĐỀ ở thanh header, không có dòng riêng trong thân slide) */
+/* Ngân hàng từ (kéo được) — pill trên nền dashed */
+.ww-bank{flex:0 0 auto;min-height:42px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;
+  align-content:flex-start;padding:6px 10px;background:var(--blue-light);
+  border:1px dashed var(--blue-primary);border-radius:0px}
+.ww-bank-empty{font-size:13px;color:var(--text-muted)}
+.ww-chip{display:inline-flex;align-items:center;padding:3px 12px;background:#fff;
+  border:1px solid var(--blue-primary);border-radius:16px;font-size:15px;font-weight:600;
+  color:var(--text-primary);box-shadow:0 1px 3px rgba(20,40,80,.14);white-space:nowrap;
+  line-height:1.2;user-select:none;cursor:grab}
+.ww-live .ww-chip{touch-action:none}
+.ww-chip.locked{cursor:default}
+.ww-chip.ww-dragging{opacity:.25}
+.ww-ghost{position:fixed;z-index:9990;transform:translate(-50%,-50%);pointer-events:none;
+  cursor:grabbing;box-shadow:0 8px 22px rgba(20,40,80,.32)}
+
+/* Lưới web 2/hàng; 1 web → 1 cột hẹp; web lẻ cuối (n=3) trải giữa 2 cột */
+.ww-webs{flex:1;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:30px 64px;justify-items:center;align-content:center;padding:2px 4px}
+.ww-webs.ww-n1{grid-template-columns:minmax(0,320px)}
+.ww-webs.ww-n3 .ww-web:last-child{grid-column:1 / -1;justify-self:center}
+.ww-web{position:relative;width:100%;max-width:200px;aspect-ratio:313 / 199}
+.ww-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.ww-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:52%;
+  text-align:center;font-size:15px;font-weight:700;color:#1A2332;
+  overflow:hidden;pointer-events:none}
+
+/* 4 ô ở 4 góc (trên đầu 4 chân của ảnh) */
+.ww-cell{position:absolute;min-width:76px;max-width:48%;min-height:26px;
+  display:flex;align-items:center;justify-content:center}
+.ww-cell .ww-chip{font-size:13.5px;padding:3px 9px}
+.ww-drop{border:1.5px dashed transparent;border-radius:14px;transition:.12s}
+.ww-live .ww-drop:empty{border-color:#9db4d0;background:rgba(255,255,255,255)}
+.ww-live .ww-drop.ww-drop-hot:empty{border-color:var(--blue-primary);background:var(--blue-light)}
+
+/* Kết quả Kiểm tra: tô VIỀN + CHỮ của chip (từ) — KHÔNG đổi viền ô drop (đỡ rối). */
+.ww-chip.ok{border-color:var(--green-primary);color:var(--green-primary);background:#EDFAF4}
+.ww-chip.bad{border-color:#DC2626;color:#DC2626;background:#FEECEC}
+
+/* ══ CHỌN TỪ ĐÚNG (layout='word-select') — xếp DỌC: BẢNG 5 CỘT các TỪ (sát header 10px, thấp gọn) rồi ẢNH TỰ
+   CĂNG đầy chiều cao còn lại. Từ CHƯA chọn = KHÔNG viền (chỉ chữ); BẤM → viền ÔM từ (.sel, fit-content); CHẤM
+   → viền+chữ xanh .ok (đúng) / đỏ .bad (sai). Khung .ws-box chừa padding cho từ cách viền (như box kéo thả). */
+.sl .ws-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}   /* gap 8px = CHUẨN box từ (word-web .ww-wrap); gap header 5px lo bởi .sl-head margin-bottom */
+/* VỎ + PADDING theo CHUẨN BOX TỪ word-web (.ww-bank): nền xanh nhạt · viền 1px DASHED · padding 6px 10px.
+   Giữ RIÊNG lưới 5 cột + gap 0 (từ xếp thẳng hàng, khác flex-wrap căn giữa của ngân hàng từ kéo-thả). */
+.sl .ws-box{flex:0 0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:0px 0px;align-content:start;
+  padding:6px 10px;background:var(--blue-light);border:1px dashed var(--blue-primary);box-sizing:border-box}
+.sl .ws-word{justify-self:center;align-self:center;display:inline-flex;align-items:center;text-align:center;padding:2px 6px 4px;line-height:1.25;
+  border:2px solid transparent;border-radius:16px;font-size:calc(15px * var(--bgz,1));font-weight:600;
+  color:var(--text-primary,#1f2d3d);cursor:pointer;user-select:none;transition:.12s}
+.sl .ws-word:hover{background:rgba(255,255,255,.55)}
+.sl .ws-word.sel{background:#fff;border-color:var(--blue-primary,#1A6FBF);box-shadow:0 1px 3px rgba(20,40,80,.14)}
+.sl .ws-word.ok{background:#EDFAF4;border-color:var(--green-primary,#16A34A);color:var(--green-primary,#16A34A)}
+.sl .ws-word.bad{background:#FEECEC;border-color:#DC2626;color:#DC2626}
+.sl .ws-word.graded{cursor:default;box-shadow:none}
+.sl .ws-empty{grid-column:1/-1;padding:10px;text-align:center;color:var(--text-muted,#8a94a6);font-size:13px}
+.sl .ws-media{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.sl .ws-media img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
+/* Panel Thuộc tính — hàng nhập từ (ô nhập + checkbox "đúng" + nút xóa) */
+.ws-rows{display:flex;flex-direction:column;gap:5px}
+.ws-row{display:flex;align-items:center;gap:6px}
+.ws-word-in{flex:1;min-width:0}
+.ws-cbx{flex:0 0 auto;white-space:nowrap}
+
+/* ══ ĐIỀN TỪ VÀO ĐOẠN (layout='ket-reading-part7' — KET Reading Part 7 / SPK Writing Part 7) ══
+   Xếp DỌC: (CÓ distractor) BẢNG TỪ 5 cột .ws-box.kp7-bank ở trên → kéo chip .ww-chip xuống ô .kp7-drop
+   (chip DÙNG 1 LẦN, GIỮ trong bảng nhưng .used = tô mờ khi đã đặt); rồi ĐOẠN VĂN .kp7-passage (cuộn,
+   float ảnh chữ quấn). (KHÔNG distractor) không bảng, mỗi (n) = .kp7-blank tự gõ. Text zoom --bgz.
+   Bảng từ có 2 bố cục (S.kp7BankPos): 'top' = lưới 5 cột ngang phía trên · 'right' = cột dọc bên phải,
+   mỗi từ/câu 1 hàng (.kp7-2col / .kp7-bank.kp7-side — xem khối riêng bên dưới). */
+.sl.lay-ket-reading-part7{padding:10px}
+.sl.lay-ket-reading-part7.has-head{padding-top:0}   /* BẮT BUỘC (§32.9): cùng độ ưu tiên với .sl.has-head → viết lại kẻo header bị đẩy 10px */
+.sl .kp7-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}   /* gap 8px = CHUẨN box từ (word-web .ww-wrap) */
+/* Bảng từ = ws-box (5 cột, vỏ + padding đã theo CHUẨN box từ ở .ws-box) nhưng chip là .ww-chip kéo-thả
+   (không phải .ws-word bấm chọn). Chiều cao AUTO theo số từ; quá nhiều từ mới chặn ở 34% rồi cuộn. */
+.sl .kp7-bank{max-height:34%;overflow-y:auto}
+.sl .kp7-bank .ww-chip{justify-self:center;align-self:center;font-size:calc(15px * var(--bgz,1));cursor:grab;margin:2px 0}
+.sl .kp7-bank .ww-chip.used{opacity:.3;cursor:default}   /* đã đặt vào chỗ trống → mờ (giữ chỗ trong bảng) */
+.kp7-live .kp7-bank .ww-chip{touch-action:none}
+.sl .kp7-bank::-webkit-scrollbar{width:4px} .sl .kp7-bank::-webkit-scrollbar-thumb{background:#9db4d0;border-radius:2px}
+/* BỐ CỤC 2 CỘT (S.kp7BankPos='right') — bảng từ thành CỘT DỌC bên phải, MỖI TỪ/CÂU 1 HÀNG.
+   Hợp dạng "chọn CÂU điền vào chỗ trống": câu dài tự xuống dòng trong chính chip của nó.
+   Bề rộng cột do GV kéo tay nắm .kp7-bankw (inline width, KHÔNG hardcode ở đây). */
+.sl .kp7-wrap.kp7-2col{flex-direction:row;align-items:stretch}
+.sl .kp7-wrap.kp7-2col .kp7-passage{flex:1 1 auto;min-width:0}
+.sl .kp7-bank.kp7-side{position:relative;display:block;flex:0 0 auto;max-height:none;height:100%;
+  box-sizing:border-box;overflow-y:auto;overflow-x:hidden}
+.sl .kp7-bank.kp7-side .ww-chip{display:block;width:100%;box-sizing:border-box;margin:0 0 6px;
+  border-radius:6px;text-align:left;white-space:normal;line-height:1.35;padding:5px 10px}
+.sl .kp7-bank.kp7-side .ww-chip:last-child{margin-bottom:0}
+/* Chip ĐÃ THẢ vào ô trong đoạn văn: bố cục 2 cột dùng cho CÂU dài → cho xuống dòng, kẻo tràn ngang.
+   CHỈ trong .kp7-2col để slide cũ (bố cục 'top', chip là từ ngắn) giữ nguyên nowrap. */
+.sl .kp7-2col .kp7-drop{max-width:100%}
+.sl .kp7-2col .kp7-drop .ww-chip{white-space:normal;line-height:1.3;text-align:left}
+/* Tay nắm kéo bề rộng: mép TRÁI cột, chỉ hiện trong editor (render không đặt thẻ này khi trình chiếu) */
+.sl .kp7-bankw{position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:12px;height:34px;
+  border-radius:3px;background:var(--blue-primary);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);
+  cursor:ew-resize;touch-action:none;z-index:3}
+/* Đoạn văn: 1 panel cuộn, chữ zoom, ảnh float chữ quấn (::after clear:both) */
+.sl .kp7-passage{flex:1;min-height:0;overflow-y:auto;background:#fff;border:1px solid #ccc;padding:0px 10px;
+  line-height:2.0;text-align:justify;font-size:calc(15px * var(--bgz,1))}
+.sl .kp7-passage .passage-title{font-size:1.2em;font-weight:700;color:#1976D2;margin-bottom:8px;
+  text-align:center;border-bottom:1px solid #eee;padding-bottom:0px}
+.sl .kp7-content::after{content:"";display:table;clear:both}
+.sl .kp7-passage::-webkit-scrollbar{width:4px} .sl .kp7-passage::-webkit-scrollbar-thumb{background:#c8ced8;border-radius:2px}
+/* Ảnh đoạn văn FLOAT (chữ quấn) — kéo góc đổi bề rộng (.kp7-edit trong editor) */
+.sl .kp7-img{position:relative;box-sizing:border-box;border:0px solid #e0e0e0;border-radius:6px;background:#fff;padding: 10px 10px 0px 0px}
+.sl .kp7-img.kp7-left{float:left;margin:0 10px 6px 0}
+.sl .kp7-img.kp7-right{float:right;margin:0 0 6px 10px}
+.sl .kp7-img img{width:100%;height:auto;display:block;object-fit:contain}
+.sl .kp7-img.kp7-edit{outline:1.5px dashed var(--blue-primary)}
+.sl .kp7-img-resize{position:absolute;bottom:-6px;right:-6px;width:14px;height:14px;border-radius:3px;
+  background:var(--blue-primary);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:ew-resize}
+/* Ô THẢ inline tại (n) — CÓ distractor. Chip trong ô dùng .ww-chip (màu .ok/.bad toàn cục). */
+.sl .kp7-drop{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
+  min-width:70px;min-height:26px;margin:0 3px;border:1px dashed transparent;border-radius:12px}
+.sl .kp7-drop .ww-chip{font-size:calc(13.5px * var(--bgz,1));padding:2px 9px}
+.kp7-live .kp7-drop:empty{border-color:#9db4d0;background:rgba(244,247,251,.7)}
+.kp7-live .kp7-drop.kp7-drop-hot:empty{border-color:var(--blue-primary);background:var(--blue-light)}
+/* Ô TỰ GÕ inline tại (n) — KHÔNG distractor (kiểu Speakout Listening Ex2) */
+.sl .kp7-blank{font-size:calc(15px * var(--bgz,1));width:120px;max-width:220px;padding:1px 6px;margin:0 3px;
+  border:none;border:1.5px solid var(--blue-primary);border-radius:6px; background:transparent;vertical-align:baseline;
+  text-align:center;color:inherit;font-family:inherit}
+.sl .kp7-blank:focus{outline:none;background:var(--blue-light)}
+.sl .kp7-blank.kp7-correct{border-bottom-color:#28a745;color:#155724}
+.sl .kp7-blank.kp7-incorrect{border-bottom-color:#dc3545;color:#721c24}
+.sl .kp7-blank.kp7-reveal{border-bottom-color:#28a745;color:#155724}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GHÉP TỪ VỚI ẢNH (layout='pic-match') — dùng lại chip/bank/ô drop của word-web (.ww-*),
+   chỉ thêm: lưới ảnh nền (.pm-grid) + ô drop đặt TỰ DO theo toạ độ % (.pm-box).
+   KHÔNG zoom --bgz (ô ghim theo % của ảnh — phóng chữ sẽ tràn ô), giống ngoại lệ word-web.
+   ══════════════════════════════════════════════════════════════════════ */
+.sl.lay-pic-match{padding:10px}
+.sl.lay-pic-match.has-head{padding-top:0}
+.pm-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}   /* gap 8px = CHUẨN box từ (word-web .ww-wrap) */
+/* ⚠ BANK CAO CỐ ĐỊNH (16% vùng nội dung) — KHÔNG để co giãn theo số chip.
+   Ô drop lưu toạ độ %(x,y) của .pm-canvas; nếu bank cao thấp khác nhau giữa lúc SOẠN (bank vơi) và lúc
+   CHIẾU (bank đầy, chip xuống 2 hàng) thì canvas đổi chiều cao ⇒ mọi ô drop LỆCH khỏi ảnh. Chip nhiều
+   quá thì bank tự cuộn, KHÔNG đẩy canvas. (Bug đã gặp 2026-07-14.) */
+/* align-content: safe center → chip CĂN GIỮA theo chiều dọc (khoảng trống trên = dưới, cân đối);
+   "safe" = khi chip nhiều tới mức tràn thì tự lùi về căn trên, tránh lỗi cuộn không thấy hàng đầu. */
+/* 16% = ĐÚNG chiều cao box từ 2 dòng của word-web (chip 26px × 2 + gap 6 + padding 12 + viền 2 = 72px;
+   vùng nội dung = 540 − header 15% − margin 5 − padding đáy 10 = 444px ⇒ 72/444 ≈ 16%). Trước là 20%
+   → box cao hơn word-web dù cùng 2 dòng. 3 dòng trở lên → bank tự cuộn, KHÔNG đẩy canvas (xem ⚠ trên). */
+.pm-wrap .ww-bank{flex:0 0 16%;min-height:0;overflow-y:auto;align-content:safe center}
+.pm-wrap .ww-bank::-webkit-scrollbar{width:4px}
+.pm-wrap .ww-bank::-webkit-scrollbar-thumb{background:#9db4d0;border-radius:2px}
+.pm-canvas{position:relative;flex:1;min-height:0;border:1px solid transparent;border-radius:6px}
+.pm-canvas.pm-hot{border-color:var(--blue-primary);background:var(--blue-light)}   /* soạn: đang rê chip lên ảnh */
+/* Lưới ảnh: mọi ảnh CÙNG CHIỀU CAO (theo số hàng), bề ngang TỰ theo tỉ lệ ảnh → app tự resize cả 2 chiều,
+   KHÔNG cắt xén, KHÔNG méo. Ảnh xếp từ trái sang, tự xuống hàng. */
+.pm-grid{position:absolute;inset:0;display:flex;flex-wrap:wrap;gap:6px;
+  justify-content:center;align-content:center;overflow:hidden}
+.pm-grid img{flex:0 1 auto;width:auto;max-width:100%;object-fit:contain;border-radius:0px;display:block;
+  pointer-events:none;user-select:none}
+.pm-grid.pm-r1 img{height:100%}
+.pm-grid.pm-r2 img{height:calc((100% - 6px) / 2)}
+.pm-grid.pm-r3 img{height:calc((100% - 12px) / 3)}
+.pm-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+  border:1.5px dashed var(--border);border-radius:6px;color:var(--text-muted);font-size:14px;padding:10px}
+/* Ô drop tự do: neo tâm vào (x%,y%) → toạ độ không đổi khi slide bị scale */
+.pm-box{position:absolute;transform:translate(-50%,-50%);min-width:80px;min-height:26px;
+  display:flex;align-items:center;justify-content:center;padding:2px;border-radius:14px}
+.pm-box .ww-chip{font-size:13.5px;padding:3px 9px}
+/* Ô drop: nền TRONG SUỐT, chỉ giữ viền → không che mất phần ảnh nằm dưới.
+   (Chip đã thả vào ô vẫn có nền trắng của .ww-chip — đó là cái cần đọc được.) */
+.ww-live .pm-box:empty{border:1.5px dashed #1A6FBF;background:transparent}
+.ww-live .pm-box.ww-drop-hot:empty{border-color:var(--blue-primary);background:rgba(235,244,255,.55)}
+/* Chế độ SOẠN: ô hiện viền đứt để thấy vị trí đã đặt; từ nhiễu mờ, không kéo được */
+.pm-author .pm-box{background:transparent;border:1.5px dashed #9db4d0}
+.pm-author .ww-chip{cursor:grab}
+.pm-author .ww-chip.pm-distr{opacity:.5;border-style:dashed;cursor:default}   /* từ nhiễu */
+.pm-author .ww-bank .ww-chip.pm-used{opacity:.3;cursor:default}               /* từ ĐÃ đặt lên ảnh (giữ chỗ trong bank) */
+/* Ảnh thu nhỏ trong panel props (danh sách ảnh đã nạp) */
+.pm-thumbs{display:flex;flex-wrap:wrap;gap:4px}
+.pm-th{position:relative;width:56px;height:42px;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.pm-th img{width:100%;height:100%;object-fit:cover;display:block}
+.pm-th .pm-th-del{position:absolute;top:1px;right:1px;height:16px;min-height:0;padding:0 4px;font-size:10px;line-height:14px;
+  border-radius:3px}
+.ww-empty{display:none}
+.ww-free .ww-freein{width:98px;max-width:100%;border:1.5px solid var(--accent);border-radius:14px;
+  padding:3px 8px;font-size:13.5px;font-family:var(--font-base);text-align:center;background:#FFF8EE;color:#1A2332}
+.ww-free .ww-freein:focus{outline:none;box-shadow:0 0 0 3px rgba(217,119,6,.18)}
+.c-tl{left:-26px;top:-10px}.c-tr{right:-26px;top:-10px}.c-bl{left:-26px;bottom:-10px}.c-br{right:-26px;bottom:-10px}
+
+/* editor: checkbox tự-viết + nút xóa sơ đồ */
+.ww-cbx{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-primary);cursor:pointer}
+.ww-cbx input{width:auto}
+.ww-delweb{float:right}   /* nút Xóa chuẩn app (.btn-del 24×24), chỉ giữ vị trí */
+
+/* ══════════════════════════════════════════════════════════════════════
+   Sắp xếp thứ tự câu/đoạn (layout='reorder') — 2 cột 1:1, cả 2 cột CUỘN được:
+   TRÁI = nguồn (card nhãn A,B,C…), PHẢI = n ô thả đánh số. Kéo-thả card sang phải;
+   thả vào ô đã có → card cũ về lại cột trái. Header 2 thanh chuẩn (§ slide) vẫn hiện.
+   ══════════════════════════════════════════════════════════════════════ */
+.ro-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+.ro-cols{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ro-col{min-height:0;display:flex;flex-direction:column;border:1px solid var(--border);background:#fff;border-radius:6px;overflow:hidden}
+.ro-col-hd{flex:0 0 auto;padding:4px 8px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--text-muted);background:#FAFBFD;border-bottom:1px solid var(--border); display: none;}
+.ro-list{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:6px;display:flex;flex-direction:column;gap:6px; }
+.ro-list::-webkit-scrollbar{width:4px}
+.ro-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ro-empty{font-size:13px;color:var(--text-muted);font-style:italic;padding:4px 2px}
+
+/* Card câu/đoạn — kéo được (trừ .locked / .ro-fixed) */
+.ro-card{flex:0 0 auto;display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:#fff;
+  border:1.5px solid var(--blue-primary);border-radius:8px;box-shadow:0 1px 3px rgba(20,40,80,.12);
+  cursor:grab;user-select:none}
+.ro-live .ro-card{touch-action:none}
+.ro-card.locked{cursor:default}
+.ro-card.ro-fixed{border-color:var(--border);background:#F4F7FB;}   /* câu cho sẵn ở ô 1 */
+.ro-card.ro-dragging{opacity:.35}                                                          /* card gốc mờ khi đang kéo */
+.ro-card.ro-used{opacity:.4}                            /* bản mờ ở lại cột trái sau khi đã kéo đoạn sang phải */
+.ro-graded .ro-src .ro-card{opacity:.4}                 /* chấm/nộp xong → mờ toàn bộ cột trái */
+.ro-lbl{flex:0 0 0px;font-size:14px;font-weight:600;color:var(--blue-primary);line-height:1.35;text-align:center}
+.ro-card.ro-fixed .ro-lbl{color:var(--text-muted)}
+.ro-txt{flex:1;min-width:0;font-size:calc(14px * var(--bgz,1));line-height:1.35;word-break:break-word}
+/* Ghost bám con trỏ khi kéo (giống .ww-ghost) */
+.ro-ghost{position:fixed;z-index:9990;transform:translate(-50%,-50%);pointer-events:none;cursor:grabbing;
+  box-shadow:0 8px 22px rgba(20,40,80,.32);background:#fff}
+/* Ô thả bên phải: số thứ tự + vùng nhận card */
+.ro-slot{flex:0 0 auto;display:flex;gap:6px;align-items:stretch}
+.ro-num{flex:0 0 18px;font-size:13px;font-weight:700;color:var(--text-muted);text-align:center;line-height:34px; display: none;}
+.ro-drop{flex:1;min-width:0;min-height:34px;display:flex;border:1.5px dashed transparent;border-radius:8px;transition:.12s}
+.ro-live .ro-drop:empty{border-color:#9db4d0;background:rgba(244,247,251,.7)}
+.ro-live .ro-drop.ro-drop-hot:empty{border-color:var(--blue-primary);background:var(--blue-light)}
+.ro-drop > .ro-card{flex:1}
+/* Kết quả Kiểm tra: tô viền + chữ của CARD (giống .ww-chip.ok/.bad) */
+.ro-card.ok{border-color:var(--green-primary);background:#EDFAF4;color:var(--green-primary)}
+.ro-card.bad{border-color:#DC2626;background:#FEECEC;color:#DC2626}
+.ro-card.ok .ro-lbl{color:var(--green-primary)}
+.ro-card.bad .ro-lbl{color:#DC2626}
+/* editor: mỗi câu/đoạn 1 dòng (nhãn + textarea + nút xóa) */
+.ro-ed-row{display:flex;gap:4px;align-items:flex-start;margin-bottom:4px}
+.ro-ed-lbl{flex:0 0 12px;font-size:12px;font-weight:800;color:var(--blue-primary);line-height:22px}
+.ro-ed-del{flex:0 0 auto}   /* nút Xóa chuẩn app (.btn-del 24×24) */
+.ro-ed-del:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── ĐIỀN TỪ VÀO CHỖ TRỐNG (layout='gap-fill') — bank word-web (§ .ww-*) + 2 cột câu cuộn RIÊNG ────
+   Ô thả (.ww-drop.gf-drop) nằm INLINE trong câu; chữ câu dùng tham số render như .ro-txt (zoom --bgz). */
+.gf-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;position:relative}
+.gf-cols{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* 1 CỘT: 1 cột duy nhất căn giữa, bề rộng = 1 cột khi ở chế độ 2 cột (calc(50% - nửa gap 8px)) */
+.gf-cols.gf-1col{display:flex;justify-content:center}
+.gf-cols.gf-1col > .gf-col{flex:0 0 calc(70% - 4px);width:calc(70% - 4px)}
+.gf-col{min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:2px 4px;display:flex;flex-direction:column;gap:6px}
+.gf-col::-webkit-scrollbar{width:4px}
+.gf-col::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.gf-empty{font-size:13px;color:var(--text-muted);font-style:italic;padding:4px 2px}
+.gf-card{flex:0 0 auto;display:flex;gap:6px;align-items:flex-start;padding:6px 8px;background:#fff;border:1px solid var(--border);border-radius:6px}
+.gf-num{flex:0 0 auto;font-size:calc(14px * var(--bgz,1));font-weight:700;color:var(--blue-primary);line-height:1.9}
+.gf-txt{flex:1;min-width:0;font-size:calc(14px * var(--bgz,1));line-height:1.9;word-break:break-word}
+.ww-live .gf-card{touch-action:none}
+/* Ô thả inline tại vị trí () — viền/nền dùng chung .ww-drop; kích thước inline riêng ở đây */
+.gf-drop{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
+  min-width:64px;min-height:calc(22px * var(--bgz,1));margin:0 3px;border-radius:8px}
+.gf-drop .ww-chip{font-size:calc(13.5px * var(--bgz,1));padding:2px 9px}
+.ww-live .gf-drop:empty{border-color:#9db4d0;background:rgba(244,247,251,.7)}
+.ww-live .gf-drop.ww-drop-hot:empty{border-color:var(--blue-primary);background:var(--blue-light)}
+/* Khối text phụ dưới câu hỏi — full bề rộng dưới cả 2 cột; có text thì cột co lại theo nội dung */
+.gf-wrap.gf-has-foot .gf-cols{flex:0 1 auto}
+.gf-foot-block{flex:0 0 auto;padding:6px 8px;background:#fff;border:1px solid var(--border);border-radius:6px;
+  max-height:42%;overflow:auto;scrollbar-gutter:stable}
+.gf-foot-block::-webkit-scrollbar{width:4px;height:4px}
+.gf-foot-block::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.gf-foot-text{font-size:calc(14px * var(--bgz,1));line-height:1.5;word-break:break-word}
+/* Ảnh phụ NỔI tự do (absolute) — cỡ px cố định (chiều cao inline), rộng auto giữ tỉ lệ */
+.gf-img{position:absolute;width:fit-content;z-index:4;border-radius:4px;background:#fff;box-shadow:0 2px 8px rgba(20,40,80,.18)}
+.gf-wrap.gf-img-off .gf-img{visibility:hidden}             /* chữ chạm ảnh (zoom) → ẩn ảnh phụ (giữ layout để vẫn đo được vị trí) */
+.gf-img img{display:block;height:100%;width:auto;border-radius:4px;pointer-events:none;user-select:none}
+/* editor: viền + tay cầm resize góc dưới-phải */
+.gf-img-edit{outline:1.5px dashed var(--blue-primary);cursor:move;touch-action:none}
+.gf-img-resize{position:absolute;right:-6px;bottom:-6px;width:14px;height:14px;border-radius:3px;
+  background:var(--blue-primary);border:2px solid #fff;cursor:nwse-resize;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+/* Ảnh minh họa 'gap-fill' / 'matching' — dùng CHUNG hệ .illus-wrap + .gfi-box + .gfi-region (khai báo ở
+   khối "ẢNH MINH HỌA DÙNG CHUNG" khu mcq-list). Wrap KHÔNG tự cuộn (nội dung .gf-col/.mt-rows cuộn riêng);
+   ở đây chỉ khai báo phần NỘI DUNG chiếm chỗ còn lại. */
+.sl .gf-imgwrap .gf-wrap,.sl .mt-imgwrap .mt-wrap,.sl .ro-imgwrap .ro-wrap{flex:1;min-width:0;min-height:0}
+/* (Ảnh BÁM MÉP Trái/Phải của gap-fill/matching/reorder dùng CHUNG block .gfi-side ở SECTION mcq-list.) */
+
+/* Popup "Nhập nội dung" (85% màn hình) — vỏ chung §13: header 40px nút Đóng, footer 40px nút Lưu/Thêm dòng */
+.gf-overlay{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;background:rgba(20,30,50,.45)}
+.gf-overlay.on{display:flex}
+.gf-box{width:85%;height:85%;background:#fff;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(20,40,80,.35)}
+.gf-head{flex:0 0 40px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border-bottom:1px solid var(--border);font-weight:700}
+.gf-ed-body{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:8px 10px}
+.gf-ed-body::-webkit-scrollbar{width:4px}
+.gf-ed-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.gf-ed-hd{display:flex;gap:6px;align-items:center;padding-bottom:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+.gf-ed-hd-l{flex:0 0 160px}
+.gf-ed-hd-r{flex:1}
+.gf-ed-hd-x{flex:0 0 24px}
+.gf-ed-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.gf-ed-row input{height:30px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;color:var(--text-primary)}
+.gf-ed-row input:focus{outline:none;border-color:var(--blue-primary)}
+.gf-ed-ans{flex:0 0 160px}
+.gf-ed-txt{flex:1;min-width:0}
+.gf-ed-del{flex:0 0 24px}   /* nút Xóa chuẩn app (.btn-del 24×24) */
+.gf-ed-del:disabled{opacity:.45;cursor:not-allowed}
+.gf-foot{flex:0 0 40px;display:flex;align-items:center;gap:6px;padding:0 10px;border-top:1px solid var(--border)}
+.gf-foot-sp{flex:1}
+
+/* ── Popup "Chọn layout mẫu" (lưới thumbnail, vỏ dùng chung .gf-overlay/.gf-box) — lưới phẳng
+   KHÔNG chia nhóm, cuộn dọc, 6 cột. Ảnh mẫu tĩnh assets/layout-thumbs/<id>.png; thiếu ảnh → ô xám
+   .lp-noimg (đặt bởi onerror của <img>) vẫn hiện tên layout, vẫn bấm chọn được. */
+.lp-grid{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:10px;
+  display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-content:start}
+.lp-grid::-webkit-scrollbar{width:4px}
+.lp-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.lp-item{cursor:pointer;border:2px solid transparent;border-radius:8px;padding:4px;text-align:center}
+.lp-item:hover{background:#f4f6fb}
+.lp-item.sel{border-color:var(--blue-primary);background:#eaf1ff}
+.lp-thumb{width:100%;aspect-ratio:16/9;background:#eef1f6;border-radius:6px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center}
+.lp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.lp-thumb.lp-noimg{background:#e2e6ee}
+.lp-label{margin-top:4px;font-size:11px;line-height:1.3;color:var(--text-primary)}
+/* §31 — hộp thoại dùng chung (.dialog-overlay) mở TỪ TRONG các popup của trang này phải nổi lên
+   TRÊN popup cha, nếu không sẽ bị chìm → không bấm được, tưởng treo.
+   ⚠ Popup cha ở trang này rất CAO: .gf-overlay z1200, .bg-overlay z9300 (Mốc & cắt audio, Gán chủ
+   đề…), player fullscreen ~9000, .auto-alert-stack z9900 ⇒ phải là 9950 (khớp .dialog-overlay ở
+   trên), KHÔNG phải 2000 như thang mặc định của §31 — để 2000 thì hộp xác nhận mở từ popup
+   "Mốc & cắt audio" bị chìm (bug 2026-08-28). Selector id nên thắng cả rule .dialog-overlay. */
+#uiConfirmOverlay,#uiConfirm3Overlay,#uiConfirmTypeOverlay,#uiPromptOverlay{z-index:9950}
+/* Khi ĐANG chụp ảnh mẫu (nút 📷) — ẩn mọi tay cầm kéo-thả + outline chọn shape để ảnh SẠCH */
+#previewStage.bg-capturing .p3-img-resize,
+#previewStage.bg-capturing .cloze-img-resize,
+#previewStage.bg-capturing .gfi-resize,
+#previewStage.bg-capturing .kp7-img-resize,
+#previewStage.bg-capturing .kp7-bankw,
+#previewStage.bg-capturing .gf-img-resize,
+#previewStage.bg-capturing .pptx-rh{display:none!important}
+#previewStage.bg-capturing .pptx-shape.pptx-sel{outline:none!important}
+
+/* ── NỐI CỘT (Matching, layout='matching') — cột TRÁI prompt tĩnh (đánh số 1,2,3…), cột PHẢI thẻ KÉO-THẢ
+   (đánh chữ a,b,c…) hoán vị theo hàng. Style thẻ mô phỏng iSpring (nền trắng-gradient nhẹ, bo 8, tay cầm 6 chấm).
+   Ảnh phụ nổi dùng lại .gf-img (§ gap-fill). Chữ nhân --bgz (§32.1). Popup nhập dùng vỏ .gf-overlay/.gf-box. */
+.sl.lay-matching{padding:10px}
+.sl.lay-matching.has-head{padding-top:0}
+/* --mt-w = bề rộng thẻ · --mt-h = CHIỀU CAO DÒNG (40px × zoom) — cả hai chỉnh 1 chỗ, cascade xuống mọi đoạn thẻ */
+.mt-wrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;--mt-w:80%;--mt-h:calc(40px * var(--bgz,1))}
+/* §32.17 (2026-07-21) — CUỘN như gap-fill: mọi dòng cao ĐÚNG --mt-h (40px × --bgz), KHÔNG co lại nữa;
+   nhiều cặp hoặc zoom to → tổng vượt khung thì .mt-rows tự cuộn (thanh 4px §7), nội dung bám MÉP TRÊN.
+   (Thay thiết kế cũ "chia đều lấp đủ khung" — dòng co tự do nên không bao giờ tràn ⇒ overflow:hidden
+   cắt chữ khi zoom, không cuộn được.) */
+.mt-rows{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;display:flex;flex-direction:column;gap:4px;padding:2px}
+.mt-rows::-webkit-scrollbar{width:4px}
+.mt-rows::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.mt-empty{font-size:13px;color:var(--text-muted);text-align:center;padding:24px}
+
+/* KHỚP GHÉP HÌNH "CHẺ ĐOẠN" (theo file Matching.html, "tách đôi"): mỗi thẻ = các ĐOẠN GHÉP NGANG —
+   [THÂN HTML co giãn] + [NẮP SVG cong] (+ [TAY CẦM] cho thẻ phải). Thân lo text/ảnh + viền trên/dưới (giữ
+   nhiều dòng / ảnh / zoom --bgz / bút gạch chân §32.3); nắp SVG lo cạnh cong + góc bo, cao 100% theo thân
+   (preserveAspectRatio=none → không méo bề ngang núm). Ổ lõm = vùng TRONG SUỐT của SVG (không cần khoét theo
+   màu nền). MÀU đặt bằng biến --pc-* (nền / fill nắp / viền) TRÊN thẻ → cascade xuống MỌI đoạn ⇒ chấm ok/bad
+   đổi màu TOÀN thẻ (thân + nắp + tay cầm). Thẻ TRÁI = [thân][nắp-phải=ổ]; thẻ PHẢI = [nắp-trái=núm][thân][tay
+   cầm]. THẢ vào hàng prompt → .mt-joined → 2 thẻ trượt 14px/bên (chồng 18px) → núm cắm vào ổ. */
+/* Dòng cao CỐ ĐỊNH --mt-h (40px × --bgz), flex:0 0 auto → KHÔNG co khi nhiều cặp; tràn khung thì
+   .mt-rows cuộn (§32.17). Mọi đoạn của thẻ chốt cùng --mt-h để nắp cong/tay cầm khớp thân. */
+.mt-row{display:grid;grid-template-columns:1fr 10px 1fr;align-items:stretch;flex:0 0 auto;height:var(--mt-h);max-height:var(--mt-h)}
+.mt-lcell{min-width:0;display:flex;max-height:var(--mt-h)}
+.mt-conn{align-self:stretch;max-height:var(--mt-h)}                     /* khe hở giữa 2 thẻ khi chưa nối */
+.mt-lcard,.mt-card{position:relative;display:flex;align-items:stretch;max-height:var(--mt-h);overflow:hidden;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.06));transition:transform .14s ease-out;
+  --pc-bg:linear-gradient(#ffffff,#f9f9f9);--pc-fill:#fcfcfc;--pc-stroke:#e0e0e0}   /* MÀU 1 chỗ → cascade mọi đoạn */
+.mt-lcard{cursor:default;width:var(--mt-w);margin-left:auto}
+.mt-card{width:100%;z-index:1}                                          /* thẻ phải nổi trên thẻ trái khi chồng nối */
+/* THÂN co giãn — viền trên/dưới; thẻ trái thêm viền TRÁI + bo góc trái. max-height:var(--mt-h) CHỐT CỨNG
+   (§ user yêu cầu: thẻ cao 40px, nay × --bgz theo zoom) — dù .mt-row/.mt-lcard có lỡ giãn hơn thì thân
+   + nắp cong vẫn không vượt quá. */
+.mt-body{flex:1;min-width:0;max-height:var(--mt-h);display:flex;align-items:center;box-sizing:border-box;background:var(--pc-bg);overflow:hidden;
+  border-top:1.5px solid var(--pc-stroke);border-bottom:1.5px solid var(--pc-stroke);padding:5px 12px;transition:background .3s,border-color .3s}
+
+
+
+.mt-lcard .mt-body{border-left:1.5px solid var(--pc-stroke);border-radius:8px 0 0 8px;padding-left:14px}
+.mt-card .mt-body{padding-left:10px}
+/* NẮP CONG SVG — cao 100% theo thân, cạnh cong + góc bo nằm trong path; chốt max-height:var(--mt-h) cùng .mt-body */
+.mt-cap{flex:0 0 auto;display:flex;align-self:stretch;overflow:hidden;max-height:var(--mt-h)}
+.mt-cap svg{display:block;width:100%;height:100%;overflow:visible}
+.mt-cap-r{width:20px;margin-left:-0.5px}
+.mt-cap-l{width:26px;margin-right:-0.5px}
+.mt-cf{fill:var(--pc-fill);transition:fill .3s;shape-rendering:crispEdges}   /* thân nắp (đổi theo --pc-fill) — crispEdges: khớp mép pixel-grid với border-top/bottom của .mt-body, tránh lệch nét do khử răng cưa (bug 2026-07-19) */
+.mt-cs{fill:none;stroke:var(--pc-stroke);stroke-width:1.5;transition:stroke .3s;shape-rendering:crispEdges}   /* viền nắp — cùng lý do */
+
+/* TAY CẦM kéo (đoạn phải thẻ match) — viền trên/dưới/phải + bo góc phải; chốt max-height:var(--mt-h) cùng .mt-body */
+.mt-drag{flex:0 0 auto;max-height:var(--mt-h);display:flex;align-items:center;box-sizing:border-box;background:var(--pc-bg);
+  border-top:1.5px solid var(--pc-stroke);border-bottom:1.5px solid var(--pc-stroke);border-right:1.5px solid var(--pc-stroke);
+  border-radius:0 8px 8px 0;padding:0 12px 0 10px;transition:background .3s,border-color .3s}
+
+
+.mt-drag svg circle{fill:#b0b5bc}
+.mt-row.mt-joined .mt-lcard{transform:translateX(14px)}                 /* thả rồi → chồng 18px, núm cắm vào ổ */
+.mt-row.mt-joined .mt-card{transform:translateX(-14px)}
+.mt-lempty{display:none}                                                /* hàng nhiễu: cột trái trống */
+.mt-num,.mt-clbl{display:none}                                          /* nhãn số/chữ ẩn (chỉ gắn dữ liệu) */
+.mt-ctxt{font-size:calc(14px * var(--bgz,1));color:var(--text-primary);line-height:1.35;word-break:break-word}
+.mt-cimg{max-height:100%;max-width:100%;display:block}
+.mt-drop{display:flex;width:var(--mt-w);margin-right:auto;border-radius:0 8px 8px 0;transition:box-shadow .12s}  /* rộng = thẻ → khung highlight khớp thẻ; display:flex để .mt-card giãn theo chiều cao hàng, khớp bên trái (.mt-lcell) */
+.mt-live .mt-card{cursor:grab;touch-action:none}
+.mt-card.locked{cursor:default}
+.mt-card.mt-dragging{opacity:.3}
+.mt-live .mt-drop.mt-drop-hot{box-shadow:0 0 0 2px var(--blue-primary)}
+.mt-ghost{position:fixed;z-index:9990;transition:none;pointer-events:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.28))}
+/* CHẤM ĐIỂM — đổi --pc-* ⇒ TOÀN thẻ (thân + nắp + tay cầm) đổi màu (fix "chưa đổi hết màu khi ghép") */
+.mt-card.mt-ok{--pc-bg:linear-gradient(#ffffff,#EDFAF4);--pc-fill:#EDFAF4;--pc-stroke:var(--green-primary)}
+.mt-card.mt-bad{--pc-bg:linear-gradient(#ffffff,#FEECEC);--pc-fill:#FEECEC;--pc-stroke:#DC2626}
+/* Popup nhập nội dung — 2 ô input rộng BẰNG nhau (yêu cầu: khác gap-fill ở chỗ đều nhau) */
+.mt-ed-sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin:10px 2px 4px}
+.mt-ed-hd{display:flex;gap:6px;align-items:center;padding-bottom:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+.mt-ed-hd-l,.mt-ed-hd-r{flex:1}
+.mt-ed-hd-x{flex:0 0 30px}
+.mt-ed-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.mt-ed-cell{flex:1;min-width:0;display:flex;gap:4px;align-items:center}   /* trái & phải: flex:1 → BẰNG nhau */
+.mt-ed-cell > input{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;color:var(--text-primary)}
+.mt-ed-cell > input:focus{outline:none;border-color:var(--blue-primary)}
+.mt-ed-imgbtn{flex:0 0 auto;height:30px;padding:0 8px}
+.mt-ed-thumb{flex:0 0 auto;height:30px;width:auto;border-radius:4px;border:1px solid var(--border)}
+.mt-ed-del{flex:0 0 24px}   /* nút Xóa chuẩn app (.btn-del 24×24) */
+.mt-ed-del:disabled{opacity:.45;cursor:not-allowed}
+.mt-ed-row-d .mt-ed-cell{flex:0 1 calc(50% - 18px)}       /* nhiễu: 1 ô, rộng bằng ô phải của cặp */
+
+/* ── Panel Thuộc tính của slide iSpring (§32 — layout 'ispring') ─────────────────────────── */
+.isp-prop-nm{margin-top:6px;padding:4px 8px;background:var(--blue-light);border-radius:6px;
+  font-size:12px;font-weight:600;word-break:break-word}
+.isp-hint{margin-top:6px;font-size:11px;line-height:1.45;color:var(--text-muted)}

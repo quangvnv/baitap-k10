@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bảng theo dõi — Giáo viên</title>
+<link rel="stylesheet" href="trang.css">
+<link rel="stylesheet" href="gv.css">
+</head>
+<body class="gv">
+
+<!-- ══ ĐĂNG NHẬP ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="manVao" class="man">
+  <div class="hop">
+    <h1>Bảng theo dõi</h1>
+    <p class="phu">Dành cho cán bộ, giảng viên</p>
+    <label class="nhan" for="oEmail">Email</label>
+    <input id="oEmail" class="o" type="email" autocomplete="username">
+    <label class="nhan" for="oMk">Mật khẩu</label>
+    <input id="oMk" class="o" type="password" autocomplete="current-password">
+    <button id="btVao" class="bt bt-chinh">Đăng nhập</button>
+    <div id="vaoLoi" class="loi"></div>
+  </div>
+</div>
+
+<!-- ══ DANH SÁCH PHIÊN ═════════════════════════════════════════════════════════════════════ -->
+<div id="manDS" class="man-full an">
+  <header class="tb">
+    <b>Các phiên bài tập</b>
+    <span class="giua"></span>
+    <select id="locTT" class="o o-nho">
+      <option value="">Tất cả</option>
+      <option value="mo">Đang mở</option>
+      <option value="dong">Đã đóng</option>
+    </select>
+    <span id="aiDo" class="ai"></span>
+    <button id="btRa" class="bt">Thoát</button>
+  </header>
+  <div class="vung">
+    <table class="bang">
+      <thead><tr>
+        <th style="width:50px">STT</th>
+        <th>Bài tập</th>
+        <th style="width:90px">Lớp</th>
+        <th style="width:90px">Kiểu</th>
+        <th style="width:80px">Mã phiên</th>
+        <th style="width:80px">Đã nộp</th>
+        <th style="width:70px">TB</th>
+        <th style="width:90px">Trạng thái</th>
+      </tr></thead>
+      <tbody id="dsBody"></tbody>
+    </table>
+    <p id="dsTrong" class="trong an">Chưa có phiên nào. Mở phiên từ app: Soạn bài giảng → ☁ Đẩy lên web.</p>
+  </div>
+</div>
+
+<!-- ══ CHI TIẾT MỘT PHIÊN ══════════════════════════════════════════════════════════════════ -->
+<div id="manCT" class="man-full an">
+  <header class="tb">
+    <button id="btVe" class="bt">‹ Quay lại</button>
+    <b id="ctTen">—</b>
+    <span class="giua"></span>
+    <span id="ctNhip" class="nhip" title="Tự cập nhật">●</span>
+    <button id="btDong" class="bt">Đóng phiên</button>
+    <button id="btTai" class="bt">Tải kết quả</button>
+  </header>
+
+  <div class="dai">
+    <div class="the">
+      <div class="the-nhan">MÃ PHIÊN</div>
+      <div id="ctMa" class="the-ma">——————</div>
+    </div>
+    <div class="the">
+      <div class="the-nhan">Đã nộp</div>
+      <div id="ctNop" class="the-so">0/0</div>
+    </div>
+    <div class="the">
+      <div class="the-nhan">Điểm trung bình</div>
+      <div id="ctTB" class="the-so">–</div>
+    </div>
+    <div class="the the-rong">
+      <div class="the-nhan">% lớp đúng mỗi câu</div>
+      <div id="ctCot" class="cot"></div>
+    </div>
+  </div>
+
+  <div class="vung">
+    <table class="bang">
+      <thead><tr>
+        <th style="width:120px">Mã học viên</th>
+        <th style="width:110px">Trạng thái</th>
+        <th style="width:70px">Điểm</th>
+        <th style="width:80px">Thời gian</th>
+        <th>Từng câu</th>
+        <th style="width:60px">Lượt</th>
+      </tr></thead>
+      <tbody id="ctBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="banner" class="banner an"></div>
+
+<script src="cauhinh.js"></script>
+<script src="gv.js"></script>
+</body>
+</html>
