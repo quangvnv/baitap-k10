@@ -21,12 +21,23 @@
 }
 
 * { box-sizing: border-box; }
+/* ⚠⚠ PHẢI GHI ĐÈ `html,body` CỦA baigiang.css — NGUYÊN NHÂN LỖI KHÔNG CUỘN ĐƯỢC (2026-09-01).
+   baigiang.css dòng 19 khai `html,body{height:100vh;overflow:hidden}` vì đó là CSS của app
+   ELECTRON — app chạy toàn màn hình trong cửa sổ cố định nên cố tình khoá cuộn trang. Ta chép
+   nguyên file đó sang web (để slide hiển thị y hệt trong app) nên thừa hưởng luôn cái khoá:
+   nội dung cao 2125px bị nhốt trong khung 502px, không cuộn được, KHÔNG có dấu hiệu gì.
+   Trên máy tính màn rộng thì nội dung vừa màn hình nên không lộ ra — chỉ điện thoại mới thấy.
+   ⚠ trang.css PHẢI nạp SAU baigiang.css trong <head> thì rule này mới thắng. */
 html, body {
   margin: 0; padding: 0;
   font-family: 'Segoe UI', Roboto, Arial, sans-serif;
   background: var(--xam); color: #1a1a1a;
-  overflow-x: hidden;            /* ⚠ chặn trang tràn ngang (bài học §32.24) */
+  height: auto;        /* ghi đè height:100vh */
+  min-height: 100%;
+  overflow: visible;   /* ghi đè overflow:hidden — để trang cuộn tự nhiên */
 }
+/* Chặn tràn ngang bằng `clip` (KHÔNG tạo vùng cuộn riêng như `hidden`, nên không khoá cuộn dọc) */
+body { overflow-x: clip; }
 .an { display: none !important; }
 
 /* ── Màn hình dạng hộp giữa (vào bài / đã nộp) ────────────────────────────────────────────── */
