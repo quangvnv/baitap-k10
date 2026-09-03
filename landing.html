@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bài tập trên web — bản chạy thử</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #F4F7FB; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    #__bundler_loading { position: fixed; bottom: 20px; right: 20px; font: 13px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; color: #666; background: #fff; padding: 8px 14px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.12); z-index: 10000; }
+    #__bundler_thumbnail { position: fixed; inset: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #F4F7FB; z-index: 9999; }
+    #__bundler_thumbnail svg { width: 100%; height: 100%; object-fit: contain; }
+    #__bundler_placeholder { color: #999; font-size: 14px; }
+  </style>
+  <noscript>
+    <style>#__bundler_loading { display: none; }</style>
+    <div style="position:fixed;bottom:12px;left:12px;font:13px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;color:#999;background:rgba(255,255,255,0.9);padding:6px 12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);z-index:10000;">
+      This page requires JavaScript to display.
+    </div>
+  </noscript>
+</head>
+<body>
+  <div id="__bundler_thumbnail">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#F4F7FB"></rect>
+    <rect x="0" y="0" width="1200" height="120" fill="#FFFFFF"></rect>
+    <rect x="0" y="118" width="1200" height="4" fill="#DDE4EE"></rect>
+    <rect x="60" y="52" width="220" height="20" fill="#1A6FBF"></rect>
+    <rect x="600" y="0" width="4" height="800" fill="#DDE4EE"></rect>
+    <rect x="60" y="300" width="440" height="80" fill="#FFFFFF" stroke="#1A6FBF" stroke-width="6"></rect>
+    <rect x="90" y="328" width="300" height="24" fill="#C6CDD6"></rect>
+    <rect x="60" y="430" width="240" height="64" fill="#1A6FBF"></rect>
+    <rect x="664" y="300" width="440" height="48" fill="#FFFFFF" stroke="#DDE4EE" stroke-width="4"></rect>
+    <rect x="664" y="382" width="440" height="48" fill="#FFFFFF" stroke="#DDE4EE" stroke-width="4"></rect>
+    <rect x="664" y="464" width="440" height="56" fill="#FFFFFF" stroke="#CFD8E6" stroke-width="4"></rect>
+  </svg>
+</div>
+  <div id="__bundler_loading">Unpacking...</div>
+
+  <script>
+    
+document.addEventListener('DOMContentLoaded', async function() {
+  const loading = document.getElementById('__bundler_loading');
+  function setStatus(msg) { if (loading) loading.textContent = msg; }
+
+  const FONT_MIME = /^(font[/]|application[/](x-)?font-|application[/]vnd\.ms-fontobject)/i;
+  const MIME_TOKEN = /^[\w.+-]+[/][\w.+-]+$/;
+  function toBase64(bytes) {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
+    return btoa(bin);
+  }
+
+  // Error sink persists across replaceWith since it's on window, not the DOM.
+  window.addEventListener('error', function(e) {
+    // Failed resource loads (CSP-blocked links, scripts, images) fire plain
+    // events at the element — warn only; real JS errors carry message/error.
+    if (!e.message && !e.error && e.target && e.target !== window) {
+      console.warn('[bundle] resource failed to load:',
+        e.target.tagName, String(e.target.src || e.target.href || ''));
+      return;
+    }
+    var p = document.body || document.documentElement;
+    var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
+    d.id = '__bundler_err';
+    d.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;font:12px/1.4 ui-monospace,monospace;background:#2a1215;color:#ff8a80;padding:10px 14px;border-radius:8px;border:1px solid #5c2b2e;z-index:99999;white-space:pre-wrap;max-height:40vh;overflow:auto';
+    d.textContent = (d.textContent ? d.textContent + String.fromCharCode(10) : '') +
+      '[bundle] ' + (e.message || e.type) +
+      (e.filename ? ' (' + e.filename.slice(0, 60) + ':' + e.lineno + ')' : '');
+  }, true);
+
+  try {
+    const manifestEl = document.querySelector('script[type="__bundler/manifest"]');
+    const templateEl = document.querySelector('script[type="__bundler/template"]');
+    if (!manifestEl || !templateEl) {
+      setStatus('Error: missing bundle data');
+      console.error('[bundler] Missing script tags — manifestEl:', !!manifestEl, 'templateEl:', !!templateEl);
+      return;
+    }
+
+    const manifest = JSON.parse(manifestEl.textContent);
+    let template = JSON.parse(templateEl.textContent);
+
+    // Nested page bundles (iframe targets). Each ships ONCE, in the ROOT
+    // document's manifest; frame srcs carry an about:blank#<uuid> marker
+    // instead of a substitutable uuid. Every document mints the blobs for
+    // its OWN frames — from local text at the root, or text obtained from
+    // its DIRECT parent over the relay protocol below — so each frame
+    // navigation stays same-origin with its initiator and a deduped page
+    // loads at any depth on any host, including a file:// download's
+    // opaque origins (where a blob minted by one document cannot be
+    // navigated to by another).
+    const pageOrderEl = document.querySelector('script[type="__bundler/page_order"]');
+    const pageOrder = pageOrderEl ? JSON.parse(pageOrderEl.textContent) : [];
+    const pageSet = new Set(pageOrder);
+    const pageTexts = {};
+
+    // ── Nested-page text protocol (parent-chain relay) ──
+    // Page bundles ship once, in the ROOT document's manifest. Every
+    // document mints the blobs for its OWN frames, obtaining page text
+    // through a strict parent-chain relay: a document only ever SENDS to
+    // its direct parent (which, for every document the publisher's own
+    // runtime minted, is another publisher document) and only ACCEPTS
+    // text from that direct parent; requests from below are honored only
+    // for the document's own child frames, and the ROOT never sends
+    // upward at all. That last rule is load-bearing: the artifact host's
+    // frame-ancestors allows claude.ai (and friends) to frame an
+    // artifact, so window.top can be a FOREIGN document — a top-addressed
+    // protocol would hand page uuids to that ancestor and accept forged
+    // "page text" from it, minting attacker HTML as an artifact-origin
+    // blob document. The chain never touches the ancestor: requests stop
+    // at the root, replies are origin-addressed per hop (never '*' when
+    // an origin exists), and both directions are origin-gated (on https
+    // a foreign sender's origin can never equal this document's; in
+    // opaque contexts — file:// — everything serializes as 'null', where
+    // an embedded EXTERNAL frame still fails the gate by carrying its
+    // own real origin, and a sandboxed child of such a frame is excluded
+    // by the own-child-frames check plus uuid unguessability). Shape is
+    // deny-by-default: one request form, one reply form, no error
+    // replies.
+    // window.origin is the SERIALIZED SECURITY origin ('null' in opaque
+    // contexts such as a sandboxed preview iframe) — location.origin is
+    // computed from the URL and stays 'https://…' even when the document
+    // is sandboxed, which would misgate every opaque chain.
+    const OWN_TARGET = /^https?:[/][/]/.test(window.origin || '')
+      ? window.origin
+      : '*';
+    function trustedOrigin(e) {
+      if (e.origin === window.origin) return true; // https chains; opaque==opaque
+      // file:// trees: Chrome serializes the file document's origin as
+      // 'file://' while the blob: documents it mints serialize as 'null',
+      // so the two legitimate shapes can never string-match — accept the
+      // pair in both directions. https origins never serialize as either,
+      // and sender identity (own child frame / direct parent) is checked
+      // separately.
+      return (
+        (e.origin === 'null' &&
+          (window.origin === 'file://' ||
+            window.location.protocol === 'file:')) ||
+        (/^file:/.test(e.origin) && window.origin === 'null')
+      );
+    }
+    // Non-empty only in the root document (nested bundles ship an empty
+    // island), so it doubles as the root marker: the root answers from
+    // local text and treats a miss as authoritative — never relaying to
+    // its (possibly foreign) parent.
+    const isPageRoot = pageOrder.length > 0;
+    const blobUrls = {};
+    const resourceBlobs = {};
+    const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    const pendingFrames = {}; // uuid -> [{el, frag}] awaiting text for own frames
+    const pendingRelays = {}; // uuid -> [childWindow] awaiting text to pass down
+    function mountPage(el, frag, text) {
+      const pageBlob = new Blob([text], { type: 'text/html' });
+      const u = URL.createObjectURL(pageBlob);
+      resourceBlobs[u] = pageBlob;
+      el.src = u + frag;
+    }
+    function deliverPage(uuid, text) {
+      const frames = pendingFrames[uuid];
+      delete pendingFrames[uuid];
+      if (frames) for (const f of frames) mountPage(f.el, f.frag, text);
+      const relays = pendingRelays[uuid];
+      delete pendingRelays[uuid];
+      if (relays) {
+        for (const cw of relays) {
+          try { cw.postMessage({ __bundler_page: uuid, __bundler_text: text }, OWN_TARGET); } catch (err) { /* gone */ }
+        }
+      }
+    }
+    function ownFrameWindows() {
+      const out = [];
+      for (const f of Array.from(document.querySelectorAll('iframe'))) {
+        try { if (f.contentWindow) out.push(f.contentWindow); } catch (err) { /* detached */ }
+      }
+      return out;
+    }
+    window.addEventListener('message', function (e) {
+      const d = e.data;
+      if (!d || typeof d !== 'object' || !e.source) return;
+      // Origin gate first; the structural checks below (own-child-frames
+      // for requests, direct-parent + solicited-uuid for replies, the
+      // root's never-relay rule) are what hold in fully opaque chains
+      // where origin strings can't discriminate — a sandboxed root's
+      // FOREIGN wrapper still fails all three even though both serialize
+      // as real-vs-'null' rather than matching.
+      if (!trustedOrigin(e)) return;
+      if (typeof d.__bundler_need === 'string' && UUID_SHAPE.test(d.__bundler_need)) {
+        // Requests are honored only for this document's own child frames.
+        if (ownFrameWindows().indexOf(e.source) < 0) return;
+        const uuid = d.__bundler_need;
+        const text = pageTexts[uuid];
+        if (typeof text === 'string') {
+          try { e.source.postMessage({ __bundler_page: uuid, __bundler_text: text }, OWN_TARGET); } catch (err) { /* gone */ }
+          return;
+        }
+        if (isPageRoot || window.parent === window) return; // authoritative miss
+        const waiting = pendingRelays[uuid];
+        if (waiting) {
+          if (waiting.indexOf(e.source) < 0) waiting.push(e.source);
+          return;
+        }
+        // Never-answered uuids would otherwise accumulate forever under a
+        // request spray; past the cap (far above any real page count) new
+        // relays are dropped rather than remembered.
+        if (Object.keys(pendingRelays).length >= 128) return;
+        pendingRelays[uuid] = [e.source];
+        window.parent.postMessage({ __bundler_need: uuid }, OWN_TARGET);
+      } else if (
+        typeof d.__bundler_page === 'string' &&
+        UUID_SHAPE.test(d.__bundler_page) &&
+        typeof d.__bundler_text === 'string'
+      ) {
+        // The shape test is load-bearing beyond tidiness: the solicited
+        // check below uses the in operator, which matches prototype keys
+        // ('__proto__', 'constructor') — an unshaped key would reach
+        // deliverPage and throw, painting the error banner.
+        // Text is accepted only from the direct parent — the document
+        // that minted this one.
+        if (e.source !== window.parent || window.parent === window) return;
+        if (!(d.__bundler_page in pendingFrames) && !(d.__bundler_page in pendingRelays)) return;
+        deliverPage(d.__bundler_page, d.__bundler_text);
+      }
+    });
+
+    const uuids = Object.keys(manifest);
+    setStatus('Unpacking ' + uuids.length + ' assets...');
+
+    await Promise.all(uuids.map(async (uuid) => {
+      const entry = manifest[uuid];
+      try {
+        const binaryStr = atob(entry.data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+        let finalBytes = bytes;
+        if (entry.compressed) {
+          if (typeof DecompressionStream !== 'undefined') {
+            const ds = new DecompressionStream('gzip');
+            const writer = ds.writable.getWriter();
+            const reader = ds.readable.getReader();
+            writer.write(bytes);
+            writer.close();
+            const chunks = [];
+            let totalLen = 0;
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+              totalLen += value.length;
+            }
+            finalBytes = new Uint8Array(totalLen);
+            let offset = 0;
+            for (const chunk of chunks) { finalBytes.set(chunk, offset); offset += chunk.length; }
+          } else {
+            console.warn('DecompressionStream not available, asset ' + uuid + ' may not render');
+          }
+        }
+
+        if (pageSet.has(uuid)) {
+          pageTexts[uuid] = new TextDecoder().decode(finalBytes);
+          return;
+        }
+        if (FONT_MIME.test(entry.mime) && MIME_TOKEN.test(entry.mime)) {
+          // Strict artifact hosts allow font-src data: but not blob:.
+          blobUrls[uuid] = 'data:' + entry.mime + ';base64,' +
+            (entry.compressed ? toBase64(finalBytes) : entry.data);
+        } else {
+          const blob = new Blob([finalBytes], { type: entry.mime });
+          blobUrls[uuid] = URL.createObjectURL(blob);
+          resourceBlobs[blobUrls[uuid]] = blob;
+        }
+      } catch (err) {
+        console.error('Failed to decode asset ' + uuid + ':', err);
+        const blob = new Blob([], { type: entry.mime });
+        blobUrls[uuid] = URL.createObjectURL(blob);
+        resourceBlobs[blobUrls[uuid]] = blob;
+      }
+    }));
+
+    const extResEl = document.querySelector('script[type="__bundler/ext_resources"]');
+    const extResources = extResEl ? JSON.parse(extResEl.textContent) : [];
+    const resourceMap = {};
+    for (const entry of extResources) {
+      if (blobUrls[entry.uuid]) resourceMap[entry.id] = blobUrls[entry.uuid];
+    }
+
+    // Artifact-host CSP (connect-src 'self') refuses fetch() of blob: URLs —
+    // consumers read these Blobs directly. Survives the swap like the error sink.
+    window.__resourceBlobs = resourceBlobs;
+
+    setStatus('Rendering...');
+    // Page uuids have no blob here — they ride inside about:blank#<uuid>
+    // frame markers the pass below resolves after the swap.
+    for (const uuid of uuids) {
+      if (pageSet.has(uuid)) continue;
+      template = template.split(uuid).join(blobUrls[uuid]);
+    }
+
+    // Strip integrity + crossorigin — blob URLs from a file:// document inherit
+    // a null origin, so crossorigin forces a CORS fetch that SRI then rejects.
+    // The manifest bytes are ours; SRI protects against CDN compromise, not this.
+    template = template.replace(/\s+integrity="[^"]*"/gi, '').replace(/\s+crossorigin="[^"]*"/gi, '');
+
+    const resourceScript = '<script>window.__resources = ' +
+      JSON.stringify(resourceMap).replace(/<\//g, '<\\/') +
+      ';</' + 'script>';
+    // Inject after <head> so the DOCTYPE stays first; prepending the script
+    // would push the parser into quirks mode. DOMParser always emits a <head>
+    // (synthesizing one if the source HTML omitted it) but may carry
+    // attributes through, so match the full opening tag. slice() rather than
+    // replace() keeps us clear of $-pattern substitution in resourceScript.
+    const headOpen = template.match(/<head[^>]*>/i);
+    if (headOpen) {
+      const i = headOpen.index + headOpen[0].length;
+      template = template.slice(0, i) + resourceScript + template.slice(i);
+    }
+
+    // Parse the template and swap the root element. Scripts inserted via
+    // DOMParser/replaceWith are inert per spec — re-create each with
+    // createElement so they execute, awaiting onload for src scripts to
+    // preserve ordering (React before ReactDOM before Babel before text/babel).
+    const doc = new DOMParser().parseFromString(template, 'text/html');
+    document.documentElement.replaceWith(doc.documentElement);
+
+    // Resolve page-frame markers: mint this document's own blob for each
+    // framed page — from local text when this is the root, otherwise by
+    // asking the direct parent over the relay protocol above. An
+    // unanswered request leaves the frame on about:blank, the same
+    // degraded state as a refused embed.
+    {
+      const MARKER = /^about:blank#([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(#.*)?$/;
+      const needed = [];
+      for (const el of Array.from(document.querySelectorAll('iframe'))) {
+        const m = MARKER.exec(el.getAttribute('src') || '');
+        if (!m) continue;
+        const text = pageTexts[m[1]];
+        if (typeof text === 'string') {
+          mountPage(el, m[2] || '', text);
+        } else if (window.parent !== window && !isPageRoot) {
+          const had = pendingFrames[m[1]];
+          (pendingFrames[m[1]] = had || []).push({ el: el, frag: m[2] || '' });
+          if (!had) needed.push(m[1]);
+        }
+      }
+      for (const uuid of needed) {
+        window.parent.postMessage({ __bundler_need: uuid }, OWN_TARGET);
+      }
+    }
+
+    const dead = Array.from(document.scripts);
+    for (const old of dead) {
+      const s = document.createElement('script');
+      for (const a of old.attributes) s.setAttribute(a.name, a.value);
+      s.textContent = old.textContent;
+      // text/babel scripts with a src: read and inline. transformScriptTags
+      // does XHR against the src, but blob:null/ from a file:// origin is
+      // silently dropped. Inlining makes it a plain inline babel script,
+      // which transformScriptTags handles unconditionally.
+      if ((s.type === 'text/babel' || s.type === 'text/jsx') && s.src) {
+        const pre = resourceBlobs[s.src.split('#')[0]];
+        s.textContent = pre ? await pre.text() : await (await fetch(s.src)).text();
+        s.removeAttribute('src');
+      }
+      const p = s.src ? new Promise(function(r) { s.onload = s.onerror = r; }) : null;
+      old.replaceWith(s);
+      if (p) await p;
+    }
+    // Babel standalone auto-transforms type=text/babel on DOMContentLoaded,
+    // which fired before we swapped the document. Trigger manually if present.
+    if (window.Babel && typeof window.Babel.transformScriptTags === 'function') {
+      window.Babel.transformScriptTags();
+    }
+  } catch (err) {
+    setStatus('Error unpacking: ' + err.message);
+    console.error('Bundle unpack error:', err);
+  }
+});
+
+  </script>
+
+  <script type="__bundler/manifest">
+{}
+  </script>
+
+  <script type="__bundler/ext_resources">
+[]
+  </script>
+
+  <script type="__bundler/page_order">
+[]
+  </script>
+
+  <script type="__bundler/template">
+"<!DOCTYPE html>\n<html lang=\"vi\"><head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Bài tập trên web — bản chạy thử<\u002Ftitle>\n<style>\n/* ══════════════════════════════════════════════════════════════════════════════\n   BẢN CHẠY THỬ TĨNH — KHÔNG JS.\n   Theme lấy từ renderer/css/landing.css (xanh #1A6FBF, Segoe UI, thẻ glossy, bo 6px)\n   + bảng lấy từ public/gv.css (header #eef2f6, viền #d8dde3, 13px).\n   Chuyển màn/tab bằng input[type=radio] + CSS :checked — không cần script.\n   ══════════════════════════════════════════════════════════════════════════════ */\n:root{\n  --blue:#1A6FBF; --blue-hover:#155EA3; --blue-dark:#0D47A1;\n  --blue-light:#EBF4FF; --bg:#F4F7FB; --white:#fff;\n  --border:#DDE4EE; --vien:#d8dde3;\n  --t1:#1A2332; --t2:#4A5568; --t3:#7A8799; --label:#374151;\n  --luc:#2e7d32; --cam:#ef6c00; --do:#d32f2f;\n  --r:6px;\n  --font:'Segoe UI','Helvetica Neue',Arial,sans-serif;\n  --grad-btn:linear-gradient(180deg,#3E8FD8 0%,#1A6FBF 55%,#1660AB 100%);\n  --grad-btn-h:linear-gradient(180deg,#4C9CE4 0%,#1C77C9 55%,#12569A 100%);\n  --grad-soft:linear-gradient(180deg,#FFFFFF 0%,#F1F5FA 100%);\n  --grad-soft-h:linear-gradient(180deg,#FFFFFF 0%,#E8EFF7 100%);\n}\n*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}\nhtml,body{font-family:var(--font);font-size:16px;background:var(--bg);color:var(--t1)}\nbody{min-height:100dvh;display:flex;flex-direction:column}\na{color:var(--blue);text-decoration:none}\na:hover{color:var(--blue-hover);text-decoration:underline}\n:focus-visible{outline:2px solid var(--blue);outline-offset:2px}\n\n/* ── radio điều khiển: ẩn khỏi mắt, vẫn nhận bàn phím ─────────────────────── */\n.sw{position:fixed;opacity:0;width:1px;height:1px;pointer-events:none}\n\n/* ── thanh tiêu đề ────────────────────────────────────────────────────────── */\n.topbar{flex:0 0 44px;display:flex;align-items:center;gap:10px;padding:0 12px;\n  background:var(--white);border-bottom:1px solid var(--border)}\n.brand{font-size:15px;font-weight:700;color:var(--blue)}\n.sep{width:1px;height:18px;background:var(--border)}\n.org{font-size:12px;color:var(--t3)}\n.spacer{flex:1}\n.who{font-size:12px;color:var(--t3)}\n.chip{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;\n  padding:3px 10px;border-radius:20px;border:1px solid #CFD8E6;color:var(--t2);\n  background:linear-gradient(180deg,#FFFFFF 0%,#EDF2F9 100%);\n  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(26,51,80,.10);cursor:pointer;\n  transition:background .14s,border-color .14s,transform .12s}\n.chip:hover{background:linear-gradient(180deg,#FFFFFF 0%,#DFEBFA 100%);border-color:#AAB4C4;transform:translateY(-1px)}\n.badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;border-radius:3px}\n.badge.gv{background:var(--blue-light);color:var(--blue)}\n.badge.cb{background:#FEF3C7;color:#92400E}\n\n/* ── hàng tab pill ────────────────────────────────────────────────────────── */\n.tabbar{flex:0 0 40px;display:flex;align-items:center;gap:6px;padding:0 12px;\n  background:var(--white);border-bottom:1px solid var(--border);overflow:hidden}\n.pill{height:28px;padding:0 12px;display:inline-flex;align-items:center;border-radius:14px;\n  font-family:var(--font);font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;\n  border:1px solid #CFD8E6;background:var(--grad-soft);\n  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(26,51,80,.10);white-space:nowrap;\n  transition:background .15s,border-color .15s,box-shadow .15s,color .15s,transform .12s}\n.pill:hover{background:var(--grad-soft-h);border-color:#AAB4C4;color:var(--blue);transform:translateY(-1px)}\n\n/* ── nút ──────────────────────────────────────────────────────────────────── */\n.bt{display:inline-flex;align-items:center;justify-content:center;gap:5px;\n  height:28px;padding:0 12px;border-radius:var(--r);font-family:var(--font);\n  font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;\n  border:1px solid #CFD8E6;background:var(--grad-soft);color:var(--t2);\n  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(26,51,80,.10);\n  transition:background .15s,border-color .15s,box-shadow .15s,color .15s,transform .12s}\n.bt:hover{background:var(--grad-soft-h);border-color:#AAB4C4;color:var(--blue);transform:translateY(-1px)}\n.bt:active{transform:translateY(0);box-shadow:inset 0 2px 4px rgba(26,51,80,.18)}\n.bt-chinh{color:#fff;border-color:#1560A6;background:var(--grad-btn);\n  text-shadow:0 1px 1px rgba(0,0,0,.18);\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 1px 2px rgba(26,51,80,.18)}\n.bt-chinh:hover{background:var(--grad-btn-h);border-color:#12569A;color:#fff;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 3px 9px rgba(26,111,191,.34)}\n.bt-do{border-color:#f5c2c0;color:var(--do);background:linear-gradient(180deg,#FFFFFF 0%,#FDF1F0 100%)}\n.bt-do:hover{color:var(--do);border-color:#e59d9a;background:linear-gradient(180deg,#FFFFFF 0%,#FBE3E1 100%)}\n.bt-nho{height:26px;padding:0 8px;font-size:12px}\n.bt-lon{height:46px;padding:0 24px;font-size:15px}\n\n/* ── ô nhập ───────────────────────────────────────────────────────────────── */\n.nhan{display:block;font-size:13px;font-weight:600;color:var(--label);margin-bottom:4px}\n.goiy{font-weight:400;color:#8a939c}\n.o{width:100%;height:40px;padding:0 10px;font-family:var(--font);font-size:15px;color:var(--t1);\n  background:var(--white);border:1px solid var(--vien);border-radius:var(--r);outline:none;\n  transition:border-color .15s,box-shadow .15s}\n.o::placeholder{color:#A8B2BF}\n.o:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,111,191,.12)}\n.o-ma{height:58px;font-size:30px;font-weight:700;letter-spacing:8px}\nselect.o{height:28px;font-size:13px;padding:0 26px 0 8px;cursor:pointer;appearance:none;\n  background-image:url(\"data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A8799' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\");\n  background-repeat:no-repeat;background-position:right 8px center;width:auto;min-width:120px}\n.ghinho{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--t2);cursor:pointer}\n\n/* ── vùng nội dung ────────────────────────────────────────────────────────── */\nmain{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}\n.man{display:none;flex:1 1 auto;min-height:0;flex-direction:column}\n.kicker{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--t3)}\n\n/* ── màn vào: hai lối vào ─────────────────────────────────────────────────── */\n.vao{display:grid;grid-template-columns:1.15fr 1fr;flex:1}\n.vao-hv{display:flex;flex-direction:column;justify-content:center;padding:32px 40px;border-right:1px solid var(--border)}\n.vao-cb{display:flex;flex-direction:column;justify-content:center;padding:32px 40px;background:var(--grad-soft)}\n.vao-hv h1{font-size:28px;font-weight:700;color:var(--blue-dark);line-height:1.25;margin:8px 0 6px}\n.vao-hv p{font-size:14px;color:var(--t2);margin-bottom:20px}\n.hang2{display:flex;gap:10px;align-items:flex-end;max-width:540px}\n.hang2>div{flex:1}\n.vao-cb h2{font-size:20px;font-weight:700;margin:8px 0 16px}\n.vao-cb .nhom{margin-bottom:10px}\n.note{font-size:12px;color:var(--t3);line-height:1.5;margin-top:14px}\n\n/* ── dải thẻ tóm tắt ──────────────────────────────────────────────────────── */\n.dai{display:flex;gap:8px;padding:10px 12px;flex-wrap:wrap}\n.the{background:var(--white);border:1px solid var(--vien);border-radius:8px;padding:8px 12px;min-width:130px}\n.the-rong{flex:1;min-width:300px}\n.the-nhan{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8a939c}\n.the-so{font-size:24px;font-weight:700;color:#222}\n.the-ma{font-size:30px;font-weight:700;letter-spacing:6px;color:var(--blue-dark)}\n.cot{display:flex;align-items:flex-end;gap:3px;height:46px;margin-top:4px}\n.cot i{flex:1;min-width:5px;background:var(--luc);border-radius:2px 2px 0 0;display:block}\n.cot i.vua{background:var(--cam)}\n.cot i.kem{background:var(--do)}\n\n/* ── bảng ─────────────────────────────────────────────────────────────────── */\n.vung{flex:1 1 auto;overflow:auto;padding:0 12px 12px}\n.bang{width:100%;border-collapse:collapse;background:var(--white);table-layout:fixed;font-size:13px}\n.bang thead th{position:sticky;top:0;z-index:2;background:#eef2f6;border:1px solid var(--vien);\n  padding:6px 8px;text-align:center;font-weight:600}\n.bang tbody td{border-bottom:1px solid #e8ecf0;padding:5px 8px;vertical-align:middle}\n.bang tbody tr:nth-child(even){background:#f6f9fc}\n.bang tbody tr:hover{background:var(--blue-light)}\n.giua{text-align:center}\n.ma{font-family:Consolas,'Courier New',monospace}\n.mo-nhat{color:#9aa4ae}\n.xong{color:var(--luc);font-weight:600}\n.dang-lam{color:var(--cam);font-weight:600}\n.diem-o{font-weight:700}\n.thao-tac{display:flex;gap:4px;justify-content:center}\n.o-qs{display:flex;gap:2px;flex-wrap:wrap}\n.o-qs i{width:12px;height:12px;border-radius:2px;display:block;background:#cfd6dd}\n.o-qs i.d{background:var(--luc)}\n.o-qs i.s{background:var(--do)}\n.duong{display:flex;align-items:center;gap:8px;padding:10px 12px 0;font-size:13px;color:var(--t2)}\n.nhip{color:var(--luc);font-size:16px}\n.chuthich{font-size:12px;color:var(--t3);margin-top:8px}\n\n/* ══ CHUYỂN MÀN — thuần CSS ═════════════════════════════════════════════════\n   #sVao mặc định; chọn radio nào thì màn tương ứng hiện, tab đó sáng lên. */\n#sVao:checked ~ main #manVao{display:flex}\n#sPhien:checked ~ main #manPhien{display:flex}\n#sChiTiet:checked ~ main #manChiTiet{display:flex}\n#sTaiKhoan:checked ~ main #manTaiKhoan{display:flex}\n\n/* thanh tab chỉ hiện khi đã \"đăng nhập\" */\n#sVao:checked ~ .tabbar{display:none}\n/* tab Tài khoản chỉ hiện với vai trò Quản trị (bật bằng #vaiAdmin) */\n.tab-admin{display:none}\n#vaiAdmin:checked ~ .tabbar .tab-admin{display:inline-flex}\n/* thoát: khi ở màn vào thì chip đổi thành dòng chữ */\n#sVao:checked ~ .topbar .khi-vao{display:inline}\n#sVao:checked ~ .topbar .khi-trong{display:none}\n.khi-vao{display:none}\n\n/* pill đang chọn */\n#sPhien:checked ~ .tabbar label[for=sPhien],\n#sChiTiet:checked ~ .tabbar label[for=sPhien],\n#sTaiKhoan:checked ~ .tabbar label[for=sTaiKhoan]{\n  color:#fff;border-color:#1560A6;background:var(--grad-btn);\n  text-shadow:0 1px 1px rgba(0,0,0,.18);\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 1px 2px rgba(26,51,80,.18)}\n\n/* công tắc vai trò ở chân trang (hộp kiểm vẽ bằng CSS, không JS) */\n.cong-tac{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);cursor:pointer}\n.cong-tac::before{content:'';width:14px;height:14px;border:1px solid #CFD8E6;background:#fff;flex:0 0 auto}\n#vaiAdmin:checked ~ footer .cong-tac::before{background:var(--blue);border-color:#1560A6;\n  box-shadow:inset 0 0 0 2px #fff}\n\n/* ══ ĐIỆN THOẠI ════════════════════════════════════════════════════════════ */\n@media (max-width:820px){\n  .vao{grid-template-columns:1fr}\n  .vao-hv{border-right:none;border-bottom:1px solid var(--border);padding:20px 16px}\n  .vao-cb{padding:20px 16px}\n  .vao-hv h1{font-size:22px}\n  .hang2{flex-direction:column;align-items:stretch;gap:10px}\n  .o-ma{font-size:26px;letter-spacing:7px;height:52px}\n  .o{height:44px}\n  .bt-lon{width:100%;height:48px}\n  .tabbar{flex-wrap:wrap;height:auto;flex-basis:auto;padding:6px 12px;gap:6px}\n  .vung{padding:0 8px 12px}\n  .bang{font-size:12px;min-width:640px}\n  .vung>table{display:table}\n  .bang thead th,.bang tbody td{padding:5px 6px}\n}\n<\u002Fstyle>\n\n<\u002Fhead>\n<body>\n\n<!-- ══ CÔNG TẮC TRẠNG THÁI (không JS) ═══════════════════════════════════════\n     Bấm chip người dùng / các pill để chuyển. Vai trò Quản trị bật ở cuối trang. -->\n<input class=\"sw\" type=\"radio\" name=\"man\" id=\"sVao\" checked=\"\">\n<input class=\"sw\" type=\"radio\" name=\"man\" id=\"sPhien\">\n<input class=\"sw\" type=\"radio\" name=\"man\" id=\"sChiTiet\">\n<input class=\"sw\" type=\"radio\" name=\"man\" id=\"sTaiKhoan\">\n<input class=\"sw\" type=\"checkbox\" id=\"vaiAdmin\">\n\n<header class=\"topbar\">\n  <span class=\"brand\">Bài tập trên web<\u002Fspan>\n  <span class=\"sep\"><\u002Fspan>\n  <span class=\"org\">Học viện Chính trị<\u002Fspan>\n  <span class=\"spacer\"><\u002Fspan>\n  <span class=\"who khi-vao\">Chưa đăng nhập<\u002Fspan>\n  <label class=\"chip khi-trong\" for=\"sVao\" title=\"Thoát\">\n    <span>Trần Văn A<\u002Fspan><span class=\"badge gv\">GV<\u002Fspan>\n  <\u002Flabel>\n<\u002Fheader>\n\n<nav class=\"tabbar\">\n  <label class=\"pill\" for=\"sPhien\">Phiên bài tập<\u002Flabel>\n  <label class=\"pill tab-admin\" for=\"sTaiKhoan\">Tài khoản<\u002Flabel>\n  <label class=\"pill\" for=\"sVao\">Vào làm bài<\u002Flabel>\n  <span class=\"spacer\"><\u002Fspan>\n  <button class=\"bt bt-chinh tab-admin\" type=\"button\">+ Thêm tài khoản<\u002Fbutton>\n<\u002Fnav>\n\n<main>\n\n  <!-- ══ MÀN 1: CHƯA ĐĂNG NHẬP — hai lối vào cạnh nhau ═══════════════════════ -->\n  <section class=\"man\" id=\"manVao\">\n    <div class=\"vao\">\n      <div class=\"vao-hv\">\n        <span class=\"kicker\">Học viên<\u002Fspan>\n        <h1>Nhập mã phiên để vào làm bài<\u002Fh1>\n        <p>Mã 6 số do giảng viên chiếu trên bảng.<\u002Fp>\n        <div class=\"hang2\">\n          <div>\n            <label class=\"nhan\" for=\"oMaPhien\">Mã phiên <span class=\"goiy\">(trên bảng)<\u002Fspan><\u002Flabel>\n            <input class=\"o o-ma\" id=\"oMaPhien\" inputmode=\"numeric\" maxlength=\"6\" placeholder=\"000000\" autocomplete=\"off\">\n          <\u002Fdiv>\n          <div>\n            <label class=\"nhan\" for=\"oMaHV\">Mã học viên<\u002Flabel>\n            <input class=\"o\" id=\"oMaHV\" placeholder=\"vd: qs2628-01\" autocomplete=\"off\">\n          <\u002Fdiv>\n        <\u002Fdiv>\n        <div style=\"margin-top:16px\">\n          <button class=\"bt bt-chinh bt-lon\" type=\"button\">Vào làm bài<\u002Fbutton>\n        <\u002Fdiv>\n        <p class=\"note\">Màn làm bài mở toàn màn hình, thoát khỏi trang này — giữ nguyên như hiện tại.<\u002Fp>\n      <\u002Fdiv>\n\n      <div class=\"vao-cb\">\n        <span class=\"kicker\">Cán bộ, giảng viên<\u002Fspan>\n        <h2>Đăng nhập bảng theo dõi<\u002Fh2>\n        <div class=\"nhom\">\n          <label class=\"nhan\" for=\"oEmail\">Email<\u002Flabel>\n          <input class=\"o\" id=\"oEmail\" type=\"email\" placeholder=\"ten@hvct.edu.vn\" autocomplete=\"username\">\n        <\u002Fdiv>\n        <div class=\"nhom\">\n          <label class=\"nhan\" for=\"oMk\">Mật khẩu<\u002Flabel>\n          <input class=\"o\" id=\"oMk\" type=\"password\" placeholder=\"••••••••\" autocomplete=\"current-password\">\n        <\u002Fdiv>\n        <label class=\"ghinho\" style=\"margin-bottom:14px\">\n          <input type=\"checkbox\"> Ghi nhớ trên máy này\n        <\u002Flabel>\n        <label class=\"bt bt-lon\" for=\"sPhien\" style=\"width:100%\">Đăng nhập<\u002Flabel>\n        <p class=\"note\">Vai trò Quản trị sẽ thấy thêm tab <b>Tài khoản<\u002Fb> sau khi đăng nhập.<\u002Fp>\n      <\u002Fdiv>\n    <\u002Fdiv>\n  <\u002Fsection>\n\n  <!-- ══ MÀN 2: DANH SÁCH PHIÊN ══════════════════════════════════════════════ -->\n  <section class=\"man\" id=\"manPhien\">\n    <div class=\"dai\">\n      <div class=\"the\"><div class=\"the-nhan\">Phiên đang mở<\u002Fdiv><div class=\"the-so\">3<\u002Fdiv><\u002Fdiv>\n      <div class=\"the\"><div class=\"the-nhan\">Đã nộp hôm nay<\u002Fdiv><div class=\"the-so\">78<\u002Fdiv><\u002Fdiv>\n      <div class=\"the\"><div class=\"the-nhan\">Điểm trung bình<\u002Fdiv><div class=\"the-so\">7.4<\u002Fdiv><\u002Fdiv>\n      <div class=\"the\" style=\"display:flex;align-items:center;gap:8px\">\n        <div>\n          <div class=\"the-nhan\">Lọc trạng thái<\u002Fdiv>\n          <select class=\"o\" style=\"margin-top:4px\">\n            <option>Tất cả<\u002Foption><option>Đang mở<\u002Foption><option>Đã đóng<\u002Foption>\n          <\u002Fselect>\n        <\u002Fdiv>\n      <\u002Fdiv>\n    <\u002Fdiv>\n\n    <div class=\"vung\">\n      <table class=\"bang\">\n        <thead><tr>\n          <th style=\"width:50px\">STT<\u002Fth>\n          <th>Bài tập<\u002Fth>\n          <th style=\"width:90px\">Lớp<\u002Fth>\n          <th style=\"width:96px\">Kiểu<\u002Fth>\n          <th style=\"width:92px\">Mã phiên<\u002Fth>\n          <th style=\"width:80px\">Đã nộp<\u002Fth>\n          <th style=\"width:60px\">TB<\u002Fth>\n          <th style=\"width:104px\">Trạng thái<\u002Fth>\n        <\u002Ftr><\u002Fthead>\n        <tbody>\n          <tr>\n            <td class=\"giua mo-nhat\">1<\u002Ftd>\n            <td><label for=\"sChiTiet\" style=\"cursor:pointer;color:var(--blue)\">Unit 4 — Reading Part 3<\u002Flabel><\u002Ftd>\n            <td class=\"giua\">QS2628<\u002Ftd><td class=\"giua\">Tự luyện<\u002Ftd>\n            <td class=\"giua ma\">418203<\u002Ftd><td class=\"giua\">28/30<\u002Ftd>\n            <td class=\"giua diem-o\">7.8<\u002Ftd><td class=\"giua xong\">● Đang mở<\u002Ftd>\n          <\u002Ftr>\n          <tr>\n            <td class=\"giua mo-nhat\">2<\u002Ftd>\n            <td>Kiểm tra giữa kỳ — Vocabulary<\u002Ftd>\n            <td class=\"giua\">QS2628<\u002Ftd><td class=\"giua\">Kiểm tra<\u002Ftd>\n            <td class=\"giua ma\">905117<\u002Ftd><td class=\"giua\">30/30<\u002Ftd>\n            <td class=\"giua diem-o\">6.9<\u002Ftd><td class=\"giua mo-nhat\">Đã đóng<\u002Ftd>\n          <\u002Ftr>\n          <tr>\n            <td class=\"giua mo-nhat\">3<\u002Ftd>\n            <td>Word Web — Military terms<\u002Ftd>\n            <td class=\"giua\">QS2701<\u002Ftd><td class=\"giua\">Tự luyện<\u002Ftd>\n            <td class=\"giua ma\">660842<\u002Ftd><td class=\"giua\">12/26<\u002Ftd>\n            <td class=\"giua diem-o\">8.1<\u002Ftd><td class=\"giua xong\">● Đang mở<\u002Ftd>\n          <\u002Ftr>\n          <tr>\n            <td class=\"giua mo-nhat\">4<\u002Ftd>\n            <td>Gap-fill — Present perfect<\u002Ftd>\n            <td class=\"giua\">QS2701<\u002Ftd><td class=\"giua\">Tự luyện<\u002Ftd>\n            <td class=\"giua ma\">231970<\u002Ftd><td class=\"giua\">26/26<\u002Ftd>\n            <td class=\"giua diem-o\">7.2<\u002Ftd><td class=\"giua mo-nhat\">Đã đóng<\u002Ftd>\n          <\u002Ftr>\n        <\u002Ftbody>\n      <\u002Ftable>\n      <p class=\"chuthich\">Bấm tên bài tập để mở chi tiết phiên ngay trong tab — không đổi URL.<\u002Fp>\n    <\u002Fdiv>\n  <\u002Fsection>\n\n  <!-- ══ MÀN 3: CHI TIẾT MỘT PHIÊN ═══════════════════════════════════════════ -->\n  <section class=\"man\" id=\"manChiTiet\">\n    <div class=\"duong\">\n      <label for=\"sPhien\" style=\"cursor:pointer;color:var(--blue)\">‹ Danh sách phiên<\u002Flabel>\n      <span style=\"color:#C6CDD6\">/<\u002Fspan>\n      <b>Unit 4 — Reading Part 3<\u002Fb>\n      <span class=\"nhip\" title=\"Tự cập nhật\">●<\u002Fspan>\n      <span class=\"spacer\"><\u002Fspan>\n      <button class=\"bt\" type=\"button\">Đóng phiên<\u002Fbutton>\n      <button class=\"bt\" type=\"button\">Tải kết quả<\u002Fbutton>\n    <\u002Fdiv>\n\n    <div class=\"dai\">\n      <div class=\"the\"><div class=\"the-nhan\">Mã phiên<\u002Fdiv><div class=\"the-ma\">418203<\u002Fdiv><\u002Fdiv>\n      <div class=\"the\"><div class=\"the-nhan\">Đã nộp<\u002Fdiv><div class=\"the-so\">28/30<\u002Fdiv><\u002Fdiv>\n      <div class=\"the\"><div class=\"the-nhan\">Điểm trung bình<\u002Fdiv><div class=\"the-so\">7.8<\u002Fdiv><\u002Fdiv>\n      <div class=\"the the-rong\">\n        <div class=\"the-nhan\">% lớp đúng mỗi câu<\u002Fdiv>\n        <div class=\"cot\">\n          <i style=\"height:82%\"><\u002Fi><i style=\"height:96%\"><\u002Fi><i class=\"vua\" style=\"height:54%\"><\u002Fi>\n          <i style=\"height:71%\"><\u002Fi><i class=\"kem\" style=\"height:29%\"><\u002Fi><i class=\"vua\" style=\"height:64%\"><\u002Fi>\n          <i style=\"height:88%\"><\u002Fi><i class=\"vua\" style=\"height:43%\"><\u002Fi><i style=\"height:93%\"><\u002Fi>\n          <i style=\"height:76%\"><\u002Fi>\n        <\u002Fdiv>\n      <\u002Fdiv>\n    <\u002Fdiv>\n\n    <div class=\"vung\">\n      <table class=\"bang\">\n        <thead><tr>\n          <th style=\"width:130px\">Mã học viên<\u002Fth>\n          <th style=\"width:110px\">Trạng thái<\u002Fth>\n          <th style=\"width:64px\">Điểm<\u002Fth>\n          <th style=\"width:90px\">Thời gian<\u002Fth>\n          <th>Từng câu<\u002Fth>\n          <th style=\"width:56px\">Lượt<\u002Fth>\n        <\u002Ftr><\u002Fthead>\n        <tbody>\n          <tr>\n            <td class=\"ma\">qs2628-01<\u002Ftd><td class=\"giua xong\">Xong<\u002Ftd>\n            <td class=\"giua diem-o\">9.0<\u002Ftd><td class=\"giua\">6:12<\u002Ftd>\n            <td><span class=\"o-qs\"><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"s\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><\u002Fspan><\u002Ftd>\n            <td class=\"giua\">1<\u002Ftd>\n          <\u002Ftr>\n          <tr>\n            <td class=\"ma\">qs2628-02<\u002Ftd><td class=\"giua dang-lam\">Đang làm<\u002Ftd>\n            <td class=\"giua mo-nhat\">–<\u002Ftd><td class=\"giua mo-nhat\">2:40<\u002Ftd>\n            <td><span class=\"o-qs\"><i class=\"d\"><\u002Fi><i class=\"s\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i><\u002Fi><i><\u002Fi><i><\u002Fi><i><\u002Fi><i><\u002Fi><i><\u002Fi><\u002Fspan><\u002Ftd>\n            <td class=\"giua\">1<\u002Ftd>\n          <\u002Ftr>\n          <tr>\n            <td class=\"ma\">qs2628-03<\u002Ftd><td class=\"giua xong\">Xong<\u002Ftd>\n            <td class=\"giua diem-o\">6.0<\u002Ftd><td class=\"giua\">4:58<\u002Ftd>\n            <td><span class=\"o-qs\"><i class=\"s\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"s\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"s\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"s\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><\u002Fspan><\u002Ftd>\n            <td class=\"giua\">2<\u002Ftd>\n          <\u002Ftr>\n          <tr>\n            <td class=\"ma\">qs2628-04<\u002Ftd><td class=\"giua xong\">Xong<\u002Ftd>\n            <td class=\"giua diem-o\">8.0<\u002Ftd><td class=\"giua\">5:31<\u002Ftd>\n            <td><span class=\"o-qs\"><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"s\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"s\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><i class=\"d\"><\u002Fi><\u002Fspan><\u002Ftd>\n            <td class=\"giua\">1<\u002Ftd>\n          <\u002Ftr>\n        <\u002Ftbody>\n      <\u002Ftable>\n    <\u002Fdiv>\n  <\u002Fsection>\n\n  <!-- ══ MÀN 4: TÀI KHOẢN (chỉ vai trò Quản trị) ═════════════════════════════ -->\n  <section class=\"man\" id=\"manTaiKhoan\">\n    <div class=\"vung\" style=\"padding-top:10px\">\n      <table class=\"bang\">\n        <thead><tr>\n          <th style=\"width:50px\">STT<\u002Fth>\n          <th style=\"width:210px\">Email<\u002Fth>\n          <th>Họ tên<\u002Fth>\n          <th style=\"width:80px\">Viết tắt<\u002Fth>\n          <th style=\"width:90px\">Vai trò<\u002Fth>\n          <th style=\"width:100px\">Trạng thái<\u002Fth>\n          <th style=\"width:250px\">Thao tác<\u002Fth>\n        <\u002Ftr><\u002Fthead>\n        <tbody>\n          <tr>\n            <td class=\"giua mo-nhat\">1<\u002Ftd><td>b.nguyen@hvct.edu.vn<\u002Ftd><td>Nguyễn Thị B<\u002Ftd>\n            <td class=\"giua\">NTB<\u002Ftd><td class=\"giua\">Quản trị<\u002Ftd><td class=\"giua xong\">Hoạt động<\u002Ftd>\n            <td class=\"thao-tac\"><button class=\"bt bt-nho\" type=\"button\">Đổi mật khẩu<\u002Fbutton><\u002Ftd>\n          <\u002Ftr>\n          <tr>\n            <td class=\"giua mo-nhat\">2<\u002Ftd><td>a.tran@hvct.edu.vn<\u002Ftd><td>Trần Văn A<\u002Ftd>\n            <td class=\"giua\">TVA<\u002Ftd><td class=\"giua\">Giảng viên<\u002Ftd><td class=\"giua xong\">Hoạt động<\u002Ftd>\n            <td class=\"thao-tac\">\n              <button class=\"bt bt-nho\" type=\"button\">Đổi mật khẩu<\u002Fbutton>\n              <button class=\"bt bt-nho\" type=\"button\">Khoá<\u002Fbutton>\n              <button class=\"bt bt-nho bt-do\" type=\"button\">Xoá<\u002Fbutton>\n            <\u002Ftd>\n          <\u002Ftr>\n          <tr>\n            <td class=\"giua mo-nhat\">3<\u002Ftd><td>c.le@hvct.edu.vn<\u002Ftd><td>Lê Văn C<\u002Ftd>\n            <td class=\"giua\">LVC<\u002Ftd><td class=\"giua\">Giảng viên<\u002Ftd><td class=\"giua mo-nhat\">Đã khoá<\u002Ftd>\n            <td class=\"thao-tac\">\n              <button class=\"bt bt-nho\" type=\"button\">Đổi mật khẩu<\u002Fbutton>\n              <button class=\"bt bt-nho\" type=\"button\">Mở khoá<\u002Fbutton>\n              <button class=\"bt bt-nho bt-do\" type=\"button\">Xoá<\u002Fbutton>\n            <\u002Ftd>\n          <\u002Ftr>\n        <\u002Ftbody>\n      <\u002Ftable>\n      <p class=\"chuthich\">Xoá giáo viên sẽ xoá theo toàn bộ bài tập của người đó (cascade <code class=\"ma\">bai_tap.chu_gv<\u002Fcode>) — nên dùng “Khoá”.<\u002Fp>\n    <\u002Fdiv>\n  <\u002Fsection>\n\n<\u002Fmain>\n\n<!-- ══ BẢNG ĐIỀU KHIỂN CHẠY THỬ — xoá khi ghép vào bản thật ═══════════════════ -->\n<footer style=\"flex:0 0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;\n  padding:8px 12px;background:#fff;border-top:1px solid var(--border);font-size:12px;color:var(--t3)\">\n  <b style=\"color:var(--t2)\">Chạy thử:<\u002Fb>\n  <label class=\"cong-tac\" for=\"vaiAdmin\">Bật vai trò Quản trị (hiện tab Tài khoản)<\u002Flabel>\n  <span class=\"spacer\"><\u002Fspan>\n  <span>Không JavaScript — chuyển màn bằng CSS <code class=\"ma\">:checked<\u002Fcode>.<\u002Fspan>\n<\u002Ffooter>\n\n\n\n<\u002Fbody><\u002Fhtml>"
+  </script>
+</body>
+</html>

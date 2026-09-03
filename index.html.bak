@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<!-- maximum-scale=5: cho phép chụm ngón phóng to trên điện thoại (§41.7) -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>Bài tập</title>
+<link rel="stylesheet" href="baigiang.css?v=4">
+<link rel="stylesheet" href="trang.css?v=4">
+</head>
+<body>
+
+<!-- ══ MÀN 1: VÀO BÀI ══════════════════════════════════════════════════════════════════════ -->
+<div id="manVao" class="man">
+  <div class="hop">
+    <h1 id="vaoTen">Bài tập</h1>
+    <p class="phu" id="vaoPhu">Nhập mã để bắt đầu</p>
+
+    <label class="nhan" for="oMaPhien">Mã phiên <span class="goiy">(giáo viên chiếu trên bảng)</span></label>
+    <input id="oMaPhien" class="o o-ma" inputmode="numeric" autocomplete="off"
+           maxlength="6" placeholder="000000">
+
+    <label class="nhan" for="oMaHV">Mã học viên</label>
+    <input id="oMaHV" class="o" autocomplete="off" placeholder="vd: qs2628-01">
+
+    <button id="btVao" class="bt bt-chinh">Vào làm bài</button>
+    <div id="vaoLoi" class="loi"></div>
+  </div>
+</div>
+
+<!-- ══ MÀN 2: LÀM BÀI ══════════════════════════════════════════════════════════════════════ -->
+<div id="manBai" class="man an">
+  <header class="dau">
+    <span id="dauCau">Câu 1/1</span>
+    <span id="dauGio" class="gio"></span>
+    <button id="btNop" class="bt bt-nop">Nộp bài</button>
+  </header>
+
+  <!-- .sl là khung slide của app (960×540). Trên điện thoại, trang.css bỏ khung + bỏ scale (§41.7) -->
+  <main id="sanKhau" class="san"></main>
+
+  <footer class="chan">
+    <button id="btTruoc" class="bt bt-phu">‹</button>
+    <div id="denBao" class="den"></div>
+    <button id="btSau" class="bt bt-phu">›</button>
+  </footer>
+</div>
+
+<!-- ══ MÀN 3: ĐÃ NỘP ═══════════════════════════════════════════════════════════════════════ -->
+<div id="manXong" class="man an">
+  <div class="hop">
+    <h1>Đã nộp bài</h1>
+    <div id="xongDiem" class="diem">–</div>
+    <div id="xongQs" class="qs"></div>
+    <p id="xongNhan" class="phu"></p>
+    <button id="btVeDau" class="bt bt-phu">Về màn hình đầu</button>
+  </div>
+</div>
+
+<div id="banner" class="banner an"></div>
+
+<script src="cauhinh.js?v=4"></script>
+<script src="cham-diem.js?v=4"></script>
+<script src="engine.js?v=4"></script>
+<script src="trang.js?v=4"></script>
+</body>
+</html>

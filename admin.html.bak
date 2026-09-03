@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản trị tài khoản</title>
+<link rel="stylesheet" href="trang.css?v=4">
+<link rel="stylesheet" href="gv.css?v=4">
+</head>
+<body class="gv">
+
+<!-- ══ ĐĂNG NHẬP ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="manVao" class="man">
+  <div class="hop">
+    <h1>Quản trị tài khoản</h1>
+    <p class="phu">Chỉ dành cho cán bộ quản trị</p>
+    <label class="nhan" for="oEmail">Email</label>
+    <input id="oEmail" class="o" type="email" autocomplete="username">
+    <label class="nhan" for="oMk">Mật khẩu</label>
+    <input id="oMk" class="o" type="password" autocomplete="current-password">
+    <button id="btVao" class="bt bt-chinh">Đăng nhập</button>
+    <div id="vaoLoi" class="loi"></div>
+  </div>
+</div>
+
+<!-- ══ DANH SÁCH TÀI KHOẢN ═════════════════════════════════════════════════════════════════ -->
+<div id="manDS" class="man-full an">
+  <header class="tb">
+    <b>Tài khoản cán bộ, giảng viên</b>
+    <span class="giua"></span>
+    <a class="bt" href="gv.html">Bảng theo dõi</a>
+    <button id="btThem" class="bt bt-chinh" style="width:auto;height:36px;margin:0">+ Thêm tài khoản</button>
+    <span id="aiDo" class="ai"></span>
+    <button id="btRa" class="bt">Thoát</button>
+  </header>
+  <div class="vung">
+    <table class="bang">
+      <thead><tr>
+        <th style="width:50px">STT</th>
+        <th style="width:190px">Email</th>
+        <th>Họ tên</th>
+        <th style="width:80px">Viết tắt</th>
+        <th style="width:90px">Vai trò</th>
+        <th style="width:100px">Trạng thái</th>
+        <th style="width:210px">Thao tác</th>
+      </tr></thead>
+      <tbody id="dsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ POPUP THÊM / ĐỔI MẬT KHẨU ═══════════════════════════════════════════════════════════ -->
+<div id="hopThem" class="lop an">
+  <div class="hop hop-rong">
+    <h1 id="htTieuDe">Thêm tài khoản</h1>
+    <div id="htThan"></div>
+    <div id="htLoi" class="loi"></div>
+    <div class="hang-nut">
+      <button id="htHuy" class="bt">Hủy</button>
+      <button id="htOk" class="bt bt-chinh" style="width:auto;margin:0">Tạo tài khoản</button>
+    </div>
+  </div>
+</div>
+
+<div id="banner" class="banner an"></div>
+
+<script src="cauhinh.js?v=4"></script>
+<script src="admin.js?v=4"></script>
+</body>
+</html>

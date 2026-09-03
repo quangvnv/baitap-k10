@@ -1,0 +1,95 @@
+/* Bảng theo dõi của giáo viên (§41). Dùng chung biến màu + nút của trang.css.
+   Bảng theo tinh thần §3/§7 của app (header sticky, cột cuối co giãn) vì GV đã quen — khác trang
+   học viên vốn thiết kế tự do cho điện thoại (§41.7). */
+
+body.gv { background: var(--xam); }
+
+.man-full { min-height: 100dvh; display: flex; flex-direction: column; }
+
+/* ── Thanh công cụ ────────────────────────────────────────────────────────────────────────── */
+.tb {
+  flex: 0 0 44px; display: flex; align-items: center; gap: 8px; padding: 0 10px;
+  background: #fff; border-bottom: 1px solid var(--vien);
+}
+.tb b { font-size: 15px; }
+.giua-day, .giua.giua-day { }
+.tb .giua { flex: 1; }
+.ai { font-size: 13px; color: #5b6570; }
+.o-nho { height: 28px; width: auto; min-width: 110px; font-size: 13px; }
+
+/* Nhịp cập nhật */
+.nhip { color: #cfd6dd; font-size: 18px; transition: color .3s; }
+.nhip.dap { color: var(--luc); }
+
+/* ── Dải thẻ tóm tắt ─────────────────────────────────────────────────────────────────────── */
+.dai { display: flex; gap: 8px; padding: 8px 10px; flex-wrap: wrap; }
+.the {
+  background: #fff; border: 1px solid var(--vien); border-radius: 8px;
+  padding: 8px 10px; min-width: 120px;
+}
+.the-rong { flex: 1; min-width: 260px; }
+.the-nhan { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: #8a939c; }
+.the-ma { font-size: 30px; font-weight: 700; letter-spacing: 6px; color: var(--xanh-dam); }
+.the-so { font-size: 24px; font-weight: 700; color: #222; }
+
+/* Biểu đồ cột — div/CSS thuần, không thư viện (offline §1, đồng bộ §32.30) */
+.cot { display: flex; align-items: flex-end; gap: 3px; height: 46px; margin-top: 4px; }
+.cot-1 { flex: 1; min-width: 5px; background: var(--luc); border-radius: 2px 2px 0 0; display: block; }
+.cot-1.vua { background: var(--cam); }
+.cot-1.kem { background: var(--do); }
+
+/* ── Bảng ────────────────────────────────────────────────────────────────────────────────── */
+.vung { flex: 1 1 auto; overflow: auto; padding: 0 10px 10px; scrollbar-gutter: stable; }
+.vung::-webkit-scrollbar { width: 4px; height: 4px; }
+.vung::-webkit-scrollbar-thumb { background: #c3ccd5; border-radius: 2px; }
+
+.bang { width: 100%; border-collapse: collapse; background: #fff; table-layout: fixed; font-size: 13px; }
+.bang thead th {
+  position: sticky; top: 0; z-index: 2;               /* §3: header cố định khi cuộn */
+  background: #eef2f6; border: 1px solid var(--vien);
+  padding: 6px 8px; text-align: center; font-weight: 600;
+}
+.bang tbody td { border-bottom: 1px solid #e8ecf0; padding: 5px 8px; vertical-align: middle; }
+.bang tbody tr:hover { background: #f6f9fc; }
+.co-tro { cursor: pointer; }
+.giua { text-align: center; }
+.ma { font-family: 'Consolas', monospace; }
+.mo-nhat { color: #9aa4ae; }
+.trong { text-align: center; color: #8a939c; padding: 24px; font-size: 14px; }
+
+.dang-lam { color: var(--cam); font-weight: 600; }
+.xong { color: var(--luc); font-weight: 600; }
+.diem-o { font-weight: 700; }
+.cham-mo {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--luc); margin-right: 5px; vertical-align: middle;
+}
+.nhan-khach {
+  font-style: normal; font-size: 10px; background: #fff3e0; color: var(--cam);
+  border: 1px solid #ffcc80; border-radius: 3px; padding: 0 4px; margin-left: 4px;
+}
+
+/* Ô "Từng câu" — cột FLEX (§3), ô vuông xanh/đỏ */
+.o-qs { display: flex; gap: 2px; flex-wrap: wrap; }
+.o-qs i { width: 12px; height: 12px; border-radius: 2px; display: block; }
+.o-qs i.d { background: var(--luc); }
+.o-qs i.s { background: var(--do); }
+
+@media (max-width: 700px) {
+  .tb { flex-wrap: wrap; height: auto; flex-basis: auto; padding: 6px 8px; }
+  .the-ma { font-size: 24px; letter-spacing: 4px; }
+  .bang { font-size: 12px; }
+}
+
+/* ── Trang quản trị tài khoản (admin.html) ────────────────────────────────────────────────── */
+.bt-nho { height: 26px; padding: 0 8px; font-size: 12px; margin: 0 2px; }
+.bt-do { color: var(--do); border-color: #f5c2c0; }
+.bt-do:hover:not(:disabled) { background: #fdecea; }
+.hop-rong { max-width: 420px; text-align: left; }
+.hop-rong h1 { text-align: center; }
+.lop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9600;
+  display: flex; align-items: center; justify-content: center; padding: 10px;
+}
+.hang-nut { display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; }
+.tb .bt { flex: 0 0 auto; }
