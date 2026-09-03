@@ -1,6 +1,15 @@
 /* ══════════════════════════════════════════════════════════════════════════════════════════════
-   VỎ TRANG BÀI TẬP — §41.7 (trang web TỰ DO, không theo TB1/TB2/TB3 của app)
+   VỎ TRANG BÀI TẬP TRÊN WEB — NGUỒN TOKEN DUY NHẤT của cả site (§41.7)
    ──────────────────────────────────────────────────────────────────────────────────────────────
+   Nạp ở MỌI trang: index.html (học viên) · gv.html (bảng theo dõi + tài khoản).
+   gv.css nạp SAU file này và chỉ thêm phần riêng của bảng theo dõi.
+
+   ⚠ MỘT BỘ TOKEN DUY NHẤT — đừng khai màu/gradient mới ở file khác.
+     Theme bám app (renderer/css/landing.css + buttons.css §8): xanh #1A6FBF, Segoe UI,
+     nút "glossy" (gradient dọc + gờ sáng + nhấc 1px khi hover), bo 6px, cao 28px.
+     Tên token tiếng Anh (--blue/--t1/--border) là bản chính; các tên tiếng Việt cũ
+     (--xanh/--xam/--vien…) giữ làm BÍ DANH để mã cũ không vỡ — đừng xoá.
+
    ⚠ BÀI HỌC §32.24 (đã sai 3 lần với riêng layout ô chữ): slide app là khung CỨNG 960×540 +
      transform:scale. Trên điện thoại dọc, thu cho vừa bề ngang thì chữ nhỏ không đọc nổi, và mọi
      mẹo chia lại lưới đều hỏng vì chiều cao đã được tính sẵn cho màn hình lớn.
@@ -11,16 +20,39 @@
    ══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --xanh: #1976D2;
-  --xanh-dam: #0D47A1;
-  --xam: #f4f6f8;
+  /* ── màu ──────────────────────────────────────────────────────────────────────────────── */
+  --blue: #1A6FBF;
+  --blue-hover: #155EA3;
+  --blue-dark: #0D47A1;
+  --blue-light: #EBF4FF;
+  --bg: #F4F7FB;
+  --white: #fff;
+  --border: #DDE4EE;
   --vien: #d8dde3;
-  --do: #d32f2f;
+  --t1: #1A2332;
+  --t2: #4A5568;
+  --t3: #7A8799;
+  --label: #374151;
   --luc: #2e7d32;
   --cam: #ef6c00;
+  --do: #d32f2f;
+  --r: 6px;
+  --font: 'Segoe UI', 'Helvetica Neue', Roboto, Arial, sans-serif;
+
+  /* ── gradient nút (glossy §8) ─────────────────────────────────────────────────────────── */
+  --grad-btn: linear-gradient(180deg, #3E8FD8 0%, #1A6FBF 55%, #1660AB 100%);
+  --grad-btn-h: linear-gradient(180deg, #4C9CE4 0%, #1C77C9 55%, #12569A 100%);
+  --grad-soft: linear-gradient(180deg, #FFFFFF 0%, #F1F5FA 100%);
+  --grad-soft-h: linear-gradient(180deg, #FFFFFF 0%, #E8EFF7 100%);
+
+  /* ── BÍ DANH cho mã cũ — đừng xoá ─────────────────────────────────────────────────────── */
+  --xanh: var(--blue);
+  --xanh-dam: var(--blue-dark);
+  --xam: var(--bg);
 }
 
 * { box-sizing: border-box; }
+
 /* ⚠⚠ PHẢI GHI ĐÈ `html,body` CỦA baigiang.css — NGUYÊN NHÂN LỖI KHÔNG CUỘN ĐƯỢC (2026-09-01).
    baigiang.css dòng 19 khai `html,body{height:100vh;overflow:hidden}` vì đó là CSS của app
    ELECTRON — app chạy toàn màn hình trong cửa sổ cố định nên cố tình khoá cuộn trang. Ta chép
@@ -30,56 +62,111 @@
    ⚠ trang.css PHẢI nạp SAU baigiang.css trong <head> thì rule này mới thắng. */
 html, body {
   margin: 0; padding: 0;
-  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-  background: var(--xam); color: #1a1a1a;
+  font-family: var(--font);
+  background: var(--bg); color: var(--t1);
   height: auto;        /* ghi đè height:100vh */
   min-height: 100%;
   overflow: visible;   /* ghi đè overflow:hidden — để trang cuộn tự nhiên */
 }
 /* Chặn tràn ngang bằng `clip` (KHÔNG tạo vùng cuộn riêng như `hidden`, nên không khoá cuộn dọc) */
 body { overflow-x: clip; }
-.an { display: none !important; }
 
-/* ── Màn hình dạng hộp giữa (vào bài / đã nộp) ────────────────────────────────────────────── */
+a { color: var(--blue); text-decoration: none; }
+a:hover { color: var(--blue-hover); text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.an { display: none !important; }
+.spacer { flex: 1; }
+
+/* ── Màn hình dạng hộp giữa (vào bài / đã nộp / đăng nhập) ─────────────────────────────────── */
 .man { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 10px; }
 .hop {
-  background: #fff; border: 1px solid var(--vien); border-radius: 10px;
-  padding: 10px; width: 100%; max-width: 380px; text-align: center;
+  background: var(--white); border: 1px solid var(--vien); border-radius: 10px;
+  padding: 16px; width: 100%; max-width: 380px; text-align: center;
+  box-shadow: 0 1px 3px rgba(26, 51, 80, .06);
 }
-.hop h1 { font-size: 20px; margin: 6px 0; color: var(--xanh-dam); }
-.phu { font-size: 13px; color: #5b6570; margin: 4px 0 10px; }
-.nhan { display: block; text-align: left; font-size: 13px; font-weight: 600; margin: 8px 0 4px; }
+.hop h1 { font-size: 20px; margin: 6px 0; color: var(--blue-dark); }
+.phu { font-size: 13px; color: var(--t2); margin: 4px 0 10px; }
+.kicker {
+  display: block; font-size: 11px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--t3);
+}
+/* Dòng chân hộp — vd link "Dành cho giảng viên" ở trang học viên */
+.chan-hop { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--t3); }
+
+/* ── Ô nhập ───────────────────────────────────────────────────────────────────────────────── */
+.nhan { display: block; text-align: left; font-size: 13px; font-weight: 600; color: var(--label); margin: 8px 0 4px; }
 .goiy { font-weight: 400; color: #8a939c; }
 .o {
-  width: 100%; height: 40px; padding: 0 10px; font-size: 15px;
-  border: 1px solid var(--vien); border-radius: 6px; outline: none; background: #fff;
+  width: 100%; height: 40px; padding: 0 10px;
+  font-family: var(--font); font-size: 15px; color: var(--t1);
+  background: var(--white); border: 1px solid var(--vien); border-radius: var(--r); outline: none;
+  transition: border-color .15s, box-shadow .15s;
 }
-.o:focus { border-color: var(--xanh); }
-.o-ma { font-size: 24px; text-align: center; letter-spacing: 6px; font-weight: 700; height: 50px; }
+.o::placeholder { color: #A8B2BF; }
+.o:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26, 111, 191, .12); }
+.o-ma { font-size: 28px; text-align: center; letter-spacing: 8px; font-weight: 700; height: 56px; }
+select.o {
+  height: 28px; font-size: 13px; padding: 0 26px 0 8px; cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A8799' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  width: auto; min-width: 120px;
+}
 .loi { color: var(--do); font-size: 13px; min-height: 18px; margin-top: 6px; }
 
+/* ── Nút — bề mặt "glossy" đồng bộ app (§8) ───────────────────────────────────────────────── */
 .bt {
-  height: 36px; padding: 0 14px; font-size: 14px; font-weight: 600;
-  border: 1px solid var(--vien); border-radius: 6px; background: #fff; color: #222;
-  cursor: pointer; transition: .15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  height: 28px; padding: 0 12px; border-radius: var(--r);
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  border: 1px solid #CFD8E6; background: var(--grad-soft); color: var(--t2);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(26, 51, 80, .10);
+  transition: background .15s, border-color .15s, box-shadow .15s, color .15s, transform .12s;
 }
-.bt:hover:not(:disabled) { background: #f0f4f8; }
+.bt:hover:not(:disabled) { background: var(--grad-soft-h); border-color: #AAB4C4; color: var(--blue); transform: translateY(-1px); }
+.bt:active:not(:disabled) { transform: translateY(0); box-shadow: inset 0 2px 4px rgba(26, 51, 80, .18); }
 .bt:disabled { opacity: .45; cursor: not-allowed; }
-.bt-chinh { width: 100%; margin-top: 10px; height: 42px; background: var(--xanh); color: #fff; border-color: var(--xanh); }
-.bt-chinh:hover:not(:disabled) { background: var(--xanh-dam); }
-.bt-nop { background: var(--luc); color: #fff; border-color: var(--luc); }
-.bt-phu { min-width: 44px; }
+
+.bt-chinh {
+  color: #fff; border-color: #1560A6; background: var(--grad-btn);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .42), 0 1px 2px rgba(26, 51, 80, .18);
+}
+.bt-chinh:hover:not(:disabled) {
+  background: var(--grad-btn-h); border-color: #12569A; color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 3px 9px rgba(26, 111, 191, .34);
+}
+.bt-nop {
+  color: #fff; border-color: #256b28;
+  background: linear-gradient(180deg, #4CA050 0%, #2e7d32 55%, #276B2A 100%);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .38), 0 1px 2px rgba(26, 51, 80, .18);
+}
+.bt-nop:hover:not(:disabled) {
+  color: #fff; border-color: #1f5c22;
+  background: linear-gradient(180deg, #58B15C 0%, #338838 55%, #22601F 100%);
+}
+.bt-do { border-color: #f5c2c0; color: var(--do); background: linear-gradient(180deg, #FFFFFF 0%, #FDF1F0 100%); }
+.bt-do:hover:not(:disabled) { color: var(--do); border-color: #e59d9a; background: linear-gradient(180deg, #FFFFFF 0%, #FBE3E1 100%); }
+
+.bt-nho { height: 26px; padding: 0 8px; font-size: 12px; }
+.bt-lon { height: 46px; padding: 0 24px; font-size: 15px; }
+.bt-rong { width: 100%; }        /* nút CTA trải hết bề ngang hộp */
+.bt-phu { min-width: 44px; }     /* nút ‹ › ở màn làm bài */
 
 /* ── Màn làm bài ──────────────────────────────────────────────────────────────────────────── */
 #manBai { flex-direction: column; align-items: stretch; padding: 0; }
 .dau, .chan {
   flex: 0 0 44px; display: flex; align-items: center; gap: 8px;
-  padding: 0 10px; background: #fff; border-bottom: 1px solid var(--vien);
+  padding: 0 10px; background: var(--white); border-bottom: 1px solid var(--vien);
 }
 .chan { border-bottom: none; border-top: 1px solid var(--vien); justify-content: center; }
 .dau { justify-content: space-between; }
-#dauCau { font-size: 13px; font-weight: 600; color: #5b6570; }
-.gio { font-size: 15px; font-weight: 700; color: var(--xanh-dam); font-variant-numeric: tabular-nums; }
+/* Nút trong thanh trên/dưới cao hơn nút toolbar — học viên bấm bằng ngón tay */
+.dau .bt, .chan .bt { height: 34px; }
+#dauCau { font-size: 13px; font-weight: 600; color: var(--t2); }
+.gio { font-size: 15px; font-weight: 700; color: var(--blue-dark); font-variant-numeric: tabular-nums; }
 .gio.gap { color: var(--do); }
 
 .san { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; overflow: auto; padding: 10px; }
@@ -87,11 +174,11 @@ body { overflow-x: clip; }
 /* Đèn báo tiến độ */
 .den { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 60vw; }
 .cham { width: 9px; height: 9px; border-radius: 50%; background: #cfd6dd; display: block; }
-.cham.xong { background: var(--xanh); }
+.cham.xong { background: var(--blue); }
 .cham.nay { outline: 2px solid var(--cam); outline-offset: 1px; }
 
 /* Kết quả */
-.diem { font-size: 40px; font-weight: 700; color: var(--xanh-dam); margin: 6px 0; }
+.diem { font-size: 40px; font-weight: 700; color: var(--blue-dark); margin: 6px 0; }
 .qs { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
 .qs i { width: 14px; height: 14px; border-radius: 3px; display: block; }
 .qs i.d { background: var(--luc); }
@@ -100,7 +187,7 @@ body { overflow-x: clip; }
 /* Băng thông báo — đè mép trên, đồng bộ mirror-host (§32.4) */
 .banner {
   position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-  background: var(--xanh); color: #fff; font-weight: 500; font-size: 14px;
+  background: var(--blue); color: #fff; font-weight: 500; font-size: 14px;
   padding: 10px 18px; border-radius: 0 0 8px 8px; z-index: 9900; max-width: 92vw; text-align: center;
 }
 .banner--nhac { background: var(--cam); }
@@ -159,5 +246,11 @@ body { overflow-x: clip; }
      ⚠ min-width:0 là mấu chốt — thiếu nó flex item không co xuống dưới bề rộng nội dung. */
   .san .sl table, .san .sl .cw-left { display: block; min-width: 0; max-width: 100%; overflow-x: auto; }
   .dau, .chan { flex-basis: 48px; }
+  .dau .bt, .chan .bt { height: 40px; }
   .den { max-width: 55vw; }
+
+  /* Ô nhập cao hơn cho ngón tay */
+  .o { height: 44px; }
+  .o-ma { font-size: 26px; letter-spacing: 7px; height: 52px; }
+  .bt-lon { height: 48px; }
 }

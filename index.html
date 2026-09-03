@@ -5,14 +5,19 @@
 <!-- maximum-scale=5: cho phép chụm ngón phóng to trên điện thoại (§41.7) -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bài tập</title>
-<link rel="stylesheet" href="baigiang.css?v=4">
-<link rel="stylesheet" href="trang.css?v=4">
+<link rel="stylesheet" href="baigiang.css?v=5">
+<link rel="stylesheet" href="trang.css?v=5">
 </head>
 <body>
 
-<!-- ══ MÀN 1: VÀO BÀI ══════════════════════════════════════════════════════════════════════ -->
+<!-- ══ MÀN 1: VÀO BÀI ══════════════════════════════════════════════════════════════════════
+     ⚠ TRANG NÀY CHỈ DÀNH CHO HỌC VIÊN — form đăng nhập của CB/GV nằm ở gv.html, KHÔNG gộp
+       vào đây (§41.4): học viên mở link trong lớp không nên thấy ô mật khẩu của giảng viên.
+       Lối vào của GV thu về đúng một dòng chữ nhỏ ở chân hộp.
+     ⚠ KHÔNG nạp thêm gì ở màn này: baigiang.css đã 117 KB và khoá cuộn trang (xem trang.css). -->
 <div id="manVao" class="man">
   <div class="hop">
+    <span class="kicker">Học viên</span>
     <h1 id="vaoTen">Bài tập</h1>
     <p class="phu" id="vaoPhu">Nhập mã để bắt đầu</p>
 
@@ -23,8 +28,12 @@
     <label class="nhan" for="oMaHV">Mã học viên</label>
     <input id="oMaHV" class="o" autocomplete="off" placeholder="vd: qs2628-01">
 
-    <button id="btVao" class="bt bt-chinh">Vào làm bài</button>
+    <button id="btVao" class="bt bt-chinh bt-lon bt-rong" style="margin-top:14px">Vào làm bài</button>
     <div id="vaoLoi" class="loi"></div>
+
+    <div class="chan-hop">
+      Cán bộ, giảng viên: <a href="gv.html">mở bảng theo dõi</a>
+    </div>
   </div>
 </div>
 
@@ -53,15 +62,15 @@
     <div id="xongDiem" class="diem">–</div>
     <div id="xongQs" class="qs"></div>
     <p id="xongNhan" class="phu"></p>
-    <button id="btVeDau" class="bt bt-phu">Về màn hình đầu</button>
+    <button id="btVeDau" class="bt bt-lon bt-rong">Về màn hình đầu</button>
   </div>
 </div>
 
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=4"></script>
-<script src="cham-diem.js?v=4"></script>
-<script src="engine.js?v=4"></script>
-<script src="trang.js?v=4"></script>
+<script src="cauhinh.js?v=5"></script>
+<script src="cham-diem.js?v=5"></script>
+<script src="engine.js?v=5"></script>
+<script src="trang.js?v=5"></script>
 </body>
 </html>

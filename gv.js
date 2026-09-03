@@ -1,9 +1,13 @@
 /* ══════════════════════════════════════════════════════════════════════════════════════════════
-   BẢNG THEO DÕI CỦA GIÁO VIÊN (§41)
+   BẢNG THEO DÕI CỦA CÁN BỘ, GIẢNG VIÊN (§41)
    ──────────────────────────────────────────────────────────────────────────────────────────────
    Trang này đăng nhập bằng tài khoản CB/GV rồi đọc THẲNG bảng qua REST — khác hẳn trang học viên
    (chỉ gọi Edge Function, không chạm bảng nào). RLS lo phần phân quyền: GV thấy phiên của mình,
    admin thấy toàn Khoa (web/sql/01-schema.sql).
+
+   ⚠ FILE NÀY GIỮ PHIÊN ĐĂNG NHẬP CHO CẢ TRANG. `admin.js` (tab Tài khoản) nạp SAU và dùng lại
+     `window.WebGV` — KHÔNG khai lại TOKEN/api/$/esc… ở đó. Hai file cùng khai `const TOKEN` ở
+     cấp cao nhất sẽ ném SyntaxError "Identifier has already been declared" và CẢ TRANG chết.
 
    ⚠ VÌ SAO HỎI LẠI MỖI 4 GIÂY, KHÔNG DÙNG REALTIME WEBSOCKET:
      Realtime của Supabase đi qua giao thức Phoenix Channels — tự viết thì rối, mà nạp supabase-js
@@ -22,6 +26,7 @@ const NHIP_MS = 4000;
 let TOKEN = null, TOI = null;
 let PHIEN_HIEN = null;      // phiên đang xem chi tiết
 let NHIP = null;            // id setInterval
+let TAB = 'phien';          // tab đang mở: 'phien' | 'taikhoan'
 
 const $ = (id) => document.getElementById(id);
 const hien = (id, on) => $(id).classList.toggle('an', !on);
@@ -44,9 +49,12 @@ async function api(duong, tuyChon = {}) {
   const chu = await r.text();
   let kq = null;
   try { kq = chu ? JSON.parse(chu) : null; } catch { kq = chu; }
-  if (!r.ok) throw new Error((kq && (kq.message || kq.error_description || kq.msg)) || ('Lỗi ' + r.status));
+  if (!r.ok) throw new Error((kq && (kq.loi || kq.message || kq.error_description || kq.msg)) || ('Lỗi ' + r.status));
   return kq;
 }
+
+/* Mặt tiền dùng chung cho admin.js — đừng để tab Tài khoản tự dựng lại phiên đăng nhập. */
+window.WebGV = { api, bao, esc, $, hien, toi: () => TOI };
 
 /* ── Đăng nhập ───────────────────────────────────────────────────────────────────────────── */
 $('oEmail').value = localStorage.getItem(KHOA_EMAIL) || '';
@@ -81,24 +89,57 @@ async function sauDangNhap(email) {
     return;
   }
   TOI = nd[0];
-  $('aiDo').textContent = (TOI.ten || email) + (TOI.vai_tro === 'admin' ? ' · quản trị' : '');
+  const laAdmin = TOI.vai_tro === 'admin';
+  $('chipTen').textContent = TOI.ten || email;
+  $('chipVai').textContent = laAdmin ? 'CB' : 'GV';
+  $('chipVai').className = 'badge ' + (laAdmin ? 'cb' : 'gv');
+  // Tab Tài khoản do VAI TRÒ trong CSDL quyết định (§41.14), không phải công tắc giao diện.
+  $('tabTaiKhoan').classList.toggle('an', !laAdmin);
+
   hien('manVao', false);
-  await veDS();
+  hien('thanhTren', true);
+  hien('thanhTab', true);
+
+  // admin.html cũ chuyển hướng sang gv.html#taikhoan ⇒ mở thẳng tab đó nếu có quyền.
+  const muonTK = location.hash === '#taikhoan' && laAdmin;
+  await doiTab(muonTK ? 'taikhoan' : 'phien');
 }
 
 $('btRa').addEventListener('click', () => {
-  TOKEN = null; TOI = null;
+  TOKEN = null; TOI = null; PHIEN_HIEN = null;
   try { localStorage.removeItem(KHOA_TOKEN); } catch { }
   dungNhip();
-  hien('manDS', false); hien('manCT', false); hien('manVao', true);
+  ['manDS', 'manCT', 'manTK', 'thanhTren', 'thanhTab'].forEach(id => hien(id, false));
+  hien('manVao', true);
   $('oMk').value = '';
+  location.hash = '';
 });
+
+/* ── Chuyển tab ──────────────────────────────────────────────────────────────────────────── */
+document.querySelectorAll('.pill[data-tab]').forEach(b => {
+  b.addEventListener('click', () => doiTab(b.dataset.tab));
+});
+
+async function doiTab(ten) {
+  TAB = ten;
+  document.querySelectorAll('.pill[data-tab]').forEach(b => b.classList.toggle('dang', b.dataset.tab === ten));
+  location.hash = ten === 'taikhoan' ? '#taikhoan' : '';
+  if (ten === 'taikhoan') {
+    dungNhip();                                   // rời tab Phiên thì thôi hỏi lại máy chủ
+    hien('manDS', false); hien('manCT', false); hien('manTK', true);
+    if (window.QuanTri) await window.QuanTri.mo();
+    return;
+  }
+  hien('manTK', false);
+  await veDS();
+}
 
 /* ── Danh sách phiên ─────────────────────────────────────────────────────────────────────── */
 $('locTT').addEventListener('change', veDS);
 
 async function veDS() {
   dungNhip();
+  PHIEN_HIEN = null;
   hien('manCT', false); hien('manDS', true);
   const loc = $('locTT').value;
   let ds = [];
@@ -127,14 +168,14 @@ async function veDS() {
     const dsD = t ? Object.values(t.hv) : [];
     const tb = dsD.length ? (dsD.reduce((a, b) => a + (+b || 0), 0) / dsD.length).toFixed(1) : '–';
     return `<tr data-id="${p.id}" class="co-tro">
-      <td class="giua">${i + 1}</td>
+      <td class="giua mo-nhat">${i + 1}</td>
       <td>${esc(p.bai_tap ? p.bai_tap.ten : '—')}</td>
       <td class="giua">${esc(p.ma_lop)}</td>
       <td class="giua">${p.kieu === 'tai_lop' ? 'Tại lớp' : 'Về nhà'}</td>
       <td class="giua ma">${esc(p.ma_phien)}</td>
       <td class="giua">${dsD.length}</td>
-      <td class="giua">${tb}</td>
-      <td class="giua">${p.trang_thai === 'mo' ? '<span class="cham-mo"></span>Đang mở' : 'Đã đóng'}</td>
+      <td class="giua diem-o">${tb}</td>
+      <td class="giua">${p.trang_thai === 'mo' ? '<span class="cham-mo"></span>Đang mở' : '<span class="mo-nhat">Đã đóng</span>'}</td>
     </tr>`;
   }).join('');
   $('dsBody').querySelectorAll('tr[data-id]').forEach(tr => {
@@ -204,9 +245,9 @@ async function lamMoi() {
     const l = theoHV[ma];
     const laKhach = trongLop.indexOf(ma) < 0;
     if (!l) return `<tr><td class="ma">${esc(ma)}</td><td class="giua mo-nhat">Chưa vào</td>
-        <td class="giua">–</td><td class="giua">–</td><td></td><td class="giua">–</td></tr>`;
+        <td class="giua mo-nhat">–</td><td class="giua mo-nhat">–</td><td></td><td class="giua mo-nhat">–</td></tr>`;
     if (!l.nop_luc) return `<tr><td class="ma">${esc(ma)}${laKhach ? ' <i class="nhan-khach">khách</i>' : ''}</td>
-        <td class="giua dang-lam">Đang làm</td><td class="giua">–</td>
+        <td class="giua dang-lam">Đang làm</td><td class="giua mo-nhat">–</td>
         <td class="giua">${phut(l.bat_dau)}</td><td></td><td class="giua">${soLan[ma] || 0}</td></tr>`;
     const qs = l.qs || [];
     return `<tr><td class="ma">${esc(ma)}${laKhach ? ' <i class="nhan-khach">khách</i>' : ''}</td>
@@ -301,5 +342,5 @@ $('btTai').addEventListener('click', async () => {
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) dungNhip();
-  else if (PHIEN_HIEN && !$('manCT').classList.contains('an')) { lamMoi(); batNhip(); }
+  else if (TAB === 'phien' && PHIEN_HIEN && !$('manCT').classList.contains('an')) { lamMoi(); batNhip(); }
 });

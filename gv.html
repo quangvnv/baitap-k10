@@ -2,28 +2,47 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bảng theo dõi — Giáo viên</title>
-<link rel="stylesheet" href="trang.css?v=4">
-<link rel="stylesheet" href="gv.css?v=4">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>Bảng theo dõi — Cán bộ, giảng viên</title>
+<link rel="stylesheet" href="trang.css?v=5">
+<link rel="stylesheet" href="gv.css?v=5">
 </head>
 <body class="gv">
+
+<!-- ══ THANH TIÊU ĐỀ + HÀNG TAB ════════════════════════════════════════════════════════════
+     Cả hai ẩn khi chưa đăng nhập. Tab "Tài khoản" chỉ hiện với vai_tro='admin' — do JS bật
+     theo bảng nguoi_dung (§41.14), KHÔNG phải công tắc trên giao diện. -->
+<header id="thanhTren" class="topbar an">
+  <span class="brand">Bài tập trên web</span>
+  <span class="sep"></span>
+  <span class="org">Học viện Chính trị</span>
+  <span class="spacer"></span>
+  <span id="chipToi" class="chip"><span id="chipTen">—</span><span id="chipVai" class="badge gv">GV</span></span>
+  <button id="btRa" class="bt" type="button">Thoát</button>
+</header>
+
+<nav id="thanhTab" class="tabbar an">
+  <button class="pill dang" type="button" data-tab="phien">Phiên bài tập</button>
+  <button class="pill an" type="button" data-tab="taikhoan" id="tabTaiKhoan">Tài khoản</button>
+</nav>
 
 <!-- ══ ĐĂNG NHẬP ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="manVao" class="man">
   <div class="hop">
+    <span class="kicker">Cán bộ, giảng viên</span>
     <h1>Bảng theo dõi</h1>
-    <p class="phu">Dành cho cán bộ, giảng viên</p>
+    <p class="phu">Tài khoản do cán bộ quản trị cấp</p>
     <label class="nhan" for="oEmail">Email</label>
     <input id="oEmail" class="o" type="email" autocomplete="username">
     <label class="nhan" for="oMk">Mật khẩu</label>
     <input id="oMk" class="o" type="password" autocomplete="current-password">
-    <button id="btVao" class="bt bt-chinh">Đăng nhập</button>
+    <button id="btVao" class="bt bt-chinh bt-lon bt-rong" style="margin-top:14px">Đăng nhập</button>
     <div id="vaoLoi" class="loi"></div>
+    <div class="chan-hop">Học viên vào làm bài: <a href="index.html">nhập mã phiên</a></div>
   </div>
 </div>
 
-<!-- ══ DANH SÁCH PHIÊN ═════════════════════════════════════════════════════════════════════ -->
+<!-- ══ TAB 1 · DANH SÁCH PHIÊN ═════════════════════════════════════════════════════════════ -->
 <div id="manDS" class="man-full an">
   <header class="tb">
     <b>Các phiên bài tập</b>
@@ -33,8 +52,6 @@
       <option value="mo">Đang mở</option>
       <option value="dong">Đã đóng</option>
     </select>
-    <span id="aiDo" class="ai"></span>
-    <button id="btRa" class="bt">Thoát</button>
   </header>
   <div class="vung">
     <table class="bang">
@@ -43,10 +60,10 @@
         <th>Bài tập</th>
         <th style="width:90px">Lớp</th>
         <th style="width:90px">Kiểu</th>
-        <th style="width:80px">Mã phiên</th>
+        <th style="width:90px">Mã phiên</th>
         <th style="width:80px">Đã nộp</th>
         <th style="width:70px">TB</th>
-        <th style="width:90px">Trạng thái</th>
+        <th style="width:100px">Trạng thái</th>
       </tr></thead>
       <tbody id="dsBody"></tbody>
     </table>
@@ -54,20 +71,20 @@
   </div>
 </div>
 
-<!-- ══ CHI TIẾT MỘT PHIÊN ══════════════════════════════════════════════════════════════════ -->
+<!-- ══ TAB 1b · CHI TIẾT MỘT PHIÊN ═════════════════════════════════════════════════════════ -->
 <div id="manCT" class="man-full an">
   <header class="tb">
-    <button id="btVe" class="bt">‹ Quay lại</button>
+    <button id="btVe" class="bt" type="button">‹ Quay lại</button>
     <b id="ctTen">—</b>
-    <span class="giua"></span>
     <span id="ctNhip" class="nhip" title="Tự cập nhật">●</span>
-    <button id="btDong" class="bt">Đóng phiên</button>
-    <button id="btTai" class="bt">Tải kết quả</button>
+    <span class="giua"></span>
+    <button id="btDong" class="bt" type="button">Đóng phiên</button>
+    <button id="btTai" class="bt" type="button">Tải kết quả</button>
   </header>
 
   <div class="dai">
     <div class="the">
-      <div class="the-nhan">MÃ PHIÊN</div>
+      <div class="the-nhan">Mã phiên</div>
       <div id="ctMa" class="the-ma">——————</div>
     </div>
     <div class="the">
@@ -87,7 +104,7 @@
   <div class="vung">
     <table class="bang">
       <thead><tr>
-        <th style="width:120px">Mã học viên</th>
+        <th style="width:130px">Mã học viên</th>
         <th style="width:110px">Trạng thái</th>
         <th style="width:70px">Điểm</th>
         <th style="width:80px">Thời gian</th>
@@ -99,9 +116,48 @@
   </div>
 </div>
 
+<!-- ══ TAB 2 · TÀI KHOẢN (chỉ vai trò Quản trị) ════════════════════════════════════════════ -->
+<div id="manTK" class="man-full an">
+  <header class="tb">
+    <b>Tài khoản cán bộ, giảng viên</b>
+    <span class="giua"></span>
+    <button id="btThem" class="bt bt-chinh" type="button">+ Thêm tài khoản</button>
+  </header>
+  <div class="vung">
+    <table class="bang">
+      <thead><tr>
+        <th style="width:50px">STT</th>
+        <th style="width:210px">Email</th>
+        <th>Họ tên</th>
+        <th style="width:80px">Viết tắt</th>
+        <th style="width:90px">Vai trò</th>
+        <th style="width:100px">Trạng thái</th>
+        <th style="width:250px">Thao tác</th>
+      </tr></thead>
+      <tbody id="tkBody"></tbody>
+    </table>
+    <p class="chuthich">Xoá giảng viên sẽ xoá theo toàn bộ bài tập của người đó
+      (cascade <code class="ma">bai_tap.chu_gv</code>) — nên dùng “Khoá”.</p>
+  </div>
+</div>
+
+<!-- ══ POPUP THÊM / ĐỔI MẬT KHẨU ═══════════════════════════════════════════════════════════ -->
+<div id="hopThem" class="lop an">
+  <div class="hop hop-rong">
+    <h1 id="htTieuDe">Thêm tài khoản</h1>
+    <div id="htThan"></div>
+    <div id="htLoi" class="loi"></div>
+    <div class="hang-nut">
+      <button id="htHuy" class="bt" type="button">Hủy</button>
+      <button id="htOk" class="bt bt-chinh" type="button">Tạo tài khoản</button>
+    </div>
+  </div>
+</div>
+
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=4"></script>
-<script src="gv.js?v=4"></script>
+<script src="cauhinh.js?v=5"></script>
+<script src="gv.js?v=5"></script>
+<script src="admin.js?v=5"></script>
 </body>
 </html>
