@@ -94,8 +94,9 @@ $('btVao').addEventListener('click', async () => {
 function vaoLamBai() {
   hien('manVao', false); hien('manBai', true); hien('manXong', false);
   CHI_SO = 0; KET_QUA = null;
-  $('sanKhau').innerHTML = '';
+  $('lopSlide').innerHTML = '';
   Object.keys(KHUNG).forEach(k => delete KHUNG[k]);
+  $('menuTen').textContent = (PHIEN && PHIEN.ten) || 'Bài tập';
   veSlide();
   if (PHIEN.khach) bao('Mã của bạn không có trong danh sách lớp — vẫn làm bài được, điểm ghi dạng khách.', 'nhac');
   if (PHIEN.conLaiGiay != null) chayDongHo(PHIEN.conLaiGiay);
@@ -113,9 +114,12 @@ function khungCua(i) {
   d.className = 'khung an';
   d.innerHTML = (sl && sl.html) || '<div class="sl"><p>Slide trống</p></div>';
   /* ⚠ Nút "Chấm điểm" của app phải BỎ — trên web chỉ có "Nộp bài" MỘT LẦN cho cả deck (§41.9),
-     và hàm *Submit của app cần đáp án trong DOM, thứ đã bị scrub sạch. */
-  d.querySelectorAll('.sl-check, .rmcq-submit').forEach(b => b.remove());
-  $('sanKhau').appendChild(d);
+     và hàm *Submit của app cần đáp án trong DOM, thứ đã bị scrub sạch.
+     ⚠ `.sl-clock` (đồng hồ góc phải header slide) cũng BỎ: app có ticker cập nhật 15 s/lần
+     (baigiang-soan.js), trang web KHÔNG có ⇒ nó đứng chết ở giờ lúc GV bấm đẩy bài lên, học
+     viên nhìn tưởng đồng hồ hỏng. */
+  d.querySelectorAll('.sl-check, .rmcq-submit, .sl-clock').forEach(b => b.remove());
+  $('lopSlide').appendChild(d);
   ganEngine(d);
   KHUNG[i] = d;
   return d;
@@ -135,16 +139,76 @@ function veSlide() {
   $('dauCau').textContent = 'Slide ' + (CHI_SO + 1) + '/' + ds.length;
   $('btTruoc').disabled = CHI_SO === 0;
   $('btSau').disabled = CHI_SO >= ds.length - 1;
-  veDen();
+  veMucLuc();
+  vuaKhung();
 }
 
-/* Đèn báo tiến độ: đặc = slide đã làm xong hết câu */
-function veDen() {
-  $('denBao').innerHTML = slides().map((sl, i) => {
-    const xong = daLamXong(i);
-    return '<i class="cham' + (i === CHI_SO ? ' nay' : '') + (xong ? ' xong' : '') + '"></i>';
+/* ── SCALE slide cho VỪA vùng trống ───────────────────────────────────────────────────────
+   Slide của app là khung CỨNG 960×540. Trước đây trang web để nguyên cỡ gốc (biến `--ty-le`
+   khai trong CSS nhưng KHÔNG có gì đặt nó) ⇒ màn rộng thì slide bé tí giữa khoảng trắng, màn
+   vừa thì bị cắt. Nay tính tỉ lệ theo đúng chỗ còn lại.
+   ⚠ `transform` KHÔNG đổi hộp bố cục ⇒ phải đặt kích thước THẬT cho khung ngoài, nếu không
+     khung 960×540 vẫn đòi chỗ và `.san` đẻ thanh cuộn dù nhìn đã vừa. Cùng cách `fitScale()`
+     của trang tự học (§32.24.1) đang dùng. */
+function vuaKhung() {
+  const san = $('sanKhau'), khung = $('khungTyLe'), lop = $('lopSlide');
+  if (!san || !khung || !lop) return;
+  if (window.matchMedia('(max-width: 700px)').matches) {   // màn hẹp: bỏ khung cứng (§41.7)
+    khung.style.width = khung.style.height = '';
+    lop.style.transform = '';
+    return;
+  }
+  const cs = getComputedStyle(san);
+  const w = san.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0) - 80; // 80 = chỗ cho 2 nút ‹ ›
+  const h = san.clientHeight - parseFloat(cs.paddingTop || 0) - parseFloat(cs.paddingBottom || 0);
+  const sc = Math.max(0.3, Math.min(Math.max(120, w) / 960, Math.max(120, h) / 540, 2));
+  khung.style.width = Math.round(960 * sc) + 'px';
+  khung.style.height = Math.round(540 * sc) + 'px';
+  lop.style.transform = 'scale(' + sc + ')';
+}
+window.addEventListener('resize', vuaKhung);
+
+/* Mục lục slide bên menu trái — THAY dải chấm tiến độ cũ. ✓ = đã làm xong · ○ = còn dở. */
+function veMucLuc() {
+  const el = $('dsSlide');
+  if (!el) return;
+  el.innerHTML = slides().map((sl, i) => {
+    const co = coBaiTap(i), xong = daLamXong(i);
+    const tt = !co ? '' : (xong ? '<span class="sl-muc-tt xong">✓</span>' : '<span class="sl-muc-tt dang">○</span>');
+    return '<button type="button" class="sl-muc' + (i === CHI_SO ? ' nay' : '') + '" data-i="' + i + '">'
+      + '<span class="sl-muc-so">' + (i + 1) + '.</span>'
+      + '<span class="sl-muc-ten">' + tenSlide(sl, i) + '</span>' + tt + '</button>';
   }).join('');
 }
+/* Tên hiển thị trong mục lục = tiêu đề slide nếu có, không thì "Slide n".
+   ⚠ Đọc từ CHÍNH HTML đã render (app không gửi kèm tiêu đề rời) — dựng DOM tạm để lấy chữ,
+     KHÔNG regex: tiêu đề có thể chứa thẻ con (<b>, <br>…). */
+function tenSlide(sl, i) {
+  try {
+    const d = document.createElement('div');
+    d.innerHTML = (sl && sl.html) || '';
+    const t = d.querySelector('.sl-head-txt, .sl-title');
+    const chu = t ? (t.textContent || '').trim() : '';
+    if (chu) return chu.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  } catch (e) { /* bỏ qua */ }
+  return 'Slide ' + (i + 1);
+}
+$('dsSlide').addEventListener('click', (e) => {
+  const b = e.target.closest('.sl-muc');
+  if (!b) return;
+  CHI_SO = Number(b.dataset.i) || 0;
+  dongMenu();
+  veSlide();
+});
+
+/* ── Ngăn kéo menu (chỉ màn hẹp) ─────────────────────────────────────────────────────────── */
+function moMenu(on) {
+  $('menuTrai').classList.toggle('mo', on);
+  $('menuNen').classList.toggle('mo', on);
+}
+const dongMenu = () => moMenu(false);
+$('btMenu').addEventListener('click', () => moMenu(!$('menuTrai').classList.contains('mo')));
+$('menuNen').addEventListener('click', dongMenu);
 
 /* Bài làm của MỘT slide — đọc THẲNG từ khung DOM của nó (khung luôn còn, xem đầu file). */
 function baiLamCua(i) {
@@ -166,15 +230,16 @@ $('btTruoc').addEventListener('click', () => chuyen(-1));
 $('btSau').addEventListener('click', () => chuyen(1));
 document.addEventListener('keydown', e => {
   if ($('manBai').classList.contains('an')) return;
+  if (e.key === 'Escape') { dongMenu(); return; }
   /* ⚠ Ô chữ và ô điền từ dùng phím mũi tên để đi trong lưới — đừng cướp mất. */
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
   if (e.key === 'ArrowLeft') chuyen(-1);
   if (e.key === 'ArrowRight') chuyen(1);
 });
-/* Bấm/thả chuột trong slide → cập nhật đèn báo (chọn đáp án, thả chip, gõ ô chữ). */
+/* Bấm/thả chuột trong slide → cập nhật dấu ✓ trong mục lục (chọn đáp án, thả chip, gõ ô chữ). */
 ['click', 'pointerup', 'input', 'change'].forEach(ev =>
-  $('sanKhau').addEventListener(ev, () => setTimeout(veDen, 0)));
+  $('sanKhau').addEventListener(ev, () => setTimeout(veMucLuc, 0)));
 
 /* ── Đồng hồ ─────────────────────────────────────────────────────────────────────────────── */
 function chayDongHo(giay) {
@@ -275,7 +340,7 @@ $('btXemLai').addEventListener('click', () => {
 
 $('btVeDau').addEventListener('click', () => {
   PHIEN = null; KET_QUA = null;
-  $('sanKhau').innerHTML = '';
+  $('lopSlide').innerHTML = '';
   Object.keys(KHUNG).forEach(k => delete KHUNG[k]);
   hien('manXong', false); hien('manVao', true);
   $('oMaPhien').value = '';

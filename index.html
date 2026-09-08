@@ -5,8 +5,8 @@
 <!-- maximum-scale=5: cho phép chụm ngón phóng to trên điện thoại (§41.7) -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bài tập</title>
-<link rel="stylesheet" href="baigiang.css?v=7">
-<link rel="stylesheet" href="trang.css?v=7">
+<link rel="stylesheet" href="baigiang.css?v=8">
+<link rel="stylesheet" href="trang.css?v=8">
 </head>
 <body>
 
@@ -37,26 +37,39 @@
   </div>
 </div>
 
-<!-- ══ MÀN 2: LÀM BÀI ══════════════════════════════════════════════════════════════════════ -->
+<!-- ══ MÀN 2: LÀM BÀI ══════════════════════════════════════════════════════════════════════
+     Bố cục 2 cột: MENU trái (mục lục slide + hạn giờ + Nộp bài) · vùng slide chiếm HẾT chiều cao
+     viewport. Bỏ hẳn thanh công cụ trên cùng (2026-09-08) — slide 960×540 nay được SCALE cho vừa
+     chỗ trống thay vì luôn hiện đúng cỡ gốc. -->
 <div id="manBai" class="man an">
-  <!-- Thanh trên chia 3 vùng: trái (số slide) · GIỮA (điều hướng slide) · phải (giờ + Nộp bài).
-       Cụm điều hướng nằm CHÍNH GIỮA thanh — lưới `1fr auto 1fr` giữ nó đúng giữa bất kể hai bên
-       dài ngắn thế nào (dùng flex + space-between thì nó lệch theo bề rộng hai bên). -->
-  <header class="dau">
-    <div class="dau-ben"><span id="dauCau">Slide 1/1</span></div>
-    <div class="dau-giua">
-      <button id="btTruoc" class="bt bt-phu" title="Slide trước">‹</button>
-      <div id="denBao" class="den"></div>
-      <button id="btSau" class="bt bt-phu" title="Slide sau">›</button>
-    </div>
-    <div class="dau-ben dau-phai">
-      <span id="dauGio" class="gio"></span>
-      <button id="btNop" class="bt bt-nop">Nộp bài</button>
-    </div>
-  </header>
+  <!-- Nút ☰ chỉ hiện ở màn hẹp (menu thu thành ngăn kéo) -->
+  <button id="btMenu" class="bt bt-menu" title="Danh sách slide">☰</button>
 
-  <!-- .sl là khung slide của app (960×540). Trên điện thoại, trang.css bỏ khung + bỏ scale (§41.7) -->
-  <main id="sanKhau" class="san"></main>
+  <nav id="menuTrai" class="menu">
+    <div class="menu-dau">
+      <div class="menu-ten" id="menuTen">Bài tập</div>
+      <div class="menu-phu" id="dauCau">Slide 1/1</div>
+    </div>
+    <!-- Mục lục slide — THAY dải chấm tiến độ cũ; bấm để nhảy thẳng tới slide -->
+    <div id="dsSlide" class="ds-slide"></div>
+    <div class="menu-chan">
+      <span id="dauGio" class="gio"></span>
+      <button id="btNop" class="bt bt-nop bt-rong">Nộp bài</button>
+    </div>
+  </nav>
+  <div id="menuNen" class="menu-nen"></div>
+
+  <!-- .sl là khung slide của app (960×540). `#lopSlide` bị scale cho vừa vùng trống; `#khungTyLe`
+       mang ĐÚNG kích thước SAU khi scale — transform không đổi hộp bố cục, thiếu bước này là
+       khung 960×540 vẫn đòi chỗ và đẻ thanh cuộn dù nhìn đã vừa.
+       Trên điện thoại, trang.css bỏ khung + bỏ scale (§41.7). -->
+  <main id="sanKhau" class="san">
+    <button id="btTruoc" class="bt bt-phu bt-canh bt-canh-trai" title="Slide trước">‹</button>
+    <div id="khungTyLe" class="khung-ty-le">
+      <div id="lopSlide" class="lop-slide"></div>
+    </div>
+    <button id="btSau" class="bt bt-phu bt-canh bt-canh-phai" title="Slide sau">›</button>
+  </main>
 </div>
 
 <!-- ══ MÀN 3: ĐÃ NỘP ═══════════════════════════════════════════════════════════════════════ -->
@@ -73,9 +86,9 @@
 
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=7"></script>
-<script src="cham-diem.js?v=7"></script>
-<script src="engine.js?v=7"></script>
-<script src="trang.js?v=7"></script>
+<script src="cauhinh.js?v=8"></script>
+<script src="cham-diem.js?v=8"></script>
+<script src="engine.js?v=8"></script>
+<script src="trang.js?v=8"></script>
 </body>
 </html>
