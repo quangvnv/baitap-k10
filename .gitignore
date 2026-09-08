@@ -2,3 +2,6 @@
 .sb-token
 *.token
 .env*
+
+# Bản sao lưu tay khi sửa file — giữ trên máy, KHÔNG đẩy lên trang công khai.
+*.bak
