@@ -1,0 +1,4 @@
+# ⚠ Repo này ĐẨY CÔNG KHAI lên GitHub Pages — không bao giờ được chứa khoá bí mật.
+.sb-token
+*.token
+.env*
