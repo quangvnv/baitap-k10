@@ -5,8 +5,8 @@
 <!-- maximum-scale=5: cho phép chụm ngón phóng to trên điện thoại (§41.7) -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bài tập</title>
-<link rel="stylesheet" href="baigiang.css?v=6">
-<link rel="stylesheet" href="trang.css?v=6">
+<link rel="stylesheet" href="baigiang.css?v=7">
+<link rel="stylesheet" href="trang.css?v=7">
 </head>
 <body>
 
@@ -39,20 +39,24 @@
 
 <!-- ══ MÀN 2: LÀM BÀI ══════════════════════════════════════════════════════════════════════ -->
 <div id="manBai" class="man an">
+  <!-- Thanh trên chia 3 vùng: trái (số slide) · GIỮA (điều hướng slide) · phải (giờ + Nộp bài).
+       Cụm điều hướng nằm CHÍNH GIỮA thanh — lưới `1fr auto 1fr` giữ nó đúng giữa bất kể hai bên
+       dài ngắn thế nào (dùng flex + space-between thì nó lệch theo bề rộng hai bên). -->
   <header class="dau">
-    <span id="dauCau">Câu 1/1</span>
-    <span id="dauGio" class="gio"></span>
-    <button id="btNop" class="bt bt-nop">Nộp bài</button>
+    <div class="dau-ben"><span id="dauCau">Slide 1/1</span></div>
+    <div class="dau-giua">
+      <button id="btTruoc" class="bt bt-phu" title="Slide trước">‹</button>
+      <div id="denBao" class="den"></div>
+      <button id="btSau" class="bt bt-phu" title="Slide sau">›</button>
+    </div>
+    <div class="dau-ben dau-phai">
+      <span id="dauGio" class="gio"></span>
+      <button id="btNop" class="bt bt-nop">Nộp bài</button>
+    </div>
   </header>
 
   <!-- .sl là khung slide của app (960×540). Trên điện thoại, trang.css bỏ khung + bỏ scale (§41.7) -->
   <main id="sanKhau" class="san"></main>
-
-  <footer class="chan">
-    <button id="btTruoc" class="bt bt-phu">‹</button>
-    <div id="denBao" class="den"></div>
-    <button id="btSau" class="bt bt-phu">›</button>
-  </footer>
 </div>
 
 <!-- ══ MÀN 3: ĐÃ NỘP ═══════════════════════════════════════════════════════════════════════ -->
@@ -69,9 +73,9 @@
 
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=6"></script>
-<script src="cham-diem.js?v=6"></script>
-<script src="engine.js?v=6"></script>
-<script src="trang.js?v=6"></script>
+<script src="cauhinh.js?v=7"></script>
+<script src="cham-diem.js?v=7"></script>
+<script src="engine.js?v=7"></script>
+<script src="trang.js?v=7"></script>
 </body>
 </html>

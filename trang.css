@@ -157,22 +157,37 @@ select.o {
 
 /* ── Màn làm bài ──────────────────────────────────────────────────────────────────────────── */
 #manBai { flex-direction: column; align-items: stretch; padding: 0; }
-.dau, .chan {
-  flex: 0 0 44px; display: flex; align-items: center; gap: 8px;
+
+/* MỘT thanh duy nhất ở trên (bỏ thanh dưới — 2026-09-08): trái = số slide · GIỮA = điều hướng ·
+   phải = đồng hồ + Nộp bài.
+   ⚠ Dùng LƯỚI `1fr auto 1fr`, KHÔNG dùng flex + space-between: chỉ lưới mới giữ cụm giữa đúng
+   CHÍNH GIỮA thanh khi hai bên dài ngắn khác nhau (bên phải có nút Nộp bài nên luôn rộng hơn). */
+.dau {
+  flex: 0 0 44px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center; gap: 8px;
   padding: 0 10px; background: var(--white); border-bottom: 1px solid var(--vien);
 }
-.chan { border-bottom: none; border-top: 1px solid var(--vien); justify-content: center; }
-.dau { justify-content: space-between; }
-/* Nút trong thanh trên/dưới cao hơn nút toolbar — học viên bấm bằng ngón tay */
-.dau .bt, .chan .bt { height: 34px; }
-#dauCau { font-size: 13px; font-weight: 600; color: var(--t2); }
+.dau-ben { min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.dau-phai { justify-content: flex-end; }
+.dau-giua { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* Nút trong thanh cao hơn nút toolbar — học viên bấm bằng ngón tay */
+.dau .bt { height: 34px; }
+#dauCau { font-size: 13px; font-weight: 600; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gio { font-size: 15px; font-weight: 700; color: var(--blue-dark); font-variant-numeric: tabular-nums; }
 .gio.gap { color: var(--do); }
 
 .san { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; overflow: auto; padding: 10px; }
 
-/* Đèn báo tiến độ */
-.den { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 60vw; }
+/* Đèn báo tiến độ.
+   ⚠ KHÔNG `flex-wrap:wrap` nữa: đèn nay nằm TRONG thanh cao 44px, xuống dòng là tràn ra ngoài
+   thanh. Bài nhiều slide thì dải đèn tự cuộn ngang (ẩn thanh cuộn — dải chấm 9px mà kèm thanh
+   cuộn thì rối; việc đi tới lui đã có 2 nút ‹ › ngay cạnh). */
+.den {
+  display: flex; gap: 5px; flex-wrap: nowrap; justify-content: center;
+  max-width: 46vw; overflow-x: auto; scrollbar-width: none;
+}
+.den::-webkit-scrollbar { display: none; }
+.cham { flex: 0 0 auto; }
 .cham { width: 9px; height: 9px; border-radius: 50%; background: #cfd6dd; display: block; }
 .cham.xong { background: var(--blue); }
 .cham.nay { outline: 2px solid var(--cam); outline-offset: 1px; }
@@ -207,7 +222,6 @@ select.o {
      KHÔNG cuộn bên trong .san — cách đó làm vùng cuộn lồng nhau, rất khó dùng trên cảm ứng. */
   #manBai { display: block; min-height: 100dvh; }
   .dau { position: sticky; top: 0; z-index: 10; }
-  .chan { position: sticky; bottom: 0; z-index: 10; }
   .san { display: block; overflow: visible; padding: 0; }
 
   .san .sl {
@@ -245,9 +259,12 @@ select.o {
   /* Bảng / lưới rộng: nhốt cuộn ngang vào RIÊNG nó, không cho tràn cả trang.
      ⚠ min-width:0 là mấu chốt — thiếu nó flex item không co xuống dưới bề rộng nội dung. */
   .san .sl table, .san .sl .cw-left { display: block; min-width: 0; max-width: 100%; overflow-x: auto; }
-  .dau, .chan { flex-basis: 48px; }
-  .dau .bt, .chan .bt { height: 40px; }
-  .den { max-width: 55vw; }
+  /* ⚠ màn hẹp: #manBai đổi sang display:block ⇒ flex-basis vô nghĩa, phải dùng min-height */
+  .dau { flex-basis: 48px; min-height: 48px; }
+  .dau .bt { height: 40px; }
+  /* Màn hẹp: nhường chỗ cho nút Nộp bài — dải đèn hẹp lại, cuộn ngang trong chính nó. */
+  .den { max-width: 34vw; }
+  .bt-phu { min-width: 38px; padding: 0 8px; }
 
   /* Ô nhập cao hơn cho ngón tay */
   .o { height: 44px; }
