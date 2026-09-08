@@ -254,3 +254,62 @@ select.o {
   .o-ma { font-size: 26px; letter-spacing: 7px; height: 52px; }
   .bt-lon { height: 48px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   MỞ RỘNG SANG MỌI DẠNG BÀI TẬP (2026-09-08) — §41
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Mỗi slide giữ khung DOM RIÊNG (xem đầu trang.js): chuyển slide = ẩn/hiện, không vẽ lại, nên bài
+   đang làm dở — nhất là vị trí chip kéo-thả và chữ trong lưới ô chữ — không mất. */
+.san .khung { display: contents; }
+.san .khung.an { display: none !important; }
+
+/* ── CÔNG CỤ CHỈ DÀNH CHO GIẢNG VIÊN — ẩn trên máy học viên ────────────────────────────────
+   Ô chữ có hàng nút 💡 Gợi ý / 📋 Danh sách từ ở mép dưới panel phải (§32.23). Máy học viên qua
+   mirror LAN đã ẩn bằng CSS trong STUDENT_PAGE; trang web phải làm y hệt, nếu không học viên tự
+   hé lộ được đáp án. (Chữ trong bảng "Danh sách từ" thì ChamDiem.bocHtml đã xoá khỏi HTML rồi —
+   ẩn bằng CSS KHÔNG đủ, mở DevTools là đọc được.) */
+.san .cw-bar { display: none !important; }
+
+/* ── KÉO-THẢ BẰNG NGÓN TAY ─────────────────────────────────────────────────────────────────
+   Engine kéo của app dùng Pointer Events. Trên cảm ứng, trình duyệt mặc định hiểu thao tác kéo
+   là CUỘN TRANG và nuốt luôn pointermove ⇒ không kéo được chip.
+   ⚠ Chỉ đặt `touch-action:none` cho CHÍNH thẻ kéo được và ô thả — KHÔNG đặt cho cả vùng bài tập:
+     làm thế là chặn luôn việc cuộn trang khi ngón tay đặt vào giữa bài, mà bài dài thì học viên
+     không cuộn xuống được nữa. */
+.san .ww-chip, .san .ro-card, .san .mt-card,
+.san .ww-drop, .san .kp7-drop, .san .gf-drop, .san .pm-box, .san .ro-drop, .san .mt-drop {
+  touch-action: none;
+}
+
+/* ── ĐIỆN THOẠI DỌC: bỏ nốt các vùng cuộn tính theo khung 540px của những layout mới ────────
+   Cùng lý do đã ghi ở khối @media phía trên: baigiang.css khai `flex:1;min-height:0;overflow:auto`
+   = "chiếm phần DƯ của khung cao 540px". Bỏ chiều cao cố định thì phần dư = 0 ⇒ vùng co về 0 và
+   nội dung BIẾN MẤT. Thêm layout mới có vùng cuộn → PHẢI bổ sung selector vào đây. */
+@media (max-width: 700px) {
+  .san .sl .spk-list,
+  .san .sl .cloze-panel, .san .sl .cloze-content, .san .sl .qp-rs4,
+  .san .sl .kp7-wrap, .san .sl .kp7-passage, .san .sl .kp7-content,
+  .san .sl .ws-wrap, .san .sl .ws-box,
+  .san .sl .wc-body,
+  .san .sl .gf-wrap, .san .sl .gf-cols, .san .sl .gf-col,
+  .san .sl .ro-wrap, .san .sl .ro-cols, .san .sl .ro-list,
+  .san .sl .mt-wrap, .san .sl .mt-rows,
+  .san .sl .cw-side, .san .sl .cw-sidescroll {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Bố cục 2 cột (đoạn văn | bảng từ · nguồn | ô thả · lưới | gợi ý) xếp chồng cho vừa màn hẹp */
+  .san .sl .kp7-2col, .san .sl .ro-cols, .san .sl .cw-wrap, .san .sl .qp-rs3, .san .sl .qp-rs4 {
+    display: block !important;
+  }
+  .san .sl .gf-cols { display: block !important; }
+
+  /* ⚠ pic-match + word-web neo ô thả theo TOẠ ĐỘ % của khung ảnh — không xếp lại được cho màn
+     hẹp. Giữ nguyên tỉ lệ và cho cuộn ngang trong chính khung đó (mấu chốt là min-width:0). */
+  .san .sl .pm-canvas, .san .sl .ww-webs { min-width: 0; max-width: 100%; overflow-x: auto; }
+}

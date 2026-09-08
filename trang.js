@@ -4,9 +4,15 @@
    Trang này CHỈ hiển thị + thu bài làm. KHÔNG chấm, KHÔNG biết đáp án — mọi thứ đó ở Edge
    Function `nop` (§41.1). Mở DevTools cũng không tìm thấy đáp án ở đâu.
 
-   ⚠ KHÔNG render slide ở đây: app đã render sẵn (từ slots ĐÃ bóc đáp án) và lưu HTML vào
-     bai_tap.de.slides[i].html ⇒ trang chỉ gán innerHTML rồi để engine.js lo tương tác. Nhờ vậy
-     KHÔNG có bản sao thứ hai của renderSlide phải giữ khớp (bài học §32.4).
+   ⚠ KHÔNG render slide ở đây: app đã render sẵn (rồi SCRUB sạch đáp án — ChamDiem.bocHtml) và lưu
+     HTML vào bai_tap.de.slides[i].html ⇒ trang chỉ gán innerHTML rồi để engine.js lo tương tác.
+     Nhờ vậy KHÔNG có bản sao thứ hai của renderSlide phải giữ khớp (bài học §32.4).
+
+   ⚠ MỖI SLIDE GIỮ KHUNG DOM RIÊNG, KHÔNG vẽ lại khi chuyển qua chuyển lại. Bản đầu gán
+     `innerHTML = sl.html` mỗi lần chuyển slide ⇒ quay lại slide cũ là MẤT SẠCH bài đang làm.
+     Với nhóm trắc nghiệm còn cứu được bằng cách nhớ mảng đáp án, nhưng với KÉO-THẢ / Ô CHỮ thì
+     không: vị trí từng chip, từng chữ trong lưới không dựng lại từ một mảng số được. Nên: dựng
+     khung một lần rồi ẩn/hiện (`.an`) — trạng thái tương tác tự nó còn nguyên.
 
    ⚠ HÀNG ĐỢI KHI MẤT MẠNG (§41.8 — bắt buộc có): Wi-Fi lớp học không tin cậy được. Nộp hỏng thì
      bài làm nằm trong localStorage và tự gửi lại khi có mạng; học viên không mất bài.
@@ -19,6 +25,8 @@ const KHOA_HANG_DOI = 'bt_hang_doi';    // bài đã làm nhưng chưa gửi đ�
 let PHIEN = null;      // { luotId, de, soCau, conLaiGiay, ... } — trả về từ batDau
 let CHI_SO = 0;        // slide đang xem
 let DONG_HO = null;    // id setInterval
+let KET_QUA = null;    // kết quả server trả về (giữ để bấm "Xem lại bài")
+const KHUNG = {};      // slideIdx → phần tử DOM của slide đó (dựng một lần, sau đó chỉ ẩn/hiện)
 
 const $ = (id) => document.getElementById(id);
 const hien = (id, on) => $(id).classList.toggle('an', !on);
@@ -32,7 +40,7 @@ function bao(chu, loai) {
   clearTimeout(bannerTimer);
   bannerTimer = setTimeout(() => b.classList.add('an'), 4000);
 }
-/* engine.js trích từ app có gọi toast() — cấp bản thay thế (cùng cách §32.24.1 làm). */
+/* engine.js trích từ app có gọi toast()/mirrorPush() — cấp bản thay thế (cùng cách §32.24.1 làm). */
 window.toast = (s) => bao(s);
 window.mirrorPush = () => {};
 
@@ -85,25 +93,49 @@ $('btVao').addEventListener('click', async () => {
 /* ── MÀN 2: làm bài ──────────────────────────────────────────────────────────────────────── */
 function vaoLamBai() {
   hien('manVao', false); hien('manBai', true); hien('manXong', false);
-  CHI_SO = 0;
+  CHI_SO = 0; KET_QUA = null;
+  $('sanKhau').innerHTML = '';
+  Object.keys(KHUNG).forEach(k => delete KHUNG[k]);
   veSlide();
   if (PHIEN.khach) bao('Mã của bạn không có trong danh sách lớp — vẫn làm bài được, điểm ghi dạng khách.', 'nhac');
   if (PHIEN.conLaiGiay != null) chayDongHo(PHIEN.conLaiGiay);
 }
 
-function slides() { return (PHIEN.de && PHIEN.de.slides) || []; }
+function slides() { return (PHIEN && PHIEN.de && PHIEN.de.slides) || []; }
+function layoutCua(i) { const s = slides()[i]; return (s && s.layout) || ''; }
+function coBaiTap(i) { return ChamDiem.LAYOUT_CO_BAI.indexOf(layoutCua(i)) >= 0; }
+
+/* Dựng khung DOM của slide (một lần duy nhất) rồi gắn engine tương tác. */
+function khungCua(i) {
+  if (KHUNG[i]) return KHUNG[i];
+  const sl = slides()[i];
+  const d = document.createElement('div');
+  d.className = 'khung an';
+  d.innerHTML = (sl && sl.html) || '<div class="sl"><p>Slide trống</p></div>';
+  /* ⚠ Nút "Chấm điểm" của app phải BỎ — trên web chỉ có "Nộp bài" MỘT LẦN cho cả deck (§41.9),
+     và hàm *Submit của app cần đáp án trong DOM, thứ đã bị scrub sạch. */
+  d.querySelectorAll('.sl-check, .rmcq-submit').forEach(b => b.remove());
+  $('sanKhau').appendChild(d);
+  ganEngine(d);
+  KHUNG[i] = d;
+  return d;
+}
+
+/* Engine kéo-thả / ô chữ của app (engine.js). Mỗi hàm tự dò lớp `.*-live` của layout tương ứng
+   và tự đánh dấu đã gắn, nên gọi thừa cũng vô hại — không cần rẽ nhánh theo layout ở đây. */
+function ganEngine(root) {
+  [window.wireWordWeb, window.wireKp7, window.wireReorder, window.wireMatching]
+    .forEach(f => { if (typeof f === 'function') { try { f(root); } catch (e) { console.warn(e); } } });
+}
 
 function veSlide() {
   const ds = slides();
-  const sl = ds[CHI_SO];
-  $('sanKhau').innerHTML = (sl && sl.html) || '<div class="sl"><p>Slide trống</p></div>';
+  Object.keys(KHUNG).forEach(k => KHUNG[k].classList.add('an'));
+  khungCua(CHI_SO).classList.remove('an');
   $('dauCau').textContent = 'Slide ' + (CHI_SO + 1) + '/' + ds.length;
   $('btTruoc').disabled = CHI_SO === 0;
   $('btSau').disabled = CHI_SO >= ds.length - 1;
   veDen();
-  // ⚠ Nút "Chấm điểm" của app (nếu app render kèm) phải BỎ — trên web chỉ có "Nộp bài" một lần
-  // cho cả deck (§41.9). Để lại sẽ gọi rmcqSubmit của app, mà hàm đó cần đáp án trong DOM.
-  $('sanKhau').querySelectorAll('.sl-check, .rmcq-submit').forEach(b => b.remove());
 }
 
 /* Đèn báo tiến độ: đặc = slide đã làm xong hết câu */
@@ -114,24 +146,18 @@ function veDen() {
   }).join('');
 }
 
-/* Bài làm của MỘT slide. Đọc từ DOM nếu đang xem, còn lại lấy từ bộ nhớ tạm. */
-const NHO = {};   // slideIdx → baiLam
-function thuSlideDangXem() {
-  const sl = slides()[CHI_SO];
-  if (!sl) return;
-  const el = $('sanKhau').querySelector('.sl') || $('sanKhau');
-  const bl = ChamDiem.thuHoach(el, sl.layout);
-  if (bl) NHO[CHI_SO] = bl;
+/* Bài làm của MỘT slide — đọc THẲNG từ khung DOM của nó (khung luôn còn, xem đầu file). */
+function baiLamCua(i) {
+  if (!coBaiTap(i) || !KHUNG[i]) return null;
+  return ChamDiem.thuHoach(KHUNG[i].querySelector('.sl') || KHUNG[i], layoutCua(i));
 }
 function daLamXong(i) {
-  const sl = slides()[i];
-  if (!sl || ChamDiem.LAYOUT_CO_BAI.indexOf(sl.layout) < 0) return true;   // slide không có bài
-  const bl = (i === CHI_SO) ? (() => { thuSlideDangXem(); return NHO[i]; })() : NHO[i];
-  return !!bl && ChamDiem.soCauChuaLam(bl) === 0;
+  if (!coBaiTap(i)) return true;                 // slide chỉ để đọc
+  if (!KHUNG[i]) return false;                   // chưa mở tới ⇒ chưa làm
+  return ChamDiem.soCauChuaLam(baiLamCua(i), layoutCua(i)) === 0;
 }
 
 function chuyen(buoc) {
-  thuSlideDangXem();
   const ds = slides();
   CHI_SO = Math.max(0, Math.min(ds.length - 1, CHI_SO + buoc));
   veSlide();
@@ -140,12 +166,15 @@ $('btTruoc').addEventListener('click', () => chuyen(-1));
 $('btSau').addEventListener('click', () => chuyen(1));
 document.addEventListener('keydown', e => {
   if ($('manBai').classList.contains('an')) return;
-  if (e.target.tagName === 'INPUT') return;
+  /* ⚠ Ô chữ và ô điền từ dùng phím mũi tên để đi trong lưới — đừng cướp mất. */
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
   if (e.key === 'ArrowLeft') chuyen(-1);
   if (e.key === 'ArrowRight') chuyen(1);
 });
-// bấm chọn đáp án → cập nhật đèn báo
-$('sanKhau').addEventListener('click', () => setTimeout(veDen, 0));
+/* Bấm/thả chuột trong slide → cập nhật đèn báo (chọn đáp án, thả chip, gõ ô chữ). */
+['click', 'pointerup', 'input', 'change'].forEach(ev =>
+  $('sanKhau').addEventListener(ev, () => setTimeout(veDen, 0)));
 
 /* ── Đồng hồ ─────────────────────────────────────────────────────────────────────────────── */
 function chayDongHo(giay) {
@@ -174,16 +203,17 @@ function chayDongHo(giay) {
 $('btNop').addEventListener('click', () => nop(false));
 
 async function nop(tuDong) {
-  thuSlideDangXem();
   const ds = slides();
   const baiLam = [];
   let conThieu = 0;
   ds.forEach((sl, i) => {
-    if (ChamDiem.LAYOUT_CO_BAI.indexOf(sl.layout) < 0) return;
-    const bl = NHO[i] || [];
-    conThieu += ChamDiem.soCauChuaLam(bl.length ? bl : new Array(1).fill(null));
+    if (!coBaiTap(i)) return;
+    khungCua(i);                        // slide chưa mở tới vẫn phải dựng để đếm đúng số câu còn thiếu
+    const bl = baiLamCua(i) || [];
+    conThieu += ChamDiem.soCauChuaLam(bl, layoutCua(i));
     baiLam.push({ slideIdx: i, baiLam: bl });
   });
+  veSlide();                            // khungCua() ở trên có thể vừa dựng thêm khung → ẩn lại cho đúng
 
   // Bắt làm hết mới nộp (§32.4) — trừ khi hết giờ, lúc đó nộp nguyên trạng
   if (!tuDong && conThieu > 0) {
@@ -206,6 +236,7 @@ async function nop(tuDong) {
 }
 
 function xong(kq, loi) {
+  KET_QUA = kq;
   hien('manBai', false); hien('manXong', true);
   if (kq) {
     $('xongDiem').textContent = kq.soDung + ' / ' + kq.tong;
@@ -220,11 +251,32 @@ function xong(kq, loi) {
     $('xongQs').innerHTML = '';
     $('xongNhan').textContent = 'Chưa gửi được (' + loi + '). Bài của bạn đã được lưu và sẽ tự gửi khi có mạng — đừng đóng trang.';
   }
+  // Nút "Xem lại bài" chỉ có nghĩa khi GV cho xem đáp án (server mới gửi khóa về).
+  hien('btXemLai', !!(kq && kq.dapAn));
 }
 
+/* Xem lại bài đã chấm — tô xanh/đỏ ngay trên chính khung slide học viên vừa làm.
+   ⚠ Chỉ chạy được khi server GỬI KHÓA ĐÁP ÁN về (answer_visibility ≠ NONE). Máy học viên KHÔNG
+     tự quyết định chuyện hé lộ: không có khóa thì không có gì để tô. */
+$('btXemLai').addEventListener('click', () => {
+  const theoSlide = (KET_QUA && KET_QUA.dapAn) || null;
+  if (!theoSlide) return;
+  slides().forEach((sl, i) => {
+    const da = theoSlide[i];
+    if (!da || !KHUNG[i]) return;
+    const el = KHUNG[i].querySelector('.sl') || KHUNG[i];
+    const kq = ChamDiem.soDapAn(sl.layout, baiLamCua(i), da);
+    ChamDiem.toMau(el, sl.layout, kq, { dapAn: da });
+  });
+  hien('manXong', false); hien('manBai', true);
+  $('btNop').textContent = 'Đã nộp';
+  bao('Bài đã chấm — xanh là đúng, đỏ là sai.', 'ok');
+});
+
 $('btVeDau').addEventListener('click', () => {
-  PHIEN = null;
-  Object.keys(NHO).forEach(k => delete NHO[k]);
+  PHIEN = null; KET_QUA = null;
+  $('sanKhau').innerHTML = '';
+  Object.keys(KHUNG).forEach(k => delete KHUNG[k]);
   hien('manXong', false); hien('manVao', true);
   $('oMaPhien').value = '';
   $('btNop').disabled = false;
@@ -263,5 +315,5 @@ guiLaiHangDoi();
 
 /* Cảnh báo khi rời trang lúc đang làm dở */
 window.addEventListener('beforeunload', e => {
-  if (PHIEN && $('manBai') && !$('manBai').classList.contains('an')) { e.preventDefault(); e.returnValue = ''; }
+  if (PHIEN && !KET_QUA && $('manBai') && !$('manBai').classList.contains('an')) { e.preventDefault(); e.returnValue = ''; }
 });
