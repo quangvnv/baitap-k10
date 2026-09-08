@@ -471,8 +471,21 @@
       case 'reorder':
         return ds('.ro-drop').map(d => { const c = d.querySelector('.ro-card'); return c ? Number(c.dataset.i) : null; });
 
+      /* ⚠ Hàng CHƯA NỐI phải trả `null` thì `soCauChuaLam` mới đếm được (§41.17). Layout này mọi ô
+         đều CÓ SẴN thẻ ngay từ lúc render (mtDerange hoán vị đủ thẻ) ⇒ "ô có thẻ" KHÔNG có nghĩa
+         là người học đã làm gì; mốc hoàn thành của app là class `.mt-joined` (mtSubmit dùng đúng
+         nó). Không xét thì học viên bấm "Nộp bài" được ngay khi chưa nối cặp nào.
+         ⚠ Hàng NHIỄU (ô trái rỗng `.mt-lempty`) KHÔNG BAO GIỜ nối được — `mtJoinRow` cố ý từ chối
+         ⇒ phải GIỮ id thẻ cho hàng đó, nếu không nó vĩnh viễn bị tính là chưa làm và deck có ô
+         nhiễu sẽ KHÔNG AI nộp bài được. */
       case 'matching':
-        return ds('.mt-drop').map(d => { const c = d.querySelector('.mt-card'); return c ? Number(c.dataset.id) : null; });
+        return ds('.mt-drop').map(d => {
+          const c = d.querySelector('.mt-card'); if (!c) return null;
+          const row = d.closest ? d.closest('.mt-row') : null;
+          const coChamDiem = row && row.querySelector('.mt-lcard:not(.mt-lempty)');
+          if (coChamDiem && !row.classList.contains('mt-joined')) return null;   // chưa nối
+          return Number(c.dataset.id);
+        });
 
       case 'crossword':
         return ds('.cw-in').map(i => (i.value || '').trim() || null);
@@ -481,9 +494,9 @@
   }
 
   /* Còn bao nhiêu câu chưa làm — để chặn "Nộp bài" khi làm dở (§32.4: bắt làm hết mới chấm).
-     ⚠ Máy học viên KHÔNG có khóa đáp án nên không biết ô nào là ô nhiễu / ô đặt sẵn. Với các
-       layout đó, mọi ô đều đã có sẵn thẻ ngay từ lúc render (matching hoán vị đủ thẻ, reorder có
-       thẻ đặt sẵn) nên không bao giờ là null ⇒ không đếm nhầm. */
+     ⚠ Máy học viên KHÔNG có khóa đáp án nên không biết ô nào là ô nhiễu / ô đặt sẵn. Các ô đó
+       phải được `thuHoach` trả về giá trị KHÁC null, nếu không chúng vĩnh viễn bị tính là "chưa
+       làm" và không ai nộp bài được — xem nhánh `matching` của `thuHoach` (§41.17). */
   function soCauChuaLam(baiLam, layout) {
     if (!baiLam) return 0;
     if (layout === 'word-select') return baiLam.some(v => v === 1) ? 0 : 1;   // wsSubmit: cần ≥1 từ
