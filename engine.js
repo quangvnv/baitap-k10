@@ -301,7 +301,7 @@ function wireMatching(root){
 
 /* ── mtJoinRow — trích từ baigiang-soan.js ── */
 function mtJoinRow(cell, on){ const row=cell&&cell.closest('.mt-row'); if(!row) return;
-  row.classList.toggle('mt-joined', !!on && cell.dataset.ans!=null && cell.dataset.ans!==''); }
+  row.classList.toggle('mt-joined', !!on && !!row.querySelector('.mt-lcard:not(.mt-lempty)')); }
 
 /* ── cwFocus — trích từ baigiang-crossword.js ── */
 function cwFocus(el){
