@@ -421,6 +421,24 @@ window.addEventListener('beforeunload', e => {
     (e.message || 'Lỗi') + ' — ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '?')));
   window.addEventListener('unhandledrejection', e => ghiLoi('Promise: ' + ((e.reason && e.reason.message) || e.reason)));
 
+  /* ── THEO DÕI THAO TÁC CHẠM (luôn bật, rất nhẹ) ─────────────────────────────────────────
+     Cần cho ca "chạm vào đáp án mà không ăn": phải biết cú chạm có tới được phần tử nào không,
+     và hàm chọn đáp án của app có thực sự được gọi không. Không có số liệu này thì chỉ còn đoán. */
+  const VET = { chamCuoi: '(chưa chạm)', soCham: 0, soGoiPick: 0, loaiSK: [] };
+  const tenEl = (el) => el ? (el.tagName ? el.tagName.toLowerCase() : '?')
+    + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.') : '') : '(trống)';
+  ['touchstart', 'click'].forEach(ev => document.addEventListener(ev, (e) => {
+    VET.soCham++;
+    VET.chamCuoi = ev + ' → ' + tenEl(e.target);
+    if (VET.loaiSK.indexOf(ev) < 0) VET.loaiSK.push(ev);
+  }, true));
+  /* Bọc rmcqPick để đếm số lần app thực sự xử lý một lựa chọn (engine.js nạp trước file này). */
+  (function boc() {
+    if (typeof window.rmcqPick !== 'function') return setTimeout(boc, 300);
+    const goc = window.rmcqPick;
+    window.rmcqPick = function (el) { VET.soGoiPick++; return goc.apply(this, arguments); };
+  })();
+
   if (!/[?&]debug=1/.test(location.search)) return;
 
   function chuoiPhanTu(el) {
@@ -479,6 +497,25 @@ window.addEventListener('beforeunload', e => {
         return Math.round(r.width) + '×' + Math.round(r.height) + ' tại ' + Math.round(r.left) + ',' + Math.round(r.top);
       })(),
       'Slide: ' + (CHI_SO + 1) + '/' + slides().length + ' · khung đã dựng: ' + Object.keys(KHUNG).length,
+      '—',
+      'CHẠM: ' + VET.soCham + ' lần · loại sự kiện nhận được: ' + (VET.loaiSK.join('+') || 'CHƯA CÓ SỰ KIỆN NÀO'),
+      'chạm gần nhất: ' + VET.chamCuoi,
+      'rmcqPick được gọi: ' + VET.soGoiPick + ' lần'
+        + ' · có hàm: ' + (typeof window.rmcqPick === 'function' ? 'có' : 'KHÔNG'),
+      'đáp án đang chọn: ' + document.querySelectorAll('#lopSlide .option-item.selected').length
+        + ' ô tô · radio đã tick: ' + document.querySelectorAll('#lopSlide input:checked').length
+        + ' · tổng ô đáp án: ' + document.querySelectorAll('#lopSlide .option-item').length,
+      (() => {
+        const o = document.querySelector('#lopSlide .option-item');
+        if (!o) return 'ô đáp án đầu: (không có)';
+        const r = o.getBoundingClientRect();
+        const t = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2));
+        const cs = getComputedStyle(o);
+        return 'ô đáp án đầu: ' + Math.round(r.width) + '×' + Math.round(r.height)
+          + ' tại ' + Math.round(r.left) + ',' + Math.round(r.top)
+          + ' · pointer-events=' + cs.pointerEvents + ' · touch-action=' + cs.touchAction
+          + ' · chạm vào trúng: ' + tenEl(t);
+      })(),
       '—',
       'Lỗi JS: ' + (LOI.length ? LOI.join(' | ') : 'không có'),
     ];

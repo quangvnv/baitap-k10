@@ -97,9 +97,15 @@ a:hover { color: var(--blue-hover); text-decoration: underline; }
 /* ── Ô nhập ───────────────────────────────────────────────────────────────────────────────── */
 .nhan { display: block; text-align: left; font-size: 13px; font-weight: 600; color: var(--label); margin: 8px 0 4px; }
 .goiy { font-weight: 400; color: #8a939c; }
+/* ⚠⚠ CỠ CHỮ Ô NHẬP PHẢI ≥ 16px — KHÔNG BAO GIỜ hạ xuống 15px cho "gọn" (sửa 2026-09-10).
+   iOS Safari TỰ PHÓNG TO cả trang khi người dùng chạm vào ô nhập có cỡ chữ < 16px, và KHÔNG tự
+   thu lại. Trang phóng rồi thì iOS neo mọi phần tử `position:fixed` theo khung GỐC chứ không
+   theo khung đang nhìn ⇒ nút ‹ › ☰ và Nộp bài TRÔI RA NGOÀI MÀN HÌNH (toạ độ âm), chạm không
+   tới ⇒ người dùng không chuyển được slide, không làm được bài. Đo trên máy thật: zoom 1.07,
+   btTruoc ở x=−4, btNop ở x=−262. Android/máy tính KHÔNG có cơ chế tự phóng này nên không dính. */
 .o {
   width: 100%; height: 40px; padding: 0 10px;
-  font-family: var(--font); font-size: 15px; color: var(--t1);
+  font-family: var(--font); font-size: 16px; color: var(--t1);
   background: var(--white); border: 1px solid var(--vien); border-radius: var(--r); outline: none;
   transition: border-color .15s, box-shadow .15s;
 }
@@ -319,6 +325,11 @@ select.o {
 
   /* Ô nhập cao hơn cho ngón tay */
   .o { height: 44px; }
+
+  /* ⚠ Ô nhập BÊN TRONG bài tập (điền từ, ô chữ, kéo-thả) cũng phải ≥16px — cùng lý do tự phóng
+     ở trên. Chữ to hơn thiết kế gốc một chút, nhưng đổi lại người học không bị mất sạch nút
+     điều hướng giữa chừng. CHỈ áp trên màn hẹp; máy tính giữ nguyên cỡ chữ của bài giảng. */
+  .san .sl input, .san .sl select, .san .sl textarea { font-size: 16px !important; }
   .o-ma { font-size: 26px; letter-spacing: 7px; height: 52px; }
   .bt-lon { height: 48px; }
 }
