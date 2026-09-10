@@ -427,12 +427,17 @@ window.addEventListener('beforeunload', e => {
   const VET = { lichSu: [], soCham: 0, soGoiPick: 0, loaiSK: [], ketQuaThu: '' };
   const tenEl = (el) => el ? (el.tagName ? el.tagName.toLowerCase() : '?')
     + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.') : '') : '(trống)';
-  ['touchstart', 'click'].forEach(ev => document.addEventListener(ev, (e) => {
+  /* ⚠ PHẢI ghi CẢ `click` kèm nhãn loại. Bản trước chỉ ghi `touchstart` ⇒ nhìn dòng
+     "loại sự kiện nhận được: touchstart+click" tưởng cú chạm vào ô đáp án có sinh click, trong khi
+     cái click đó có thể đến từ lúc bấm nút ⚙. Chính chỗ này phân định: chạm tới ô mà KHÔNG có
+     `click` theo sau nghĩa là iOS không tổng hợp click cho ô đó — và cả radio lẫn onclick của app
+     đều phụ thuộc `click`. */
+  ['touchstart', 'touchend', 'click'].forEach(ev => document.addEventListener(ev, (e) => {
     VET.soCham++;
-    if (ev === 'touchstart') {   /* mỗi lần chạm chỉ ghi MỘT dòng, khỏi lẫn với click tổng hợp */
-      VET.lichSu.push(tenEl(e.target));
-      if (VET.lichSu.length > 6) VET.lichSu.shift();
-    }
+    const nhan = { touchstart: 'chạm', touchend: 'nhả', click: 'CLICK' }[ev];
+    const t = ev === 'click' ? e.target : (e.target || (e.touches && e.touches[0] && e.touches[0].target));
+    VET.lichSu.push(nhan + '→' + tenEl(t));
+    if (VET.lichSu.length > 9) VET.lichSu.shift();
     if (VET.loaiSK.indexOf(ev) < 0) VET.loaiSK.push(ev);
   }, true));
   /* Bọc rmcqPick để đếm số lần app thực sự xử lý một lựa chọn (engine.js nạp trước file này). */
