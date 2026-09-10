@@ -384,6 +384,42 @@ window.addEventListener('beforeunload', e => {
 });
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LƯỚI AN TOÀN CHO CẢM ỨNG — nếu iOS nuốt mất cú `click`, tự phát lại (2026-09-10)
+   ──────────────────────────────────────────────────────────────────────────────────────────────
+   iOS Safari coi phần tử có style `:hover` là "hoverable": cú chạm ĐẦU TIÊN chỉ áp `:hover` và
+   KHÔNG phát `click`. Đã chữa gốc bằng `@media (hover: none)` trong trang.css, nhưng iOS còn vài
+   trường hợp khác cũng nuốt click (thanh địa chỉ vừa thu/phóng, ngón tay hơi trượt…). Lớp này là
+   chốt chặn cuối: chạm vào một ô chọn được mà 350ms sau vẫn KHÔNG có `click` nào ⇒ tự phát.
+
+   ⚠ Chỉ phát khi ngón tay gần như KHÔNG DI CHUYỂN (≤10px): vuốt để cuộn trang mà kết thúc trên ô
+     đáp án thì tuyệt đối không được tính là chọn.
+   ⚠ Phát bằng `input.click()` (hoặc `label.click()`) chứ KHÔNG gọi thẳng `rmcqPick`: đi đúng
+     đường của trình duyệt thì radio được tick và mọi layout khác (không dùng rmcqPick) cũng chạy.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  /* Các ô "chạm để chọn" của mọi layout — thêm layout mới có ô chọn thì bổ sung vào đây. */
+  const O_CHON = '.option-item, .spk-opt, .ws-word, .wc-opt, .cw-clue';
+  let mocClick = 0, x0 = 0, y0 = 0;
+  document.addEventListener('click', () => { mocClick = Date.now(); }, true);
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches && e.touches[0];
+    if (t) { x0 = t.clientX; y0 = t.clientY; }
+  }, true);
+  document.addEventListener('touchend', (e) => {
+    const t = (e.changedTouches && e.changedTouches[0]) || null;
+    if (t && (Math.abs(t.clientX - x0) > 10 || Math.abs(t.clientY - y0) > 10)) return;  // đang vuốt cuộn
+    const el = e.target && e.target.closest ? e.target.closest(O_CHON) : null;
+    if (!el || !document.getElementById('lopSlide').contains(el)) return;
+    const t0 = Date.now();
+    setTimeout(() => {
+      if (mocClick >= t0) return;              // click đã tới bình thường → không làm gì
+      const inp = el.querySelector('input');
+      try { (inp || el).click(); } catch (_) { /* bỏ qua */ }
+    }, 350);
+  }, true);
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
    TỰ CHẨN ĐOÁN — vì trang này chạy trên máy học viên, KHÔNG có DevTools để mở (§41.13: "đo,
    đừng đoán"; §41.19: lỗi im lặng làm mất cả buổi gỡ rối).
 

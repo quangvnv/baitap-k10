@@ -360,6 +360,29 @@ select.o {
    ẩn bằng CSS KHÔNG đủ, mở DevTools là đọc được.) */
 .san .cw-bar { display: none !important; }
 
+/* ══ iOS: BỎ `:hover` TRÊN THIẾT BỊ CẢM ỨNG ═══════════════════════════════════════════════
+   ⚠⚠ NGUYÊN NHÂN "chạm vào đáp án mà không chọn được" trên iPhone (2026-09-10).
+   iOS Safari coi phần tử CÓ style `:hover` là "hoverable": cú chạm ĐẦU TIÊN chỉ được hiểu là
+   "đưa chuột tới" — nó áp `:hover` (người dùng thấy ô đổi màu) và **KHÔNG phát ra `click`**.
+   Không có click ⇒ radio không tick ⇒ `onclick="rmcqPick(this)"` không bao giờ chạy. Đo trên máy
+   thật khớp đúng: chạm tới `label.option-item`, nhưng `rmcqPick: 0 lần` và `radio đã tick: 0`.
+   Windows/Android Chrome KHÔNG có luật này nên không dính; Playwright mô phỏng chạm nhưng không
+   mô phỏng luật hover-rồi-mới-click nên KHÔNG tái hiện được (mất nhiều vòng vì tin vào nó).
+   `@media (hover: none)` = thiết bị không có chuột thật ⇒ gỡ hẳn rule hover ở đó.
+   QUY TẮC: phần tử BẤM ĐƯỢC trên trang web phục vụ điện thoại KHÔNG được đổi hình bằng `:hover`
+   mà không bọc trong `@media (hover: hover)`. */
+@media (hover: none) {
+  .san .sl .option-item:hover,
+  .san .sl .spk-opt:hover,
+  .san .sl .ws-word:hover,
+  .san .sl .cw-clue:hover,
+  .san .sl .wc-opt:hover { background: #fff; }
+  /* Giữ nguyên màu của các trạng thái thật — hover không được đè lên chúng */
+  .san .sl .option-item.selected:hover  { background: #e3f2fd; }
+  .san .sl .option-item.correct:hover   { background: #d4edda; }
+  .san .sl .option-item.incorrect:hover { background: #f8d7da; }
+}
+
 /* ── KÉO-THẢ BẰNG NGÓN TAY ─────────────────────────────────────────────────────────────────
    Engine kéo của app dùng Pointer Events. Trên cảm ứng, trình duyệt mặc định hiểu thao tác kéo
    là CUỘN TRANG và nuốt luôn pointermove ⇒ không kéo được chip.
