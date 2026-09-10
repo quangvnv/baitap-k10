@@ -382,3 +382,125 @@ guiLaiHangDoi();
 window.addEventListener('beforeunload', e => {
   if (PHIEN && !KET_QUA && $('manBai') && !$('manBai').classList.contains('an')) { e.preventDefault(); e.returnValue = ''; }
 });
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   TỰ CHẨN ĐOÁN — vì trang này chạy trên máy học viên, KHÔNG có DevTools để mở (§41.13: "đo,
+   đừng đoán"; §41.19: lỗi im lặng làm mất cả buổi gỡ rối).
+
+   ① LỖI JS LUÔN HIỆN LÊN MÀN HÌNH. Trước đây một lỗi giữa chừng làm nút chết ngắc mà không có
+      dấu hiệu gì — học viên tưởng bài hỏng, giáo viên không biết báo gì cho người sửa.
+   ② Mở kèm `?debug=1` thì hiện hộp thông số máy + phép thử "nút có bị phần tử khác phủ không".
+      Chụp màn hình hộp đó là đủ để chẩn đoán từ xa, không cần cầm máy trong tay.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  const LOI = [];
+  function ghiLoi(chu) {
+    LOI.push(chu);
+    try {
+      let b = document.getElementById('loiJs');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'loiJs';
+        b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#B3261E;'
+          + 'color:#fff;font:12px/1.45 monospace;padding:8px 34px 8px 10px;max-height:42vh;overflow:auto;'
+          + 'white-space:pre-wrap;word-break:break-word';
+        const x = document.createElement('button');
+        x.textContent = '×';
+        x.style.cssText = 'position:absolute;right:4px;top:4px;width:26px;height:26px;border:0;'
+          + 'background:rgba(255,255,255,.22);color:#fff;font-size:17px;border-radius:6px';
+        x.onclick = () => b.remove();
+        b.appendChild(x);
+        (document.body || document.documentElement).appendChild(b);
+      }
+      const d = document.createElement('div');
+      d.textContent = '⚠ ' + chu;
+      b.appendChild(d);
+    } catch (e) { /* không còn gì để làm */ }
+  }
+  window.addEventListener('error', e => ghiLoi(
+    (e.message || 'Lỗi') + ' — ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '?')));
+  window.addEventListener('unhandledrejection', e => ghiLoi('Promise: ' + ((e.reason && e.reason.message) || e.reason)));
+
+  if (!/[?&]debug=1/.test(location.search)) return;
+
+  function chuoiPhanTu(el) {
+    if (!el) return '(không có)';
+    if (el === document.documentElement) return 'html';
+    return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '')
+      + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : '');
+  }
+  /* Phép thử QUAN TRỌNG NHẤT: bấm vào giữa nút thì trình duyệt trao cú bấm cho AI?
+     Trả về phần tử khác nút ⇒ nút đang bị một lớp trong suốt phủ lên (lớp lỗi hay gặp nhất). */
+  function thuNut(id) {
+    const el = document.getElementById(id);
+    if (!el) return id + ': KHÔNG CÓ NÚT';
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return id + ': nút cỡ 0 (đang bị ẩn)';
+    const tren = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2));
+    const ok = tren === el || el.contains(tren);
+    return id + ': ' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + '×'
+      + Math.round(r.height) + (el.disabled ? ' [disabled]' : '')
+      + (ok ? ' ✓ bấm được' : ' ✗ BỊ PHỦ BỞI ' + chuoiPhanTu(tren));
+  }
+  function css(id, ...props) {
+    const el = document.getElementById(id);
+    if (!el) return id + ': (không có)';
+    const s = getComputedStyle(el);
+    return id + ': ' + props.map(p => p + '=' + s[p]).join(' · ');
+  }
+
+  function ve() {
+    const vv = window.visualViewport;
+    const khung = document.querySelector('#lopSlide > .khung:not(.an)');
+    const dong = [
+      'MÁY: ' + navigator.userAgent,
+      'Màn: ' + innerWidth + '×' + innerHeight + ' dpr=' + devicePixelRatio
+        + (vv ? ' · visual ' + Math.round(vv.width) + '×' + Math.round(vv.height) + ' zoom=' + (vv.scale || 1).toFixed(2) : ''),
+      'Chế độ hẹp (≤700px): ' + matchMedia('(max-width: 700px)').matches,
+      'Hỗ trợ dvh: ' + (CSS.supports ? CSS.supports('height', '100dvh') : '?')
+        + ' · display:contents: ' + (CSS.supports ? CSS.supports('display', 'contents') : '?'),
+      '—',
+      thuNut('btSau'), thuNut('btTruoc'), thuNut('btNop'), thuNut('btMenu'),
+      '—',
+      css('sanKhau', 'display', 'overflow', 'position'),
+      css('khungTyLe', 'display', 'width', 'height', 'transform'),
+      css('lopSlide', 'display', 'width', 'transform'),
+      'khung đang hiện: ' + chuoiPhanTu(khung)
+        + (khung ? ' display=' + getComputedStyle(khung).display : ''),
+      '.sl: ' + (() => {
+        const sl = khung && khung.querySelector('.sl');
+        if (!sl) return '(không thấy .sl)';
+        const r = sl.getBoundingClientRect();
+        return Math.round(r.width) + '×' + Math.round(r.height) + ' tại ' + Math.round(r.left) + ',' + Math.round(r.top);
+      })(),
+      'Slide: ' + (CHI_SO + 1) + '/' + slides().length + ' · khung đã dựng: ' + Object.keys(KHUNG).length,
+      '—',
+      'Lỗi JS: ' + (LOI.length ? LOI.join(' | ') : 'không có'),
+    ];
+    return dong.join('\n');
+  }
+
+  const hop = document.createElement('div');
+  hop.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99998;background:#0F2438;color:#DCEBFA;'
+    + 'font:11px/1.5 monospace;padding:8px 8px 40px;max-height:60vh;overflow:auto;white-space:pre-wrap;word-break:break-word';
+  const chu = document.createElement('div');
+  const hang = document.createElement('div');
+  hang.style.cssText = 'position:absolute;left:8px;bottom:8px;display:flex;gap:6px';
+  [['Làm mới', () => { chu.textContent = ve(); }],
+   ['Chép', async () => { try { await navigator.clipboard.writeText(chu.textContent); hang.children[1].textContent = 'Đã chép'; } catch (e) { hang.children[1].textContent = 'Không chép được'; } }],
+   ['Ẩn', () => hop.remove()],
+  ].forEach(([nhan, fn]) => {
+    const b = document.createElement('button');
+    b.textContent = nhan;
+    b.style.cssText = 'border:0;border-radius:6px;padding:7px 12px;background:#1F6FEB;color:#fff;font-size:12px';
+    b.onclick = fn;
+    hang.appendChild(b);
+  });
+  hop.appendChild(chu); hop.appendChild(hang);
+  document.addEventListener('DOMContentLoaded', () => document.body.appendChild(hop));
+  if (document.body) document.body.appendChild(hop);
+  chu.textContent = ve();
+  /* Vẽ lại sau mỗi lần đổi slide / xoay máy — số liệu luôn là của TRẠNG THÁI ĐANG NHÌN THẤY */
+  ['click', 'resize', 'orientationchange'].forEach(ev =>
+    window.addEventListener(ev, () => setTimeout(() => { chu.textContent = ve(); }, 60)));
+})();
