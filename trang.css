@@ -79,7 +79,7 @@ a:hover { color: var(--blue-hover); text-decoration: underline; }
 .spacer { flex: 1; }
 
 /* ── Màn hình dạng hộp giữa (vào bài / đã nộp / đăng nhập) ─────────────────────────────────── */
-.man { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 10px; }
+.man { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 10px; }
 .hop {
   background: var(--white); border: 1px solid var(--vien); border-radius: 10px;
   padding: 16px; width: 100%; max-width: 380px; text-align: center;
@@ -158,7 +158,7 @@ select.o {
 /* ── Màn làm bài ──────────────────────────────────────────────────────────────────────────── */
 /* ══ MÀN LÀM BÀI — MENU TRÁI + VÙNG SLIDE CAO HẾT VIEWPORT (2026-09-08) ═══════════════════
    Thay thanh công cụ trên cùng bằng menu dọc bên trái. Vùng slide nay chiếm trọn chiều cao. */
-#manBai { display: flex; flex-direction: row; align-items: stretch; padding: 0; height: 100dvh; }
+#manBai { display: flex; flex-direction: row; align-items: stretch; padding: 0; height: 100vh; height: 100dvh; }
 
 /* ── Menu trái ─────────────────────────────────────────────────────────────────────────── */
 .menu {
@@ -244,7 +244,7 @@ select.o {
 @media (max-width: 700px) {
   /* CẢ TRANG cuộn dọc như trang web thường; thanh trên/dưới DÍNH mép để nút Nộp bài luôn thấy.
      KHÔNG cuộn bên trong .san — cách đó làm vùng cuộn lồng nhau, rất khó dùng trên cảm ứng. */
-  #manBai { display: block; min-height: 100dvh; height: auto; }
+  #manBai { display: block; min-height: 100vh; min-height: 100dvh; height: auto; }
   .san { display: block; overflow: visible; padding: 0; }
   /* Khung tỉ lệ + lớp scale chỉ có nghĩa ở màn rộng — màn hẹp trả về luồng thường */
   .khung-ty-le, .lop-slide {
@@ -320,8 +320,18 @@ select.o {
    ══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* Mỗi slide giữ khung DOM RIÊNG (xem đầu trang.js): chuyển slide = ẩn/hiện, không vẽ lại, nên bài
-   đang làm dở — nhất là vị trí chip kéo-thả và chữ trong lưới ô chữ — không mất. */
-.san .khung { display: contents; }
+   đang làm dở — nhất là vị trí chip kéo-thả và chữ trong lưới ô chữ — không mất.
+
+   ⚠⚠ PHẢI LÀ `block`, TUYỆT ĐỐI KHÔNG `display:contents` (sửa 2026-09-10 sau khi người dùng báo).
+   Bản 08/09 dùng `display:contents` cho lớp bọc này. Trên Chrome (Windows, Android) chạy đúng,
+   nhưng trên **iPhone/Safari** thì bấm ‹ › không đổi slide và không chọn được đáp án — WebKit
+   có bug đã biết: đổi qua lại giữa `display:contents` và `display:none` KHÔNG dựng lại render
+   tree đúng, nên slide mới không bao giờ hiện ra dù DOM đã đổi class chuẩn.
+   Triệu chứng đánh lừa: nhìn như "nút hỏng", thực ra nút chạy đúng còn màn hình đứng im.
+   `block` cho hình y hệt (`.sl` tự khai kích thước; mọi rule đều viết `.san .sl` dạng hậu duệ
+   nên không phụ thuộc lớp bọc) mà không đụng vào vùng bug của WebKit.
+   QUY TẮC: trang web này phục vụ cả iPhone ⇒ KHÔNG dùng `display:contents` ở bất kỳ đâu. */
+.san .khung { display: block; }
 .san .khung.an { display: none !important; }
 
 /* ── CÔNG CỤ CHỈ DÀNH CHO GIẢNG VIÊN — ẩn trên máy học viên ────────────────────────────────
