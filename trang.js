@@ -424,12 +424,15 @@ window.addEventListener('beforeunload', e => {
   /* ── THEO DÕI THAO TÁC CHẠM (luôn bật, rất nhẹ) ─────────────────────────────────────────
      Cần cho ca "chạm vào đáp án mà không ăn": phải biết cú chạm có tới được phần tử nào không,
      và hàm chọn đáp án của app có thực sự được gọi không. Không có số liệu này thì chỉ còn đoán. */
-  const VET = { chamCuoi: '(chưa chạm)', soCham: 0, soGoiPick: 0, loaiSK: [] };
+  const VET = { lichSu: [], soCham: 0, soGoiPick: 0, loaiSK: [] };
   const tenEl = (el) => el ? (el.tagName ? el.tagName.toLowerCase() : '?')
     + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.') : '') : '(trống)';
   ['touchstart', 'click'].forEach(ev => document.addEventListener(ev, (e) => {
     VET.soCham++;
-    VET.chamCuoi = ev + ' → ' + tenEl(e.target);
+    if (ev === 'touchstart') {   /* mỗi lần chạm chỉ ghi MỘT dòng, khỏi lẫn với click tổng hợp */
+      VET.lichSu.push(tenEl(e.target));
+      if (VET.lichSu.length > 6) VET.lichSu.shift();
+    }
     if (VET.loaiSK.indexOf(ev) < 0) VET.loaiSK.push(ev);
   }, true));
   /* Bọc rmcqPick để đếm số lần app thực sự xử lý một lựa chọn (engine.js nạp trước file này). */
@@ -449,12 +452,21 @@ window.addEventListener('beforeunload', e => {
   }
   /* Phép thử QUAN TRỌNG NHẤT: bấm vào giữa nút thì trình duyệt trao cú bấm cho AI?
      Trả về phần tử khác nút ⇒ nút đang bị một lớp trong suốt phủ lên (lớp lỗi hay gặp nhất). */
+  /* ⚠ Hộp chẩn đoán phủ nửa trên màn hình ⇒ đo `elementFromPoint` lúc nó đang mở thì mọi phần
+     tử ở nửa trên đều báo "bị div che" — chính công cụ làm nhiễu số liệu (đã xảy ra 2026-09-10).
+     Vì vậy mọi phép đo hit-test đều chạy trong lúc TẠM ẨN hộp. */
+  function doKhiAnHop(fn) {
+    const luu = hop.style.visibility;
+    hop.style.visibility = 'hidden';
+    try { return fn(); } finally { hop.style.visibility = luu; }
+  }
   function thuNut(id) {
     const el = document.getElementById(id);
     if (!el) return id + ': KHÔNG CÓ NÚT';
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) return id + ': nút cỡ 0 (đang bị ẩn)';
-    const tren = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2));
+    const tren = doKhiAnHop(() => document.elementFromPoint(
+      Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)));
     const ok = tren === el || el.contains(tren);
     return id + ': ' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + '×'
       + Math.round(r.height) + (el.disabled ? ' [disabled]' : '')
@@ -499,7 +511,7 @@ window.addEventListener('beforeunload', e => {
       'Slide: ' + (CHI_SO + 1) + '/' + slides().length + ' · khung đã dựng: ' + Object.keys(KHUNG).length,
       '—',
       'CHẠM: ' + VET.soCham + ' lần · loại sự kiện nhận được: ' + (VET.loaiSK.join('+') || 'CHƯA CÓ SỰ KIỆN NÀO'),
-      'chạm gần nhất: ' + VET.chamCuoi,
+      'các chỗ vừa chạm: ' + (VET.lichSu.join('  ·  ') || '(chưa chạm vào đâu)'),
       'rmcqPick được gọi: ' + VET.soGoiPick + ' lần'
         + ' · có hàm: ' + (typeof window.rmcqPick === 'function' ? 'có' : 'KHÔNG'),
       'đáp án đang chọn: ' + document.querySelectorAll('#lopSlide .option-item.selected').length
@@ -509,7 +521,8 @@ window.addEventListener('beforeunload', e => {
         const o = document.querySelector('#lopSlide .option-item');
         if (!o) return 'ô đáp án đầu: (không có)';
         const r = o.getBoundingClientRect();
-        const t = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2));
+        const t = doKhiAnHop(() => document.elementFromPoint(
+          Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)));
         const cs = getComputedStyle(o);
         return 'ô đáp án đầu: ' + Math.round(r.width) + '×' + Math.round(r.height)
           + ' tại ' + Math.round(r.left) + ',' + Math.round(r.top)
