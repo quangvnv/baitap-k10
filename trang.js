@@ -424,7 +424,7 @@ window.addEventListener('beforeunload', e => {
   /* ── THEO DÕI THAO TÁC CHẠM (luôn bật, rất nhẹ) ─────────────────────────────────────────
      Cần cho ca "chạm vào đáp án mà không ăn": phải biết cú chạm có tới được phần tử nào không,
      và hàm chọn đáp án của app có thực sự được gọi không. Không có số liệu này thì chỉ còn đoán. */
-  const VET = { lichSu: [], soCham: 0, soGoiPick: 0, loaiSK: [] };
+  const VET = { lichSu: [], soCham: 0, soGoiPick: 0, loaiSK: [], ketQuaThu: '' };
   const tenEl = (el) => el ? (el.tagName ? el.tagName.toLowerCase() : '?')
     + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.') : '') : '(trống)';
   ['touchstart', 'click'].forEach(ev => document.addEventListener(ev, (e) => {
@@ -518,6 +518,17 @@ window.addEventListener('beforeunload', e => {
         + ' ô tô · radio đã tick: ' + document.querySelectorAll('#lopSlide input:checked').length
         + ' · tổng ô đáp án: ' + document.querySelectorAll('#lopSlide .option-item').length,
       (() => {
+        const inp = document.querySelector('#lopSlide .option-item input');
+        const lab = document.querySelector('#lopSlide .option-item');
+        if (!inp) return 'CẤU TRÚC Ô: KHÔNG CÓ <input> nào — onclick của app nằm trên input nên sẽ không bao giờ chạy';
+        const cs = getComputedStyle(inp);
+        return 'CẤU TRÚC Ô: ' + document.querySelectorAll('#lopSlide .option-item input').length + ' input'
+          + ' · disabled=' + inp.disabled
+          + ' · label nối đúng input: ' + (lab && lab.control === inp)
+          + ' · input pointer-events=' + cs.pointerEvents
+          + ' · có onclick: ' + !!inp.getAttribute('onclick');
+      })(),
+      (() => {
         const o = document.querySelector('#lopSlide .option-item');
         if (!o) return 'ô đáp án đầu: (không có)';
         const r = o.getBoundingClientRect();
@@ -531,6 +542,7 @@ window.addEventListener('beforeunload', e => {
       })(),
       '—',
       'Lỗi JS: ' + (LOI.length ? LOI.join(' | ') : 'không có'),
+      (VET.ketQuaThu ? '【KẾT QUẢ THỬ】 ' + VET.ketQuaThu : ''),
     ];
     return dong.join('\n');
   }
@@ -558,6 +570,27 @@ window.addEventListener('beforeunload', e => {
   hang.style.cssText = 'position:absolute;left:8px;bottom:8px;display:flex;gap:6px';
   [['Làm mới', () => { chu.textContent = ve(); }],
    ['Chép', async () => { try { await navigator.clipboard.writeText(chu.textContent); hang.children[1].textContent = 'Đã chép'; } catch (e) { hang.children[1].textContent = 'Không chép được'; } }],
+   ['Thử chọn ô đầu', () => {
+     /* Phân định dứt khoát: BỎ QUA tầng chạm, gọi thẳng hàm chọn đáp án của app.
+        Ăn  → DOM/CSS/JS lành, lỗi nằm ở đường sự kiện chạm.
+        Không ăn → lỗi ở chính DOM hoặc hàm, không phải do chạm. */
+     const o = document.querySelector('#lopSlide .option-item');
+     const inp = o && o.querySelector('input');
+     const kq = [];
+     if (!o) kq.push('KHÔNG có ô đáp án nào trong slide');
+     else {
+       kq.push('input: ' + (inp ? 'có (disabled=' + inp.disabled + ')' : 'KHÔNG CÓ'));
+       if (inp) { try { inp.click(); kq.push('gọi input.click(): xong'); } catch (e) { kq.push('input.click() LỖI: ' + e.message); } }
+       kq.push('→ radio đã tick: ' + document.querySelectorAll('#lopSlide input:checked').length);
+       if (typeof window.rmcqPick === 'function' && inp) {
+         try { window.rmcqPick(inp); kq.push('gọi thẳng rmcqPick(): xong'); }
+         catch (e) { kq.push('rmcqPick() LỖI: ' + e.message); }
+       }
+       kq.push('→ ô được tô: ' + document.querySelectorAll('#lopSlide .option-item.selected').length);
+     }
+     VET.ketQuaThu = kq.join('  ·  ');
+     chu.textContent = ve();
+   }],
    ['Thu gọn', () => datTrangThai(false)],
   ].forEach(([nhan, fn]) => {
     const b = document.createElement('button');
