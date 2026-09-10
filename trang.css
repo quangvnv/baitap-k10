@@ -264,13 +264,21 @@ select.o {
   .menu.mo { transform: none; }
   .menu-nen { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(26,51,80,.42); }
   .menu-nen:not(.mo) { display: none; }
-  /* Nút ‹ › bám mép màn hình, KHÔNG bám giữa slide (slide nay cao tự do, giữa nó ở tận đâu) */
-  .bt-canh { position: fixed; top: auto; bottom: 10px; transform: none; width: 44px; height: 44px; }
+  /* Nút ‹ › bám mép màn hình, KHÔNG bám giữa slide (slide nay cao tự do, giữa nó ở tận đâu).
+     ⚠ PHẢI cộng `env(safe-area-inset-bottom)`: trên iPhone, dải sát mép dưới màn hình là vùng
+     dành cho cử chỉ vuốt-lên-về-Home của hệ điều hành, và thanh địa chỉ của Safari cũng nằm ở
+     ĐÁY. Nút đặt ở `bottom:10px` rơi đúng vào dải đó ⇒ chạm vào rất dễ trượt sang cử chỉ hệ
+     thống thay vì tới trang. Android (thanh địa chỉ ở TRÊN) và máy tính không dính. */
+  .bt-canh {
+    position: fixed; top: auto; transform: none; width: 44px; height: 44px;
+    bottom: 10px;                                     /* trình duyệt không hiểu env() thì giữ nguyên như cũ */
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  }
   .bt-canh:hover:not(:disabled) { transform: none; }
   .bt-canh-trai { left: 8px; }
   .bt-canh-phai { right: 8px; }
   /* Nút Nộp bài phải luôn với tới được: chừa chỗ cho cụm nút nổi ở đáy */
-  .san { padding-bottom: 64px; }
+  .san { padding-bottom: 64px; padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 
   .san .sl {
     width: 100% !important; height: auto !important; min-height: 0 !important;

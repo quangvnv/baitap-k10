@@ -485,15 +485,30 @@ window.addEventListener('beforeunload', e => {
     return dong.join('\n');
   }
 
+  /* ⚠ MẶC ĐỊNH THU GỌN. Bản đầu mở sẵn và cao 60vh ⇒ trên iPhone nó CHE MẤT ô nhập mã, người
+     dùng không vào nổi bài để lấy đúng số liệu cần đo — công cụ chẩn đoán tự chặn đường chẩn đoán
+     (đã xảy ra thật 2026-09-10, mất 2 vòng gửi ảnh). Thu gọn chỉ còn một nút nhỏ góc phải-trên. */
   const hop = document.createElement('div');
   hop.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99998;background:#0F2438;color:#DCEBFA;'
     + 'font:11px/1.5 monospace;padding:8px 8px 40px;max-height:60vh;overflow:auto;white-space:pre-wrap;word-break:break-word';
+  const nutMo = document.createElement('button');
+  nutMo.textContent = '⚙ Chẩn đoán';
+  nutMo.style.cssText = 'position:fixed;right:6px;top:6px;z-index:99998;border:0;border-radius:6px;'
+    + 'padding:6px 10px;background:#0F2438;color:#DCEBFA;font:11px/1 monospace;opacity:.85';
+  let dangMo = false;
+  const datTrangThai = (mo) => {
+    dangMo = mo;
+    hop.style.display = mo ? 'block' : 'none';
+    nutMo.style.display = mo ? 'none' : 'block';
+    if (mo) chu.textContent = ve();
+  };
+  nutMo.onclick = () => datTrangThai(true);
   const chu = document.createElement('div');
   const hang = document.createElement('div');
   hang.style.cssText = 'position:absolute;left:8px;bottom:8px;display:flex;gap:6px';
   [['Làm mới', () => { chu.textContent = ve(); }],
    ['Chép', async () => { try { await navigator.clipboard.writeText(chu.textContent); hang.children[1].textContent = 'Đã chép'; } catch (e) { hang.children[1].textContent = 'Không chép được'; } }],
-   ['Ẩn', () => hop.remove()],
+   ['Thu gọn', () => datTrangThai(false)],
   ].forEach(([nhan, fn]) => {
     const b = document.createElement('button');
     b.textContent = nhan;
@@ -502,10 +517,9 @@ window.addEventListener('beforeunload', e => {
     hang.appendChild(b);
   });
   hop.appendChild(chu); hop.appendChild(hang);
-  document.addEventListener('DOMContentLoaded', () => document.body.appendChild(hop));
-  if (document.body) document.body.appendChild(hop);
-  chu.textContent = ve();
+  const gan = () => { document.body.appendChild(hop); document.body.appendChild(nutMo); datTrangThai(false); };
+  if (document.body) gan(); else document.addEventListener('DOMContentLoaded', gan);
   /* Vẽ lại sau mỗi lần đổi slide / xoay máy — số liệu luôn là của TRẠNG THÁI ĐANG NHÌN THẤY */
   ['click', 'resize', 'orientationchange'].forEach(ev =>
-    window.addEventListener(ev, () => setTimeout(() => { chu.textContent = ve(); }, 60)));
+    window.addEventListener(ev, () => setTimeout(() => { if (dangMo) chu.textContent = ve(); }, 60)));
 })();
