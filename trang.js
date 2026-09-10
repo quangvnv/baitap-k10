@@ -430,6 +430,7 @@ window.addEventListener('beforeunload', e => {
    ══════════════════════════════════════════════════════════════════════════════════════════════ */
 (function () {
   const LOI = [];
+  const NGOAI = [];   // lỗi của script NGOÀI trang (Zalo…) — chỉ để chẩn đoán, không hiện cho học viên
   function ghiLoi(chu) {
     LOI.push(chu);
     try {
@@ -453,9 +454,31 @@ window.addEventListener('beforeunload', e => {
       b.appendChild(d);
     } catch (e) { /* không còn gì để làm */ }
   }
-  window.addEventListener('error', e => ghiLoi(
-    (e.message || 'Lỗi') + ' — ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '?')));
-  window.addEventListener('unhandledrejection', e => ghiLoi('Promise: ' + ((e.reason && e.reason.message) || e.reason)));
+  /* ⚠ CHỈ hiện lỗi CỦA CHÍNH TRANG NÀY.
+     Trình duyệt nhúng trong Zalo (và Facebook/Messenger) TỰ TIÊM script theo dõi của nó vào mọi
+     trang nó mở — dấu vết là các tham số nó gắn thêm vào URL (`zarsrc`, `utm_source=zalo`). Script
+     đó tự nổ trong môi trường của nó (`ReferenceError: zaloJSV2 is not defined`) và chạy ĐỊNH KỲ
+     nên băng đỏ hiện ra sau một lúc, ở bất kỳ màn nào — không liên quan gì tới bài tập, nhưng học
+     viên thấy chữ đỏ thì tưởng bài hỏng và báo về (đã xảy ra 2026-09-10, cả iOS lẫn Android).
+     Trang này KHÔNG có script inline (kiểm index.html) ⇒ mọi lỗi THẬT đều mang tên một trong 4
+     tệp dưới đây; thứ khác là của người ngoài, không phải việc của học viên.
+     ⚠ Vẫn ĐẾM lại và hiện trong hộp ?debug=1 — chặn hiển thị, KHÔNG chặn chẩn đoán. */
+  const FILE_CUA_TA = ['cauhinh.js', 'cham-diem.js', 'engine.js', 'trang.js'];
+  const laFileCuaTa = (src) => FILE_CUA_TA.indexOf(
+    String(src || '').split('?')[0].split('#')[0].split('/').pop()) >= 0;
+  window.addEventListener('error', e => {
+    const noi = String(e.filename || '').split('?')[0].split('/').pop() + ':' + (e.lineno || '?');
+    if (!laFileCuaTa(e.filename)) { NGOAI.push((e.message || 'Lỗi') + ' @ ' + noi); return; }
+    ghiLoi((e.message || 'Lỗi') + ' — ' + noi);
+  });
+  window.addEventListener('unhandledrejection', e => {
+    const chu = 'Promise: ' + ((e.reason && e.reason.message) || e.reason);
+    /* Có stack mà KHÔNG trỏ vào tệp của ta ⇒ của script ngoài. Không có stack thì cứ hiện —
+       lỗi mạng của chính trang (fetch tới Supabase) rơi vào nhánh này và phải thấy được. */
+    const st = e.reason && e.reason.stack;
+    if (st && !FILE_CUA_TA.some(f => st.indexOf(f) >= 0)) { NGOAI.push(chu); return; }
+    ghiLoi(chu);
+  });
 
   /* ── THEO DÕI THAO TÁC CHẠM (luôn bật, rất nhẹ) ─────────────────────────────────────────
      Cần cho ca "chạm vào đáp án mà không ăn": phải biết cú chạm có tới được phần tử nào không,
@@ -583,6 +606,7 @@ window.addEventListener('beforeunload', e => {
       })(),
       '—',
       'Lỗi JS: ' + (LOI.length ? LOI.join(' | ') : 'không có'),
+      'Lỗi script NGOÀI trang (Zalo…): ' + (NGOAI.length ? NGOAI.length + ' — ' + NGOAI[NGOAI.length - 1] : 'không có'),
       (VET.ketQuaThu ? '【KẾT QUẢ THỬ】 ' + VET.ketQuaThu : ''),
     ];
     return dong.join('\n');
