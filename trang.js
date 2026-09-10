@@ -452,7 +452,12 @@ window.addEventListener('beforeunload', e => {
   function ve() {
     const vv = window.visualViewport;
     const khung = document.querySelector('#lopSlide > .khung:not(.an)');
+    /* ⚠ PHẢI biết máy đang chạy BẢN NÀO: trình duyệt nhúng trong Zalo/Facebook cache rất dai,
+       rất hay xảy ra cảnh sửa xong mà máy người dùng vẫn chạy bản cũ (§41.19). */
+    const tk = document.querySelector('script[src*="trang.js"]');
+    const ban = tk ? (String(tk.getAttribute('src')).split('?v=')[1] || '(không có ?v=)') : '?';
     const dong = [
+      'BẢN ĐANG CHẠY: v=' + ban,
       'MÁY: ' + navigator.userAgent,
       'Màn: ' + innerWidth + '×' + innerHeight + ' dpr=' + devicePixelRatio
         + (vv ? ' · visual ' + Math.round(vv.width) + '×' + Math.round(vv.height) + ' zoom=' + (vv.scale || 1).toFixed(2) : ''),
