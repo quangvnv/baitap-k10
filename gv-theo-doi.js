@@ -171,6 +171,7 @@
       tr.onclick = () => moHV(tr.dataset.hv);
     });
 
+    ghimCot();
     hien('tdTrong', !P.length);
 
     // Dải tóm tắt
@@ -189,6 +190,18 @@
         + (khach.length ? ` · Khách <b>${khach.length}</b>` : '')
       : `Sĩ số <b>${trong.length}</b> · không có phiên nào trong khoảng ngày đã chọn`;
   }
+
+  /* ⚠ Vị trí ghim của 2 cột giữa phải ĐO từ bề rộng THẬT, không đặt số cứng trong CSS: bảng
+     dùng table-layout:auto nên cột co theo nội dung (mã học viên dài/ngắn, số phiên…). Lệch vài
+     px là cột ghim ĐÈ LÊN tiêu đề cột phiên đầu tiên và nuốt mất chữ đầu — nhìn như lỗi phông. */
+  function ghimCot() {
+    const t = document.querySelector('.td-bang');
+    const a = $('tdHead').querySelector('.td-c1'), b = $('tdHead').querySelector('.td-c2');
+    if (!t || !a || !b) return;
+    t.style.setProperty('--td-l2', a.offsetWidth + 'px');
+    t.style.setProperty('--td-l3', (a.offsetWidth + b.offsetWidth) + 'px');
+  }
+  window.addEventListener('resize', ghimCot);
 
   /* ── Chi tiết một học viên (dựng từ dữ liệu đã tải, KHÔNG gọi lại máy chủ) ─────────────── */
   function moHV(ma) {

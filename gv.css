@@ -163,8 +163,8 @@ body.gv > .man { flex: 1 1 auto; }
 
 .td-s { position: sticky; z-index: 1; }
 .td-c1 { left: 0; min-width: 150px; }
-.td-c2 { left: 150px; width: 74px; }
-.td-c3 { left: 224px; width: 56px; box-shadow: 1px 0 0 var(--vien); }
+.td-c2 { left: var(--td-l2, 150px); width: 74px; }
+.td-c3 { left: var(--td-l3, 224px); width: 56px; box-shadow: 1px 0 0 var(--vien); }
 .td-bang thead th.td-s { z-index: 3; }             /* góc trên-trái đè cả 2 chiều */
 
 .td-bang tbody td.td-s { background: var(--white); }
@@ -174,6 +174,9 @@ body.gv > .man { flex: 1 1 auto; }
 
 /* Tiêu đề cột phiên: tên bài (rút gọn) + ngày · kiểu */
 /* Cột rỗng cuối HÚT hết chỗ thừa — thiếu nó thì cột "Mã học viên" phình ra chiếm cả bảng. */
+/* ⚠ Vùng cuộn KHÔNG được có padding ngang: nội dung cuộn đi qua vùng padding mà cột ghim
+   (sticky left:0) chỉ phủ tới mép trong ⇒ chữ của cột đang trôi LÒI RA ở dải 12px bên trái. */
+#manTD .vung, #manHV .vung { padding-left: 0; padding-right: 0; }
 .td-hut { width: 100%; }
 .td-p { width: 108px; max-width: 108px; }
 .td-pt { display: block; font-weight: 600; }
@@ -198,6 +201,4 @@ body.gv > .man { flex: 1 1 auto; }
   .o, .o-nho, .o-ngay { font-size: 16px; }
   .td-bang { min-width: max-content; font-size: 12px; }
   .td-c1 { min-width: 120px; }
-  .td-c2 { left: 120px; }
-  .td-c3 { left: 194px; }
 }
