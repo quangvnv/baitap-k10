@@ -148,3 +148,56 @@ body.gv > .man { flex: 1 1 auto; }
   .bang { font-size: 12px; min-width: 640px; }
   .bang thead th, .bang tbody td { padding: 5px 6px; }
 }
+
+/* ══ TAB "THEO DÕI LỚP" — ma trận Học viên × Phiên (§41.22) ═══════════════════════════════════
+   3 cột đầu ghim trái, khối cột phiên cuộn ngang trong .vung.
+   ⚠ Ô ghim PHẢI tự khai nền, nếu không nội dung cuộn bên dưới lộ xuyên qua. Và phải khai riêng
+     cho hàng chẵn/lẻ vì bảng có kẻ sọc (nth-child) — quên là hàng chẵn hở nền trắng. */
+.tom { flex: 0 0 auto; padding: 8px 12px 0; font-size: 13px; color: var(--t2); }
+.tom b { color: #222; }
+.tom b.canh, .td-canh { color: var(--do); }
+.td-canh { margin-right: 3px; }
+
+.td-bang { table-layout: auto; min-width: max-content; }
+.td-bang th, .td-bang td { white-space: nowrap; }
+
+.td-s { position: sticky; z-index: 1; }
+.td-c1 { left: 0; min-width: 150px; }
+.td-c2 { left: 150px; width: 74px; }
+.td-c3 { left: 224px; width: 56px; box-shadow: 1px 0 0 var(--vien); }
+.td-bang thead th.td-s { z-index: 3; }             /* góc trên-trái đè cả 2 chiều */
+
+.td-bang tbody td.td-s { background: var(--white); }
+.td-bang tbody tr:nth-child(even) td.td-s { background: #f6f9fc; }
+.td-bang tbody tr:hover td.td-s { background: var(--blue-light); }
+.td-bang tbody tr.td-nhac td.td-s { background: #fff6f6; }
+
+/* Tiêu đề cột phiên: tên bài (rút gọn) + ngày · kiểu */
+/* Cột rỗng cuối HÚT hết chỗ thừa — thiếu nó thì cột "Mã học viên" phình ra chiếm cả bảng. */
+.td-hut { width: 100%; }
+.td-p { width: 108px; max-width: 108px; }
+.td-pt { display: block; font-weight: 600; }
+.td-pd { display: block; font-weight: 400; font-size: 11px; color: #8a939c; }
+.td-p:hover .td-pt { color: var(--blue); text-decoration: underline; }
+
+/* Ô điểm — tô theo mức để liếc là thấy mảng kém nằm đâu */
+.o-diem { font-weight: 700; }
+.o-diem.tot { color: #14632f; background: #eaf7ef; }
+.o-diem.vua { color: #8a4b00; background: #fff5e6; }
+.o-diem.kem { color: #8a1c1c; background: #fdeced; }
+
+.td-nhac td { background: #fff6f6; }
+.td-nhom td {
+  background: #eef2f6 !important; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  color: var(--t3); text-transform: uppercase; padding: 4px 8px;
+}
+
+@media (max-width: 820px) {
+  /* ⚠ §41.20: ô nhập < 16px làm iOS TỰ PHÓNG cả trang và không thu lại ⇒ mọi phần tử
+     position:fixed trôi khỏi màn hình. Đừng hạ xuống cho "gọn". */
+  .o, .o-nho, .o-ngay { font-size: 16px; }
+  .td-bang { min-width: max-content; font-size: 12px; }
+  .td-c1 { min-width: 120px; }
+  .td-c2 { left: 120px; }
+  .td-c3 { left: 194px; }
+}

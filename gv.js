@@ -53,8 +53,22 @@ async function api(duong, tuyChon = {}) {
   return kq;
 }
 
-/* Mặt tiền dùng chung cho admin.js — đừng để tab Tài khoản tự dựng lại phiên đăng nhập. */
-window.WebGV = { api, bao, esc, $, hien, toi: () => TOI };
+/* Mặt tiền dùng chung cho admin.js + gv-theo-doi.js — đừng để tab khác tự dựng lại phiên đăng
+   nhập. `moPhien` để tab "Theo dõi lớp" bấm tiêu đề cột là nhảy sang chi tiết phiên đó. */
+window.WebGV = { api, bao, esc, $, hien, toi: () => TOI, moPhien };
+
+/* ⚠ Tên bài phải TRUYỀN VÀO: join `bai_tap(ten)` trả NULL với bài của GV khác (policy `bt_doc`
+   chỉ cho chủ bài + bài đã chia sẻ đọc). Tab Theo dõi lấy tên từ view `v_phien_bang` (§41.22). */
+async function moPhien(id, tenBai, soCau) {
+  try {
+    const r = await api('/rest/v1/phien?select=*,bai_tap(ten,so_cau)&id=eq.' + id);
+    if (!r || !r.length) { bao('Không mở được phiên này.', 'nhac'); return; }
+    const p = r[0];
+    if (!p.bai_tap) p.bai_tap = { ten: tenBai || '—', so_cau: soCau || 0 };
+    await doiTab('phien');
+    await moChiTiet(p);
+  } catch (e) { bao(e.message, 'nhac'); }
+}
 
 /* ── Đăng nhập ───────────────────────────────────────────────────────────────────────────── */
 $('oEmail').value = localStorage.getItem(KHOA_EMAIL) || '';
@@ -101,15 +115,16 @@ async function sauDangNhap(email) {
   hien('thanhTab', true);
 
   // admin.html cũ chuyển hướng sang gv.html#taikhoan ⇒ mở thẳng tab đó nếu có quyền.
-  const muonTK = location.hash === '#taikhoan' && laAdmin;
-  await doiTab(muonTK ? 'taikhoan' : 'phien');
+  const muon = location.hash.slice(1);
+  const moDuoc = muon === 'theodoi' || (muon === 'taikhoan' && laAdmin);
+  await doiTab(moDuoc ? muon : 'phien');
 }
 
 $('btRa').addEventListener('click', () => {
   TOKEN = null; TOI = null; PHIEN_HIEN = null;
   try { localStorage.removeItem(KHOA_TOKEN); } catch { }
   dungNhip();
-  ['manDS', 'manCT', 'manTK', 'thanhTren', 'thanhTab'].forEach(id => hien(id, false));
+  ['manDS', 'manCT', 'manTD', 'manHV', 'manTK', 'thanhTren', 'thanhTab'].forEach(id => hien(id, false));
   hien('manVao', true);
   $('oMk').value = '';
   location.hash = '';
@@ -123,14 +138,12 @@ document.querySelectorAll('.pill[data-tab]').forEach(b => {
 async function doiTab(ten) {
   TAB = ten;
   document.querySelectorAll('.pill[data-tab]').forEach(b => b.classList.toggle('dang', b.dataset.tab === ten));
-  location.hash = ten === 'taikhoan' ? '#taikhoan' : '';
-  if (ten === 'taikhoan') {
-    dungNhip();                                   // rời tab Phiên thì thôi hỏi lại máy chủ
-    hien('manDS', false); hien('manCT', false); hien('manTK', true);
-    if (window.QuanTri) await window.QuanTri.mo();
-    return;
-  }
-  hien('manTK', false);
+  location.hash = ten === 'phien' ? '' : '#' + ten;
+  // Rời tab Phiên thì THÔI hỏi lại máy chủ — 2 tab kia là màn xem tổng kết, không cần nhịp.
+  if (ten !== 'phien') dungNhip();
+  ['manDS', 'manCT', 'manTD', 'manHV', 'manTK'].forEach(id => hien(id, false));
+  if (ten === 'taikhoan') { hien('manTK', true); if (window.QuanTri) await window.QuanTri.mo(); return; }
+  if (ten === 'theodoi') { if (window.TheoDoi) await window.TheoDoi.mo(); return; }
   await veDS();
 }
 

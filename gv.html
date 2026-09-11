@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bảng theo dõi — Cán bộ, giảng viên</title>
-<link rel="stylesheet" href="trang.css?v=17">
-<link rel="stylesheet" href="gv.css?v=17">
+<link rel="stylesheet" href="trang.css?v=18">
+<link rel="stylesheet" href="gv.css?v=18">
 </head>
 <body class="gv">
 
@@ -23,6 +23,7 @@
 
 <nav id="thanhTab" class="tabbar an">
   <button class="pill dang" type="button" data-tab="phien">Phiên bài tập</button>
+  <button class="pill" type="button" data-tab="theodoi">Theo dõi lớp</button>
   <button class="pill an" type="button" data-tab="taikhoan" id="tabTaiKhoan">Tài khoản</button>
 </nav>
 
@@ -116,7 +117,59 @@
   </div>
 </div>
 
-<!-- ══ TAB 2 · TÀI KHOẢN (chỉ vai trò Quản trị) ════════════════════════════════════════════ -->
+<!-- ══ TAB 2 · THEO DÕI LỚP — ma trận Học viên × Phiên (§41.22) ════════════════════════════
+     Hàng lấy từ `lop_hv` nên học viên CHƯA VÀO BÀI vẫn có hàng — đó là điểm chính của tab này.
+     3 cột đầu ghim trái (position:sticky), khối cột phiên cuộn ngang. -->
+<div id="manTD" class="man-full an">
+  <header class="tb">
+    <b>Theo dõi lớp</b>
+    <select id="tdLop" class="o o-nho" title="Lớp"></select>
+    <select id="tdKieu" class="o o-nho" title="Kiểu phiên">
+      <option value="">Tại lớp + Về nhà</option>
+      <option value="tai_lop">Chỉ tại lớp</option>
+      <option value="ve_nha">Chỉ về nhà</option>
+    </select>
+    <input id="tdTu" class="o o-nho o-ngay" type="date" title="Từ ngày">
+    <span class="mo-nhat">→</span>
+    <input id="tdDen" class="o o-nho o-ngay" type="date" title="Đến ngày">
+    <span class="giua"></span>
+    <button id="tdMoi" class="bt" type="button" title="Tải lại">↻ Làm mới</button>
+  </header>
+  <div id="tdTom" class="tom">—</div>
+  <div class="vung">
+    <table class="bang td-bang">
+      <thead id="tdHead"></thead>
+      <tbody id="tdBody"></tbody>
+    </table>
+    <p id="tdTrong" class="trong an">Không có phiên nào của lớp này trong khoảng ngày đã chọn.</p>
+  </div>
+</div>
+
+<!-- ══ TAB 2b · CHI TIẾT MỘT HỌC VIÊN ══════════════════════════════════════════════════════ -->
+<div id="manHV" class="man-full an">
+  <header class="tb">
+    <button id="hvVe" class="bt" type="button">‹ Quay lại</button>
+    <b id="hvMa" class="ma">—</b>
+    <span class="mo-nhat" id="hvLop"></span>
+  </header>
+  <div id="hvTom" class="tom">—</div>
+  <div class="vung">
+    <table class="bang">
+      <thead><tr>
+        <th>Bài tập</th>
+        <th style="width:90px">Kiểu</th>
+        <th style="width:70px">Lượt</th>
+        <th style="width:70px">Điểm</th>
+        <th style="width:80px">Số câu</th>
+        <th style="width:110px">Nộp lúc</th>
+        <th style="width:190px">Từng câu</th>
+      </tr></thead>
+      <tbody id="hvBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ TAB 3 · TÀI KHOẢN (chỉ vai trò Quản trị) ════════════════════════════════════════════ -->
 <div id="manTK" class="man-full an">
   <header class="tb">
     <b>Tài khoản cán bộ, giảng viên</b>
@@ -156,8 +209,9 @@
 
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=17"></script>
-<script src="gv.js?v=17"></script>
-<script src="admin.js?v=17"></script>
+<script src="cauhinh.js?v=18"></script>
+<script src="gv.js?v=18"></script>
+<script src="gv-theo-doi.js?v=18"></script>
+<script src="admin.js?v=18"></script>
 </body>
 </html>
