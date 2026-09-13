@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bảng theo dõi — Cán bộ, giảng viên</title>
-<link rel="stylesheet" href="trang.css?v=18">
-<link rel="stylesheet" href="gv.css?v=18">
+<link rel="stylesheet" href="trang.css?v=19">
+<link rel="stylesheet" href="gv.css?v=19">
 </head>
 <body class="gv">
 
@@ -25,6 +25,7 @@
   <button class="pill dang" type="button" data-tab="phien">Phiên bài tập</button>
   <button class="pill" type="button" data-tab="theodoi">Theo dõi lớp</button>
   <button class="pill an" type="button" data-tab="taikhoan" id="tabTaiKhoan">Tài khoản</button>
+  <button class="pill an" type="button" data-tab="dungluong" id="tabDungLuong">Dung lượng</button>
 </nav>
 
 <!-- ══ ĐĂNG NHẬP ═══════════════════════════════════════════════════════════════════════════ -->
@@ -194,6 +195,97 @@
   </div>
 </div>
 
+<!-- ══ TAB 4 · DUNG LƯỢNG (chỉ vai trò Quản trị — §41.23) ═════════════════════════════════════
+     Supabase qua RPC dung_luong() · GitHub qua API công khai (không token) · dọn dữ liệu cũ. -->
+<div id="manDL" class="man-full an">
+  <header class="tb">
+    <b>Dung lượng lưu trữ</b>
+    <span class="giua"></span>
+    <span id="dlLuc" class="mo-nhat"></span>
+    <button id="dlMoi" class="bt" type="button">↻ Cập nhật</button>
+  </header>
+  <div class="vung dl-vung">
+    <div class="dl-luoi">
+      <section class="dl-khoi">
+        <h2>Supabase <span class="mo-nhat">· gói Free</span></h2>
+        <div id="dlSB">—</div>
+      </section>
+      <section class="dl-khoi">
+        <h2>GitHub Pages <span class="mo-nhat ma" id="dlGHTen"></span></h2>
+        <div id="dlGH">—</div>
+      </section>
+    </div>
+
+    <section class="dl-khoi">
+      <h2>Bảng trong cơ sở dữ liệu</h2>
+      <table class="bang">
+        <thead><tr>
+          <th style="width:50px">STT</th>
+          <th>Bảng</th>
+          <th style="width:90px">Số dòng</th>
+          <th style="width:110px">Dung lượng</th>
+          <th style="width:140px">% CSDL</th>
+        </tr></thead>
+        <tbody id="dlBangBody"></tbody>
+      </table>
+    </section>
+
+    <section class="dl-khoi">
+      <h2>Tệp lớn nhất trên GitHub</h2>
+      <table class="bang">
+        <thead><tr>
+          <th style="width:50px">STT</th>
+          <th>Đường dẫn</th>
+          <th style="width:110px">Dung lượng</th>
+        </tr></thead>
+        <tbody id="dlTepBody"></tbody>
+      </table>
+    </section>
+
+    <section class="dl-khoi">
+      <h2>Dọn dữ liệu</h2>
+      <div class="dl-don-moc">
+        <label class="nhan" for="dlMoc">Dữ liệu trước ngày</label>
+        <input id="dlMoc" class="o o-nho o-ngay" type="date">
+      </div>
+      <div class="dl-don">
+        <div>
+          <b>Xoá phiên đã đóng</b> <span class="mo-nhat">(kèm mọi lượt làm bài của phiên)</span><br>
+          <span id="dlXemPhien" class="dl-chu">—</span>
+        </div>
+        <button id="btDonPhien" class="bt bt-do" type="button" disabled>Xoá…</button>
+      </div>
+      <div class="dl-don">
+        <div>
+          <b>Xoá bài tập không còn phiên nào dùng</b> <span class="mo-nhat">(kèm đáp án)</span><br>
+          <span id="dlXemBT" class="dl-chu">—</span>
+        </div>
+        <button id="btDonBT" class="bt bt-do" type="button" disabled>Xoá…</button>
+      </div>
+      <p class="chuthich">Phiên đang mở không bao giờ bị xoá. Sau khi dọn, con số “Cơ sở dữ liệu” có thể
+        <b>không giảm ngay</b>: Postgres giữ chỗ trống để dữ liệu mới dùng lại thay vì phình thêm.
+        Xoá tệp trên GitHub cần quyền ghi repo nên không làm ở trang này.</p>
+    </section>
+
+    <section class="dl-khoi">
+      <h2>Nhật ký dọn dữ liệu</h2>
+      <table class="bang">
+        <thead><tr>
+          <th style="width:50px">STT</th>
+          <th style="width:130px">Thời gian</th>
+          <th style="width:160px">Người thực hiện</th>
+          <th style="width:180px">Việc</th>
+          <th style="width:100px">Mốc ngày</th>
+          <th>Đã xoá</th>
+          <th style="width:110px">Ước tính</th>
+        </tr></thead>
+        <tbody id="dlNkBody"></tbody>
+      </table>
+      <p id="dlNkTrong" class="trong an">Chưa có lần dọn nào.</p>
+    </section>
+  </div>
+</div>
+
 <!-- ══ POPUP THÊM / ĐỔI MẬT KHẨU ═══════════════════════════════════════════════════════════ -->
 <div id="hopThem" class="lop an">
   <div class="hop hop-rong">
@@ -207,11 +299,27 @@
   </div>
 </div>
 
+<!-- ══ POPUP XÁC NHẬN XOÁ — gõ "OK" (§26) ═════════════════════════════════════════════════════ -->
+<div id="hopXoa" class="lop an">
+  <div class="hop hop-rong">
+    <h1>Xác nhận xoá dữ liệu</h1>
+    <p id="dxThan" class="dl-canh"></p>
+    <label class="nhan" for="dxO">Gõ “OK” để xác nhận</label>
+    <input id="dxO" class="o" type="text" autocomplete="off">
+    <div id="dxLoi" class="loi"></div>
+    <div class="hang-nut">
+      <button id="dxHuy" class="bt" type="button">Hủy</button>
+      <button id="dxOk" class="bt bt-do" type="button" disabled>Xoá</button>
+    </div>
+  </div>
+</div>
+
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=18"></script>
-<script src="gv.js?v=18"></script>
-<script src="gv-theo-doi.js?v=18"></script>
-<script src="admin.js?v=18"></script>
+<script src="cauhinh.js?v=19"></script>
+<script src="gv.js?v=19"></script>
+<script src="gv-theo-doi.js?v=19"></script>
+<script src="admin.js?v=19"></script>
+<script src="gv-dung-luong.js?v=19"></script>
 </body>
 </html>

@@ -202,3 +202,42 @@ body.gv > .man { flex: 1 1 auto; }
   .td-bang { min-width: max-content; font-size: 12px; }
   .td-c1 { min-width: 120px; }
 }
+
+/* ══ TAB "DUNG LƯỢNG" (§41.23) — chỉ CB ═══════════════════════════════════════════════════════
+   Thanh dung lượng: xanh < 70% · cam 70–90% · đỏ ≥ 90%. Chấm đỏ trên nút tab khi ≥ 80%. */
+.pill.co-canh { position: relative; }
+.pill.co-canh::after {
+  content: ''; position: absolute; top: 3px; right: 4px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--do); box-shadow: 0 0 0 2px var(--white);
+}
+.dl-vung { padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.dl-luoi { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px; }
+.dl-khoi { background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+.dl-khoi h2 { font-size: 14px; margin: 0 0 8px; }
+.dl-khoi .bang thead th { position: static; }
+.dl-dong { display: grid; grid-template-columns: 170px 1fr auto; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; }
+.dl-nhan { font-weight: 600; }
+.dl-phu { display: block; font-weight: 400; font-size: 11px; color: #8a939c; }
+.dl-thanh { height: 10px; border-radius: 5px; background: #e8ecf0; overflow: hidden; }
+.dl-thanh i { display: block; height: 100%; min-width: 2px; border-radius: 5px; background: var(--luc); }
+.dl-thanh i.vua { background: var(--cam); }
+.dl-thanh i.kem { background: var(--do); }
+.dl-thanh-nho { height: 8px; }
+.dl-so { white-space: nowrap; }
+.dl-chu { font-size: 12px; color: var(--t2); }
+.dl-khac td { color: #8a939c; font-style: italic; }
+.dl-cat { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-don-moc { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.dl-don-moc .nhan { margin: 0; }
+.dl-don { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 0; border-top: 1px solid #e8ecf0; font-size: 13px; }
+.dl-don .bt { flex: 0 0 auto; }
+.dl-canh { font-size: 13px; line-height: 1.5; text-align: left; color: var(--t2); }
+.loi-nho { color: var(--do); font-size: 13px; margin: 0; }
+
+@media (max-width: 820px) {
+  .dl-luoi { grid-template-columns: 1fr; }
+  .dl-dong { grid-template-columns: 1fr auto; }
+  .dl-dong .dl-thanh { grid-column: 1 / -1; grid-row: 2; }
+  .dl-khoi { overflow-x: auto; }
+}

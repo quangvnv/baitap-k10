@@ -26,7 +26,7 @@ const NHIP_MS = 4000;
 let TOKEN = null, TOI = null;
 let PHIEN_HIEN = null;      // phiên đang xem chi tiết
 let NHIP = null;            // id setInterval
-let TAB = 'phien';          // tab đang mở: 'phien' | 'taikhoan'
+let TAB = 'phien';          // tab đang mở: 'phien' | 'theodoi' | 'taikhoan' | 'dungluong'
 
 const $ = (id) => document.getElementById(id);
 const hien = (id, on) => $(id).classList.toggle('an', !on);
@@ -109,6 +109,7 @@ async function sauDangNhap(email) {
   $('chipVai').className = 'badge ' + (laAdmin ? 'cb' : 'gv');
   // Tab Tài khoản do VAI TRÒ trong CSDL quyết định (§41.14), không phải công tắc giao diện.
   $('tabTaiKhoan').classList.toggle('an', !laAdmin);
+  $('tabDungLuong').classList.toggle('an', !laAdmin);   // §41.23 — chỉ CB
 
   hien('manVao', false);
   hien('thanhTren', true);
@@ -116,15 +117,17 @@ async function sauDangNhap(email) {
 
   // admin.html cũ chuyển hướng sang gv.html#taikhoan ⇒ mở thẳng tab đó nếu có quyền.
   const muon = location.hash.slice(1);
-  const moDuoc = muon === 'theodoi' || (muon === 'taikhoan' && laAdmin);
+  const moDuoc = muon === 'theodoi' || ((muon === 'taikhoan' || muon === 'dungluong') && laAdmin);
   await doiTab(moDuoc ? muon : 'phien');
+  // Chấm đỏ trên nút tab Dung lượng khi có hạn mức ≥80% — chạy nền, không chặn việc vào trang.
+  if (laAdmin && window.DungLuong && muon !== 'dungluong') window.DungLuong.kiemNen();
 }
 
 $('btRa').addEventListener('click', () => {
   TOKEN = null; TOI = null; PHIEN_HIEN = null;
   try { localStorage.removeItem(KHOA_TOKEN); } catch { }
   dungNhip();
-  ['manDS', 'manCT', 'manTD', 'manHV', 'manTK', 'thanhTren', 'thanhTab'].forEach(id => hien(id, false));
+  ['manDS', 'manCT', 'manTD', 'manHV', 'manTK', 'manDL', 'thanhTren', 'thanhTab'].forEach(id => hien(id, false));
   hien('manVao', true);
   $('oMk').value = '';
   location.hash = '';
@@ -141,8 +144,9 @@ async function doiTab(ten) {
   location.hash = ten === 'phien' ? '' : '#' + ten;
   // Rời tab Phiên thì THÔI hỏi lại máy chủ — 2 tab kia là màn xem tổng kết, không cần nhịp.
   if (ten !== 'phien') dungNhip();
-  ['manDS', 'manCT', 'manTD', 'manHV', 'manTK'].forEach(id => hien(id, false));
+  ['manDS', 'manCT', 'manTD', 'manHV', 'manTK', 'manDL'].forEach(id => hien(id, false));
   if (ten === 'taikhoan') { hien('manTK', true); if (window.QuanTri) await window.QuanTri.mo(); return; }
+  if (ten === 'dungluong') { hien('manDL', true); if (window.DungLuong) await window.DungLuong.mo(); return; }
   if (ten === 'theodoi') { if (window.TheoDoi) await window.TheoDoi.mo(); return; }
   await veDS();
 }
