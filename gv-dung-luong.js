@@ -31,7 +31,6 @@
   };
   const NGUONG_CANH_BAO = 0.8;     // chấm đỏ trên nút tab
   const GH_CACHE_MS = 10 * 60 * 1000;
-  const SO_TEP_LON = 10;
 
   /* owner/repo suy từ địa chỉ trang (quangvnv.github.io/baitap-k10/…); chạy thử cục bộ thì rơi về
      hằng số. */
@@ -95,7 +94,6 @@
       nhanh: repo.default_branch,
       soTep: tep.length,
       trangByte: tep.reduce((a, x) => a + x.size, 0),
-      tepLon: tep.sort((a, b) => b.size - a.size).slice(0, SO_TEP_LON),
       catBot: !!cay.truncated,
     };
     try { sessionStorage.setItem(khoa, JSON.stringify({ t: Date.now(), v })); } catch { }
@@ -118,7 +116,7 @@
 
   /* ── Vẽ ───────────────────────────────────────────────────────────────────────────────── */
   function veSB(loi) {
-    if (loi) { $('dlSB').innerHTML = `<p class="loi-nho">${esc(loi)}</p>`; $('dlBangBody').innerHTML = ''; return; }
+    if (loi) { $('dlSB').innerHTML = `<p class="loi-nho">${esc(loi)}</p>`; $('dlBangBody').innerHTML = ''; veGV(); return; }
     const x = S.sb;
     $('dlSB').innerHTML = thanh('Cơ sở dữ liệu', x.db_byte, GIOI_HAN.db)
       + thanh('File Storage', x.storage_byte, GIOI_HAN.storage, x.storage_tep + ' tệp');
@@ -133,21 +131,42 @@
       + `<tr class="dl-khac"><td></td><td>(hệ thống Supabase: auth, storage, realtime…)</td><td class="giua">—</td>
          <td class="giua">${coByte(x.he_thong_byte)}</td>
          <td><div class="dl-thanh dl-thanh-nho"><i class="vua" style="width:${(x.db_byte ? x.he_thong_byte / x.db_byte * 100 : 0).toFixed(1)}%"></i></div></td></tr>`;
+    veGV();
+  }
+
+  /* Thống kê theo giảng viên. "Dung lượng" = dữ liệu THÔ đã nén của bài tập + đáp án + phiên
+     + lượt làm bài của người đó — KHÔNG gồm chỉ mục và trang trống, nên cộng lại nhỏ hơn con
+     số CSDL tổng là bình thường. % tính trên tổng của các giảng viên. */
+  function veGV() {
+    const ds = (S.sb && S.sb.gv) || [];
+    const tong = ds.reduce((a, g) => a + (+g.byte || 0), 0);
+    hien('dlGVTrong', !ds.length);
+    $('dlGVBody').innerHTML = ds.map((g, i) => {
+      const tile = tong ? g.byte / tong : 0;
+      return `<tr class="${g.khoa ? 'dl-khoa' : ''}">
+        <td class="giua mo-nhat">${i + 1}</td>
+        <td>${esc(g.ten || '—')}${g.vai_tro === 'admin' ? ' <span class="badge cb">CB</span>' : ''}${g.khoa ? ' <i class="mo-nhat">· đã khoá</i>' : ''}</td>
+        <td class="giua">${esc(g.viet_tat || '')}</td>
+        <td class="giua">${g.so_bai_tap}${g.so_bt_chia_se ? ` <span class="mo-nhat" title="Số bài đã chia sẻ cho cả Khoa">(${g.so_bt_chia_se} chia sẻ)</span>` : ''}</td>
+        <td class="giua">${g.so_phien}</td>
+        <td class="giua">${(+g.so_luot).toLocaleString('vi-VN')}</td>
+        <td class="giua">${coByte(g.byte)}</td>
+        <td><div class="dl-thanh dl-thanh-nho"><i class="tot" style="width:${(tile * 100).toFixed(1)}%"></i></div></td>
+      </tr>`;
+    }).join('');
+    $('dlGVTong').textContent = ds.length
+      ? `${ds.reduce((a, g) => a + g.so_bai_tap, 0)} bài tập · ${ds.reduce((a, g) => a + g.so_phien, 0)} phiên · ${coByte(tong)}`
+      : '';
   }
 
   function veGH(loi) {
     $('dlGHTen').textContent = GH.owner + '/' + GH.repo;
-    if (loi) { $('dlGH').innerHTML = `<p class="loi-nho">${esc(loi)}</p>`; $('dlTepBody').innerHTML = ''; return; }
+    if (loi) { $('dlGH').innerHTML = `<p class="loi-nho">${esc(loi)}</p>`; return; }
     const x = S.gh;
     $('dlGH').innerHTML = thanh('Repo (kèm lịch sử git)', x.repoByte, GIOI_HAN.repo)
       + thanh('Trang web phát hành', x.trangByte, GIOI_HAN.pages, x.soTep + ' tệp')
       + `<div class="dl-chu">Đẩy lên gần nhất: <b>${gio7(x.pushedAt)}</b> · nhánh <span class="ma">${esc(x.nhanh)}</span>`
       + `${x.catBot ? ' · <span class="dang-lam">danh sách tệp bị GitHub cắt bớt</span>' : ''}</div>`;
-    $('dlTepBody').innerHTML = x.tepLon.map((t, i) => `<tr>
-        <td class="giua mo-nhat">${i + 1}</td>
-        <td class="ma dl-cat" title="${esc(t.path)}">${esc(t.path)}</td>
-        <td class="giua">${coByte(t.size)}</td>
-      </tr>`).join('');
   }
 
   async function taiNhatKy() {

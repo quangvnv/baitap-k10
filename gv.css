@@ -241,3 +241,6 @@ body.gv > .man { flex: 1 1 auto; }
   .dl-dong .dl-thanh { grid-column: 1 / -1; grid-row: 2; }
   .dl-khoi { overflow-x: auto; }
 }
+.dl-khoa td { color: #9aa4ae; }
+.dl-khoi h2 .mo-nhat { font-weight: 400; font-size: 12px; margin-left: 6px; }
+.dl-khoi td .badge { font-size: 10px; padding: 0 5px; }

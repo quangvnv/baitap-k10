@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bảng theo dõi — Cán bộ, giảng viên</title>
-<link rel="stylesheet" href="trang.css?v=19">
-<link rel="stylesheet" href="gv.css?v=19">
+<link rel="stylesheet" href="trang.css?v=20">
+<link rel="stylesheet" href="gv.css?v=20">
 </head>
 <body class="gv">
 
@@ -231,15 +231,23 @@
     </section>
 
     <section class="dl-khoi">
-      <h2>Tệp lớn nhất trên GitHub</h2>
+      <h2>Bài tập và dung lượng theo giảng viên <span id="dlGVTong" class="mo-nhat"></span></h2>
       <table class="bang">
         <thead><tr>
           <th style="width:50px">STT</th>
-          <th>Đường dẫn</th>
+          <th>Giảng viên</th>
+          <th style="width:80px">Viết tắt</th>
+          <th style="width:130px">Bài tập</th>
+          <th style="width:70px">Phiên</th>
+          <th style="width:100px">Lượt làm bài</th>
           <th style="width:110px">Dung lượng</th>
+          <th style="width:140px">% tổng</th>
         </tr></thead>
-        <tbody id="dlTepBody"></tbody>
+        <tbody id="dlGVBody"></tbody>
       </table>
+      <p id="dlGVTrong" class="trong an">Chưa có tài khoản giảng viên nào.</p>
+      <p class="chuthich">Dung lượng = dữ liệu (đã nén) của bài tập, đáp án, các phiên người đó mở và mọi lượt
+        làm bài trong các phiên đó; không gồm chỉ mục nên cộng lại nhỏ hơn con số “Cơ sở dữ liệu”.</p>
     </section>
 
     <section class="dl-khoi">
@@ -316,10 +324,10 @@
 
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=19"></script>
-<script src="gv.js?v=19"></script>
-<script src="gv-theo-doi.js?v=19"></script>
-<script src="admin.js?v=19"></script>
-<script src="gv-dung-luong.js?v=19"></script>
+<script src="cauhinh.js?v=20"></script>
+<script src="gv.js?v=20"></script>
+<script src="gv-theo-doi.js?v=20"></script>
+<script src="admin.js?v=20"></script>
+<script src="gv-dung-luong.js?v=20"></script>
 </body>
 </html>
