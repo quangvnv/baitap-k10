@@ -193,10 +193,15 @@ async function veDS() {
       <td class="giua">${dsD.length}</td>
       <td class="giua diem-o">${tb}</td>
       <td class="giua">${p.trang_thai === 'mo' ? '<span class="cham-mo"></span>Đang mở' : '<span class="mo-nhat">Đã đóng</span>'}</td>
+      <td class="giua">${laCuaToi(p) ? `<button class="bt bt-nho bt-do bt-xoa" type="button" data-xoa="${p.id}"
+        ${p.trang_thai === 'mo' ? 'disabled title="Đóng phiên trước khi xoá"' : 'title="Xoá phiên này"'}>${ICON_XOA}</button>` : ''}</td>
     </tr>`;
   }).join('');
   $('dsBody').querySelectorAll('tr[data-id]').forEach(tr => {
     tr.onclick = () => moChiTiet(ds.find(p => p.id === tr.dataset.id));
+  });
+  $('dsBody').querySelectorAll('[data-xoa]').forEach(b => {
+    b.onclick = (e) => { e.stopPropagation(); xoaPhien(ds.find(p => p.id === b.dataset.xoa)); };
   });
 }
 
@@ -212,6 +217,7 @@ async function moChiTiet(p) {
   $('ctMa').textContent = p.ma_phien;
   $('btDong').disabled = p.trang_thai !== 'mo';
   $('btDong').textContent = p.trang_thai === 'mo' ? 'Đóng phiên' : 'Đã đóng';
+  dongBoNutXoa();
   await lamMoi();
   batNhip();
 }
@@ -311,10 +317,42 @@ $('btDong').addEventListener('click', async () => {
     });
     PHIEN_HIEN.trang_thai = 'dong';
     $('btDong').disabled = true; $('btDong').textContent = 'Đã đóng';
+    dongBoNutXoa();
     dungNhip();
     bao('Đã đóng phiên.', 'ok');
   } catch (e) { bao(e.message, 'nhac'); }
 });
+
+/* ── Xoá phiên ───────────────────────────────────────────────────────────────────────────── */
+/* Chỉ phiên CỦA MÌNH (kể cả CB) và chỉ khi ĐÃ ĐÓNG. Nút ẩn/mờ chỉ là tiện lợi — quyền thật nằm ở
+   hàm `xoa_phien` trên máy chủ (tự kiểm chủ phiên + trạng thái), gọi thẳng REST cũng không vượt.
+   Xoá kèm lượt làm bài; bài tập hết phiên thì máy chủ xoá luôn. Không ghi nhật ký (đã chốt). */
+const ICON_XOA = '<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2.5 4h9M5.5 4V2.5h3V4M4 4l.5 8h5l.5-8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const laCuaToi = (p) => !!(p && TOI && p.gv === TOI.id);
+
+function dongBoNutXoa() {
+  const p = PHIEN_HIEN;
+  hien('btXoa', laCuaToi(p));
+  $('btXoa').disabled = !p || p.trang_thai === 'mo';
+  $('btXoa').title = p && p.trang_thai === 'mo' ? 'Đóng phiên trước khi xoá' : 'Xoá phiên này';
+}
+
+async function xoaPhien(p) {
+  if (!laCuaToi(p) || p.trang_thai === 'mo') return;
+  const ten = p.bai_tap ? p.bai_tap.ten : 'bài tập';
+  // confirm() native được phép trên trang web (xem ghi chú ở nút Đóng phiên)
+  if (!confirm(`Xoá phiên ${p.ma_phien} (${ten} · ${p.ma_lop})?
+
+`
+    + 'Toàn bộ kết quả làm bài của phiên này sẽ bị xoá, không khôi phục được.')) return;
+  try {
+    const kq = await api('/rest/v1/rpc/xoa_phien', { method: 'POST', body: JSON.stringify({ p_id: p.id }) });
+    bao('Đã xoá phiên' + (kq && kq.so_luot ? ` và ${kq.so_luot} lượt làm bài` : '')
+      + (kq && kq.xoa_bai_tap ? ' (bài tập không còn phiên nào nên đã xoá luôn).' : '.'), 'ok');
+    await veDS();
+  } catch (e) { bao(e.message, 'nhac'); }
+}
+$('btXoa').addEventListener('click', () => xoaPhien(PHIEN_HIEN));
 
 /* ── Tải kết quả ─────────────────────────────────────────────────────────────────────────── */
 /* Xuất JSON để app nhập vào lưới điểm quá trình (§32.31). Phiên "về nhà" KHÔNG đổ về điểm QT
