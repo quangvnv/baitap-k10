@@ -180,7 +180,9 @@ body.gv > .man { flex: 1 1 auto; }
 .cb-nhan { font-size: 12px; color: var(--t3); }
 .cb-tk { font-size: 13px; font-weight: 600; color: var(--luc); }
 .cb-tk.kem { color: var(--do); }
-.cb-hoi { font-size: 19px; line-height: 1.4; color: var(--t1); margin-bottom: 10px; }
+.cb-hoi { font-size: 19px; line-height: 1.4; color: var(--t1); margin-bottom: 6px; }
+/* Ngữ cảnh: câu văn quanh chỗ trống, hoặc gợi ý của ô chữ — chữ nhỏ hơn câu hỏi */
+.cb-ctx { font-size: 14px; line-height: 1.5; color: var(--t2); margin-bottom: 10px; }
 
 /* Một phương án: dấu tích · chữ · thanh tỉ lệ · đếm · phần trăm */
 .cb-dong {
@@ -189,6 +191,8 @@ body.gv > .man { flex: 1 1 auto; }
   background: var(--white); font-size: 16px;
 }
 .cb-dong.dung { border-color: #7CB342; background: #F1F8E9; font-weight: 600; }
+/* Câu trả lời KHÔNG nằm trong danh sách phương án của đề (đề đã sửa sau khi học viên làm) */
+.cb-dong.la { border-style: dashed; }
 .cb-dau-tich { width: 16px; color: var(--luc); font-weight: 700; }
 .cb-chu { flex: 1; min-width: 0; }
 .cb-bar { flex: 0 0 180px; height: 10px; background: #EDF1F5; border-radius: 5px; overflow: hidden; }
