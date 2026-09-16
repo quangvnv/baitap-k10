@@ -68,6 +68,17 @@ async function goiFn(ten, than) {
 $('oMaHV').value = localStorage.getItem(KHOA_MA_HV) || '';
 $('oMaPhien').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
 
+/* Mã phiên điền sẵn từ địa chỉ `?p=698312` — đường vào của mã QR trên bảng theo dõi (gv.html).
+   ⚠ CHỈ điền sẵn, KHÔNG tự bấm "Vào làm bài": vẫn phải nhập mã học viên, và tự vào bài sẽ đốt
+   mất một lượt làm khi ai đó chỉ lỡ mở nhầm link. Dữ liệu từ địa chỉ là dữ liệu NGOÀI ⇒ lọc
+   đúng 6 chữ số rồi mới nhận. */
+(function () {
+  const p = new URLSearchParams(location.search).get('p');
+  if (!p || !/^\d{6}$/.test(p)) return;
+  $('oMaPhien').value = p;
+  if (!$('oMaHV').value) $('oMaHV').focus();     // đã nhớ mã học viên thì khỏi cướp con trỏ
+})();
+
 $('btVao').addEventListener('click', async () => {
   const maPhien = $('oMaPhien').value.trim();
   const maHV = $('oMaHV').value.trim().toLowerCase();

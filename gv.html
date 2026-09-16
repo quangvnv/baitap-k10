@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bảng theo dõi — Cán bộ, giảng viên</title>
-<link rel="stylesheet" href="trang.css?v=21">
-<link rel="stylesheet" href="gv.css?v=21">
+<link rel="stylesheet" href="trang.css?v=22">
+<link rel="stylesheet" href="gv.css?v=22">
 </head>
 <body class="gv">
 
@@ -81,8 +81,11 @@
     <b id="ctTen">—</b>
     <span id="ctNhip" class="nhip" title="Tự cập nhật">●</span>
     <span class="giua"></span>
-    <button id="btDong" class="bt" type="button">Đóng phiên</button>
+    <!-- Thứ tự CHỐT, từ trái sang phải: QR code · Chữa bài · Tải kết quả · Đóng phiên · Xoá phiên -->
+    <button id="btQR" class="bt" type="button" title="Hiện mã QR để học viên quét vào bài">QR code</button>
+    <button id="btChuaBai" class="bt" type="button">Chữa bài</button>
     <button id="btTai" class="bt" type="button">Tải kết quả</button>
+    <button id="btDong" class="bt" type="button">Đóng phiên</button>
     <button id="btXoa" class="bt bt-do an" type="button">Xoá phiên</button>
   </header>
 
@@ -117,6 +120,26 @@
       </tr></thead>
       <tbody id="ctBody"></tbody>
     </table>
+  </div>
+</div>
+
+<!-- ══ TAB 1c · CHỮA BÀI — chiếu lên bảng, đi từng câu (§41) ═══════════════════════════════
+     CHỈ-ĐỌC. Chỉ chủ bài tập + CB quản trị mở được: đáp án nằm ở bảng riêng `bai_tap_dap_an`
+     mà policy `da_chu` không cho cả bài đã chia sẻ đọc. -->
+<div id="manCB" class="man-full an">
+  <header class="tb">
+    <button id="cbVe" class="bt" type="button">‹ Quay lại</button>
+    <b id="cbTen">—</b>
+    <span class="mo-nhat" id="cbSoHV"></span>
+    <span class="giua"></span>
+    <b id="cbSo" class="cb-so">—</b>
+    <button id="cbTruoc" class="bt" type="button" title="Câu trước (←)">‹</button>
+    <button id="cbSau" class="bt" type="button" title="Câu sau (→)">›</button>
+    <button id="cbAn" class="bt" type="button">Ẩn đáp án</button>
+  </header>
+  <div id="cbDai" class="cb-dai"></div>
+  <div class="vung">
+    <div id="cbThan" class="cb-than"></div>
   </div>
 </div>
 
@@ -324,12 +347,32 @@
   </div>
 </div>
 
+<!-- ══ POPUP MÃ QR ═════════════════════════════════════════════════════════════════════════════
+     Chiếu lên bảng để học viên quét thay vì gõ tay mã 6 số + mò địa chỉ trang. Mã QR mở thẳng
+     trang học viên với ô "Mã phiên" điền sẵn; học viên chỉ còn phải nhập mã của mình. -->
+<div id="hopQR" class="lop an">
+  <div class="hop hop-qr">
+    <h1 id="qrTen">Quét để vào làm bài</h1>
+    <div id="qrHinh" class="qr-hinh"></div>
+    <div id="qrMa" class="qr-ma">——————</div>
+    <div id="qrDiaChi" class="qr-diachi"></div>
+    <div id="qrLoi" class="loi"></div>
+    <div class="hang-nut">
+      <button id="qrChep" class="bt" type="button">Chép địa chỉ</button>
+      <button id="qrDong" class="bt bt-chinh" type="button">Đóng</button>
+    </div>
+  </div>
+</div>
+
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=21"></script>
-<script src="gv.js?v=21"></script>
-<script src="gv-theo-doi.js?v=21"></script>
-<script src="admin.js?v=21"></script>
-<script src="gv-dung-luong.js?v=21"></script>
+<script src="cauhinh.js?v=22"></script>
+<script src="qr.js?v=22"></script>
+<script src="cham-diem.js?v=22"></script>
+<script src="gv.js?v=22"></script>
+<script src="gv-chua-bai.js?v=22"></script>
+<script src="gv-theo-doi.js?v=22"></script>
+<script src="admin.js?v=22"></script>
+<script src="gv-dung-luong.js?v=22"></script>
 </body>
 </html>

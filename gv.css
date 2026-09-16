@@ -137,6 +137,71 @@ body.gv > .man { flex: 1 1 auto; }
 }
 .hang-nut { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }
 
+/* ── Popup mã QR ───────────────────────────────────────────────────────────────────────────── */
+/* Chiếu lên bảng cho cả lớp quét ⇒ mã phải TO. 304px = 37 ô (phiên bản 4) × 8px, cỡ thật của
+   <svg> nên không bị nội suy mờ; mã ngắn hơn ra lưới nhỏ hơn thì để nguyên, KHÔNG kéo giãn. */
+.hop-qr { max-width: 380px; text-align: center; }
+.hop-qr h1 { font-size: 17px; }
+.qr-hinh { display: flex; justify-content: center; margin: 4px 0; }
+.qr-hinh svg { display: block; max-width: 100%; height: auto; border: 1px solid var(--vien); }
+.qr-ma {
+  font-size: 26px; font-weight: 700; letter-spacing: 6px;
+  color: var(--blue-dark); margin-top: 6px;
+}
+/* Địa chỉ đầy đủ để đọc to cho máy không quét được — ngắt được giữa chuỗi, không tràn hộp */
+.qr-diachi {
+  font-size: 11px; color: var(--t3); word-break: break-all; line-height: 1.35; margin-top: 4px;
+}
+
+
+/* ── Màn chữa bài (§41) ────────────────────────────────────────────────────────────────────── */
+/* Chiếu lên bảng cho cả lớp đọc ⇒ cỡ chữ lớn hơn hẳn các bảng khác của trang này. */
+.cb-so { font-size: 15px; color: var(--blue-dark); min-width: 92px; text-align: right; }
+
+/* Dải ô từng câu — bấm để nhảy, màu theo % lớp đúng (cùng thang màu với biểu đồ cột) */
+.cb-dai {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 12px;
+  background: var(--white); border-bottom: 1px solid var(--border);
+}
+.cb-o {
+  width: 28px; height: 26px; border: 1px solid var(--vien); border-radius: 4px;
+  background: #E8F5E9; color: var(--t1); font: inherit; font-size: 12px; cursor: pointer;
+}
+.cb-o.vua { background: #FFF3E0; }
+.cb-o.kem { background: #FDE7E6; }
+.cb-o.chua { background: #F1F3F6; color: var(--t3); }
+.cb-o:hover { border-color: var(--blue); }
+.cb-o.dang { border: 2px solid var(--blue); font-weight: 700; }
+
+/* Giới hạn bề ngang: trên máy chiếu 1920px mà để dàn hết thì chữ ở mép trái, thanh tỉ lệ ở
+   mép phải — không dóng hàng nổi bằng mắt từ cuối lớp. */
+.cb-than { padding: 4px 0 10px; max-width: 1040px; }
+.cb-dau { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.cb-nhan { font-size: 12px; color: var(--t3); }
+.cb-tk { font-size: 13px; font-weight: 600; color: var(--luc); }
+.cb-tk.kem { color: var(--do); }
+.cb-hoi { font-size: 19px; line-height: 1.4; color: var(--t1); margin-bottom: 10px; }
+
+/* Một phương án: dấu tích · chữ · thanh tỉ lệ · đếm · phần trăm */
+.cb-dong {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border: 1px solid var(--vien); border-radius: 6px; margin-bottom: 6px;
+  background: var(--white); font-size: 16px;
+}
+.cb-dong.dung { border-color: #7CB342; background: #F1F8E9; font-weight: 600; }
+.cb-dau-tich { width: 16px; color: var(--luc); font-weight: 700; }
+.cb-chu { flex: 1; min-width: 0; }
+.cb-bar { flex: 0 0 180px; height: 10px; background: #EDF1F5; border-radius: 5px; overflow: hidden; }
+.cb-bar i { display: block; height: 100%; background: var(--blue); }
+.cb-dong.dung .cb-bar i { background: var(--luc); }
+.cb-dem { flex: 0 0 56px; text-align: right; font-size: 13px; color: var(--t2); }
+.cb-pc { flex: 0 0 44px; text-align: right; font-size: 13px; color: var(--t3); }
+
+/* Dạng bài không có phương án — chỉ một thanh % lớp đúng */
+.cb-thanh { height: 14px; background: #EDF1F5; border-radius: 7px; overflow: hidden; max-width: 420px; }
+.cb-thanh i { display: block; height: 100%; background: var(--luc); }
+.cb-phu { font-size: 12px; color: var(--t3); margin-top: 8px; }
+
 /* ── Điện thoại ───────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 820px) {
   .topbar, .tabbar, .tb { flex-wrap: wrap; height: auto; flex-basis: auto; padding: 6px 10px; gap: 6px; }
@@ -147,6 +212,10 @@ body.gv > .man { flex: 1 1 auto; }
   /* Bảng nhiều cột: cho cuộn ngang TRONG vùng bảng, không để tràn cả trang */
   .bang { font-size: 12px; min-width: 640px; }
   .bang thead th, .bang tbody td { padding: 5px 6px; }
+  .cb-hoi { font-size: 16px; }
+  .cb-dong { font-size: 14px; flex-wrap: wrap; }
+  .cb-bar { flex: 1 1 100px; }
+  .cb-so { min-width: 0; }
 }
 
 /* ══ TAB "THEO DÕI LỚP" — ma trận Học viên × Phiên (§41.22) ═══════════════════════════════════

@@ -55,13 +55,20 @@ async function api(duong, tuyChon = {}) {
 
 /* Mặt tiền dùng chung cho admin.js + gv-theo-doi.js — đừng để tab khác tự dựng lại phiên đăng
    nhập. `moPhien` để tab "Theo dõi lớp" bấm tiêu đề cột là nhảy sang chi tiết phiên đó. */
-window.WebGV = { api, bao, esc, $, hien, toi: () => TOI, moPhien };
+window.WebGV = { api, bao, esc, $, hien, toi: () => TOI, moPhien, veChiTiet };
+
+/* Màn chữa bài quay về chi tiết phiên — phải BẬT LẠI nhịp hỏi máy chủ, nếu không bảng đứng
+   im mà nhìn vẫn như đang chạy. */
+function veChiTiet() {
+  hien('manCB', false); hien('manCT', true);
+  if (PHIEN_HIEN) { lamMoi(); batNhip(); }
+}
 
 /* ⚠ Tên bài phải TRUYỀN VÀO: join `bai_tap(ten)` trả NULL với bài của GV khác (policy `bt_doc`
    chỉ cho chủ bài + bài đã chia sẻ đọc). Tab Theo dõi lấy tên từ view `v_phien_bang` (§41.22). */
 async function moPhien(id, tenBai, soCau) {
   try {
-    const r = await api('/rest/v1/phien?select=*,bai_tap(ten,so_cau)&id=eq.' + id);
+    const r = await api('/rest/v1/phien?select=*,bai_tap(ten,so_cau,chu_gv)&id=eq.' + id);
     if (!r || !r.length) { bao('Không mở được phiên này.', 'nhac'); return; }
     const p = r[0];
     if (!p.bai_tap) p.bai_tap = { ten: tenBai || '—', so_cau: soCau || 0 };
@@ -127,7 +134,7 @@ $('btRa').addEventListener('click', () => {
   TOKEN = null; TOI = null; PHIEN_HIEN = null;
   try { localStorage.removeItem(KHOA_TOKEN); } catch { }
   dungNhip();
-  ['manDS', 'manCT', 'manTD', 'manHV', 'manTK', 'manDL', 'thanhTren', 'thanhTab'].forEach(id => hien(id, false));
+  ['manDS', 'manCT', 'manCB', 'manTD', 'manHV', 'manTK', 'manDL', 'thanhTren', 'thanhTab'].forEach(id => hien(id, false));
   hien('manVao', true);
   $('oMk').value = '';
   location.hash = '';
@@ -144,7 +151,7 @@ async function doiTab(ten) {
   location.hash = ten === 'phien' ? '' : '#' + ten;
   // Rời tab Phiên thì THÔI hỏi lại máy chủ — 2 tab kia là màn xem tổng kết, không cần nhịp.
   if (ten !== 'phien') dungNhip();
-  ['manDS', 'manCT', 'manTD', 'manHV', 'manTK', 'manDL'].forEach(id => hien(id, false));
+  ['manDS', 'manCT', 'manCB', 'manTD', 'manHV', 'manTK', 'manDL'].forEach(id => hien(id, false));
   if (ten === 'taikhoan') { hien('manTK', true); if (window.QuanTri) await window.QuanTri.mo(); return; }
   if (ten === 'dungluong') { hien('manDL', true); if (window.DungLuong) await window.DungLuong.mo(); return; }
   if (ten === 'theodoi') { if (window.TheoDoi) await window.TheoDoi.mo(); return; }
@@ -157,11 +164,11 @@ $('locTT').addEventListener('change', veDS);
 async function veDS() {
   dungNhip();
   PHIEN_HIEN = null;
-  hien('manCT', false); hien('manDS', true);
+  hien('manCT', false); hien('manCB', false); hien('manDS', true);
   const loc = $('locTT').value;
   let ds = [];
   try {
-    ds = await api('/rest/v1/phien?select=*,bai_tap(ten,so_cau)&order=mo_luc.desc'
+    ds = await api('/rest/v1/phien?select=*,bai_tap(ten,so_cau,chu_gv)&order=mo_luc.desc'
       + (loc ? '&trang_thai=eq.' + loc : ''));
   } catch (e) { bao(e.message, 'nhac'); return; }
 
@@ -218,6 +225,8 @@ async function moChiTiet(p) {
   $('btDong').disabled = p.trang_thai !== 'mo';
   $('btDong').textContent = p.trang_thai === 'mo' ? 'Đóng phiên' : 'Đã đóng';
   dongBoNutXoa();
+  dongBoNutQR();
+  dongBoNutChuaBai();
   await lamMoi();
   batNhip();
 }
@@ -318,6 +327,9 @@ $('btDong').addEventListener('click', async () => {
     PHIEN_HIEN.trang_thai = 'dong';
     $('btDong').disabled = true; $('btDong').textContent = 'Đã đóng';
     dongBoNutXoa();
+    dongBoNutQR();
+    hien('hopQR', false);        // mã QR của phiên vừa đóng không còn dùng được
+
     dungNhip();
     bao('Đã đóng phiên.', 'ok');
   } catch (e) { bao(e.message, 'nhac'); }
@@ -384,6 +396,78 @@ $('btTai').addEventListener('click', async () => {
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   bao('Đã tải ' + ten + (goi.dungChoDiemQT ? '' : ' (phiên về nhà — không đổ vào điểm quá trình)'), 'ok');
+});
+
+/* ── Mã QR vào bài ───────────────────────────────────────────────────────────────────────── */
+/* Chiếu lên bảng thay cho việc đọc to mã 6 số + địa chỉ trang. Mã QR mở trang học viên với ô
+   "Mã phiên" điền sẵn (`index.html?p=<mã>`); học viên chỉ còn nhập mã của mình.
+   ⚠ Địa chỉ suy TỪ CHÍNH trang đang mở (`new URL('index.html', location.href)`), KHÔNG viết
+   cứng tên repo — đổi chỗ đặt trang là mã QR tự đúng theo.
+   ⚠ `?p=` còn tiện thêm một việc: URL khác nhau nên BỎ QUA cache 10 phút của index.html trên
+   GitHub Pages (§41.19) — học viên không dính bản cũ. */
+function diaChiVaoBai(ma) {
+  const u = new URL('index.html', location.href);
+  u.search = '';                 // bỏ ?debug=1 hay tham số lạ đang có trên trang GV
+  u.hash = '';
+  u.searchParams.set('p', ma);
+  return u.href;
+}
+
+function dongBoNutQR() {
+  const p = PHIEN_HIEN, mo = !!p && p.trang_thai === 'mo';
+  $('btQR').disabled = !mo;
+  $('btQR').title = mo ? 'Hiện mã QR để học viên quét vào bài'
+    : 'Phiên đã đóng — học viên không vào làm được nữa';
+}
+
+function moQR() {
+  const p = PHIEN_HIEN;
+  if (!p || p.trang_thai !== 'mo') return;
+  const diaChi = diaChiVaoBai(p.ma_phien);
+  $('qrTen').textContent = p.bai_tap ? p.bai_tap.ten : 'Quét để vào làm bài';
+  $('qrMa').textContent = p.ma_phien;
+  $('qrDiaChi').textContent = diaChi;
+  $('qrLoi').textContent = '';
+  try {
+    $('qrHinh').innerHTML = QR.svg(diaChi, { oCo: 8 });
+  } catch (e) {
+    /* Không vẽ được thì nói thẳng — mã QR hỏng mà vẫn hiện ra là cả lớp quét vào chỗ sai */
+    $('qrHinh').innerHTML = '';
+    $('qrLoi').textContent = 'Không tạo được mã QR: ' + e.message + ' — đọc mã phiên cho học viên gõ tay.';
+  }
+  hien('hopQR', true);
+}
+
+$('btQR').addEventListener('click', moQR);
+
+/* ── Chữa bài ────────────────────────────────────────────────────────────────────────────── */
+/* ⚠ Điều kiện mở là QUYỀN ĐỌC ĐÁP ÁN, không phải quyền xem phiên: policy `da_chu` chỉ cho chủ
+   bài tập + CB quản trị đọc `bai_tap_dap_an`, và bài ĐÃ CHIA SẺ cũng KHÔNG kéo theo quyền đó.
+   Nói rõ lý do trên nút thay vì để GV bấm vào rồi nhận màn trống. */
+function dongBoNutChuaBai() {
+  const p = PHIEN_HIEN;
+  const laAdmin = !!(TOI && TOI.vai_tro === 'admin');
+  const laChuBai = !!(p && p.bai_tap && TOI && p.bai_tap.chu_gv === TOI.id);
+  const duoc = !!p && (laChuBai || laAdmin);
+  $('btChuaBai').disabled = !duoc;
+  $('btChuaBai').title = duoc ? 'Chiếu chữa bài cho cả lớp'
+    : 'Chỉ chủ bài tập và cán bộ quản trị mới xem được đáp án';
+}
+
+$('btChuaBai').addEventListener('click', () => {
+  if ($('btChuaBai').disabled) return;
+  dungNhip();                     // rời màn chi tiết thì thôi hỏi lại máy chủ
+  window.ChuaBai.mo(PHIEN_HIEN);
+});
+$('qrDong').addEventListener('click', () => hien('hopQR', false));
+$('qrChep').addEventListener('click', async () => {
+  const t = $('qrDiaChi').textContent;
+  try { await navigator.clipboard.writeText(t); bao('Đã chép địa chỉ vào bộ nhớ tạm.', 'ok'); }
+  catch { bao('Trình duyệt không cho chép tự động — bôi đen dòng địa chỉ rồi Ctrl+C.', 'nhac'); }
+});
+/* Esc đóng popup. KHÔNG đóng khi bấm nền (§13) — đang chiếu lên bảng, lỡ tay là mất mã. */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('hopQR').classList.contains('an')) hien('hopQR', false);
 });
 
 /* ── Vào lại bằng token cũ ───────────────────────────────────────────────────────────────── */
