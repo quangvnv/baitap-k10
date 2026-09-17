@@ -101,7 +101,12 @@ async function vao() {
 }
 
 async function sauDangNhap(email) {
-  const nd = await api('/rest/v1/nguoi_dung?select=id,vai_tro,ten,viet_tat&limit=1');
+  /* ⚠ PHẢI lọc theo id của chính mình: tài khoản quản trị đọc được MỌI dòng nguoi_dung (nd_doc_minh
+     cho admin thấy hết) ⇒ `limit=1` trần có thể trả về NGƯỜI KHÁC, làm sai vai trò/chủ phiên. */
+  let uid = '';
+  try { uid = JSON.parse(atob(TOKEN.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub || ''; } catch { }
+  const nd = await api('/rest/v1/nguoi_dung?select=id,vai_tro,ten,viet_tat'
+    + (uid ? '&id=eq.' + uid : '') + '&limit=1');
   if (!nd || !nd.length) {
     // Có tài khoản đăng nhập nhưng chưa có bản ghi phân quyền ⇒ RLS chặn hết. Báo rõ, đừng để
     // GV nhìn bảng trống rồi tưởng chưa có phiên nào.
@@ -186,6 +191,22 @@ async function veDS() {
     if (t.hv[l.ma_hv] == null || l.diem > t.hv[l.ma_hv]) t.hv[l.ma_hv] = l.diem;
   });
 
+  /* Cột "Giảng viên" CHỈ cho quản trị (§41.22 — GV chỉ thấy phiên của mình nên cột thừa).
+     Tên lấy từ nguoi_dung; RLS chỉ cho admin đọc hết bảng này. */
+  const laAdmin = !!(TOI && TOI.vai_tro === 'admin');
+  $('thGv').classList.toggle('an', !laAdmin);
+  let tenGv = {};
+  if (laAdmin && ds.length) {
+    try {
+      (await api('/rest/v1/nguoi_dung?select=id,ten,viet_tat')).forEach(n => { tenGv[n.id] = n; });
+    } catch { tenGv = {}; }
+  }
+  const oGv = (p) => {
+    if (!laAdmin) return '';
+    const n = tenGv[p.gv];
+    return '<td title="' + esc(n ? n.ten : '') + '">' + (n ? esc(n.ten || n.viet_tat || '') : '<span class="mo-nhat">(không rõ)</span>') + '</td>';
+  };
+
   hien('dsTrong', !ds.length);
   $('dsBody').innerHTML = ds.map((p, i) => {
     const t = theoPhien[p.id];
@@ -194,6 +215,7 @@ async function veDS() {
     return `<tr data-id="${p.id}" class="co-tro">
       <td class="giua mo-nhat">${i + 1}</td>
       <td>${esc(p.bai_tap ? p.bai_tap.ten : '—')}</td>
+      ${oGv(p)}
       <td class="giua">${esc(p.ma_lop)}</td>
       <td class="giua">${p.kieu === 'tai_lop' ? 'Tại lớp' : 'Về nhà'}</td>
       <td class="giua ma">${esc(p.ma_phien)}</td>

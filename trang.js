@@ -26,6 +26,7 @@ let PHIEN = null;      // { luotId, de, soCau, conLaiGiay, ... } — trả về 
 let CHI_SO = 0;        // slide đang xem
 let DONG_HO = null;    // id setInterval
 let KET_QUA = null;    // kết quả server trả về (giữ để bấm "Xem lại bài")
+let XEM_LAI = false;   // đang ở chế độ Xem lại bài (sau khi nộp) — slide CHỈ-ĐỌC
 const KHUNG = {};      // slideIdx → phần tử DOM của slide đó (dựng một lần, sau đó chỉ ẩn/hiện)
 
 const $ = (id) => document.getElementById(id);
@@ -104,7 +105,8 @@ $('btVao').addEventListener('click', async () => {
 /* ── MÀN 2: làm bài ──────────────────────────────────────────────────────────────────────── */
 function vaoLamBai() {
   hien('manVao', false); hien('manBai', true); hien('manXong', false);
-  CHI_SO = 0; KET_QUA = null;
+  CHI_SO = 0; KET_QUA = null; XEM_LAI = false;
+  $('manBai').classList.remove('xem-lai');
   $('lopSlide').innerHTML = '';
   Object.keys(KHUNG).forEach(k => delete KHUNG[k]);
   $('menuTen').textContent = (PHIEN && PHIEN.ten) || 'Bài tập';
@@ -276,7 +278,10 @@ function chayDongHo(giay) {
 }
 
 /* ── Nộp bài ─────────────────────────────────────────────────────────────────────────────── */
-$('btNop').addEventListener('click', () => nop(false));
+$('btNop').addEventListener('click', () => {
+  if (XEM_LAI) { dongMenu(); hien('manBai', false); hien('manXong', true); return; }
+  nop(false);
+});
 
 async function nop(tuDong) {
   const ds = slides();
@@ -327,30 +332,65 @@ function xong(kq, loi) {
     $('xongQs').innerHTML = '';
     $('xongNhan').textContent = 'Chưa gửi được (' + loi + '). Bài của bạn đã được lưu và sẽ tự gửi khi có mạng — đừng đóng trang.';
   }
-  // Nút "Xem lại bài" chỉ có nghĩa khi GV cho xem đáp án (server mới gửi khóa về).
-  hien('btXemLai', !!(kq && kq.dapAn));
+  /* Nút "Xem lại bài" LUÔN có sau khi nộp (kể cả khi đang chờ gửi lại): học viên xem lại CHÍNH bài
+     mình để đối chiếu khi GV chữa bài trên lớp. Có khóa đáp án (answer_visibility ≠ NONE) thì tô
+     thêm xanh/đỏ; không có thì CHỈ hiện bài làm — máy học viên không tự quyết chuyện hé lộ. */
+  hien('btXemLai', true);
 }
 
-/* Xem lại bài đã chấm — tô xanh/đỏ ngay trên chính khung slide học viên vừa làm.
-   ⚠ Chỉ chạy được khi server GỬI KHÓA ĐÁP ÁN về (answer_visibility ≠ NONE). Máy học viên KHÔNG
-     tự quyết định chuyện hé lộ: không có khóa thì không có gì để tô. */
+/* ── XEM LẠI BÀI ─────────────────────────────────────────────────────────────────────────────
+   Dùng lại NGUYÊN các khung DOM học viên vừa làm (KHUNG giữ nguyên sau khi nộp) ⇒ không phải dựng
+   lại bài làm từ dữ liệu. Chế độ này là CHỈ-ĐỌC: chặn mọi thao tác sửa bài, nhưng vẫn cuộn được.
+   ⚠ Chặn ở pha CAPTURE trên #lopSlide và KHÔNG preventDefault pointerdown/touchstart — preventDefault
+     ở đó là chết luôn việc cuộn bằng ngón tay trong đoạn văn dài. Engine kéo-thả không nhận được
+     sự kiện là đủ. Chỉ `click` mới preventDefault (chặn tick radio/label). */
+const CHAN_XEM_LAI = e => {
+  if (!XEM_LAI) return;
+  e.stopPropagation();
+  if (e.type === 'click' || e.type === 'dblclick') e.preventDefault();
+};
+['pointerdown', 'mousedown', 'touchstart', 'click', 'dblclick', 'dragstart'].forEach(ev =>
+  $('lopSlide').addEventListener(ev, CHAN_XEM_LAI, { capture: true, passive: ev !== 'click' && ev !== 'dblclick' && ev !== 'dragstart' }));
+['keydown', 'beforeinput'].forEach(ev => $('lopSlide').addEventListener(ev, e => {
+  if (!XEM_LAI) return;
+  if (e.key && /^Arrow|^Tab$/.test(e.key)) return;
+  e.preventDefault(); e.stopPropagation();
+}, true));
+
+function khoaKhung(root) {
+  root.querySelectorAll('input, select, textarea').forEach(el => {
+    if (el.type === 'radio' || el.type === 'checkbox' || el.tagName === 'SELECT') el.disabled = true;
+    else el.readOnly = true;
+  });
+}
+
 $('btXemLai').addEventListener('click', () => {
   const theoSlide = (KET_QUA && KET_QUA.dapAn) || null;
-  if (!theoSlide) return;
+  XEM_LAI = true;
   slides().forEach((sl, i) => {
-    const da = theoSlide[i];
-    if (!da || !KHUNG[i]) return;
-    const el = KHUNG[i].querySelector('.sl') || KHUNG[i];
-    const kq = ChamDiem.soDapAn(sl.layout, baiLamCua(i), da);
-    ChamDiem.toMau(el, sl.layout, kq, { dapAn: da });
+    if (!coBaiTap(i)) return;
+    const k = khungCua(i);                       // slide chưa mở tới cũng dựng để xem được
+    const el = k.querySelector('.sl') || k;
+    khoaKhung(el);
+    const da = theoSlide && theoSlide[i];
+    if (!da) return;
+    ChamDiem.toMau(el, sl.layout, ChamDiem.soDapAn(sl.layout, baiLamCua(i), da), { dapAn: da });
   });
+  CHI_SO = 0;
+  $('manBai').classList.add('xem-lai');
+  $('dauGio').textContent = '';
+  $('btNop').disabled = false;
+  $('btNop').textContent = 'Xem kết quả';
   hien('manXong', false); hien('manBai', true);
-  $('btNop').textContent = 'Đã nộp';
-  bao('Bài đã chấm — xanh là đúng, đỏ là sai.', 'ok');
+  veSlide();
+  bao(theoSlide
+    ? 'Xem lại bài — xanh là đúng, đỏ là sai.'
+    : 'Xem lại bài của bạn để đối chiếu khi giáo viên chữa bài.', 'ok');
 });
 
 $('btVeDau').addEventListener('click', () => {
-  PHIEN = null; KET_QUA = null;
+  PHIEN = null; KET_QUA = null; XEM_LAI = false;
+  $('manBai').classList.remove('xem-lai');
   $('lopSlide').innerHTML = '';
   Object.keys(KHUNG).forEach(k => delete KHUNG[k]);
   hien('manXong', false); hien('manVao', true);
