@@ -58,9 +58,11 @@
      slide chỉ để đọc vẫn phải xem được). */
   const LAYOUT_CO_BAI = [
     'reading-mcq', 'mcq-list', 'quiz', 'spk-dialogue',       // chọn 1 trong nhiều (radio / bấm chip)
+    'spk-listening-part1',                                   // nghe và chọn — cùng markup .question-item (§32.37)
     'spk-reading-part3', 'reading-cloze',                    // dropdown
-    'word-choice',                                           // gạch chân phương án
+    'word-choice', 'spk-reading-part5',                      // gạch chân phương án · tìm lỗi sai (cùng markup .wc-slot)
     'ket-reading-part7', 'gap-fill', 'pic-match',            // điền chuỗi / thả chip
+    'spk-reading-part6',                                     // mô tả từ — ô gõ, đa đáp án "phần còn lại/cả từ"
     'word-web',                                              // thả chip theo TẬP đáp án
     'word-select',                                           // chọn nhiều từ đúng
     'reorder', 'matching',                                   // sắp thứ tự / nối cột
@@ -154,7 +156,7 @@
     switch (layout) {
 
       /* ── Chọn 1 trong nhiều: .question-item[data-answer] (radio hoặc chip bấm) ─────────── */
-      case 'reading-mcq': case 'mcq-list': case 'quiz': case 'spk-dialogue': {
+      case 'reading-mcq': case 'mcq-list': case 'quiz': case 'spk-dialogue': case 'spk-listening-part1': {
         const answers = [];
         h = quetThe(h, 'question-item', (the) => {
           const v = docAttr(the, 'data-answer');
@@ -181,7 +183,7 @@
          vào tổng). GIỮ NGUYÊN "-1" trong HTML (không lộ gì) để trang web biết chỗ nào không bắt
          buộc phải chọn — nếu xoá luôn thì học viên bị chặn nộp vì "còn chỗ chưa chọn" mà không
          có cách nào chọn cho đúng. Mọi giá trị khác bị xoá. */
-      case 'word-choice': {
+      case 'word-choice': case 'spk-reading-part5': {
         const answers = [];
         h = quetThe(h, 'wc-slot', (the) => {
           const v = soHoacAm(docAttr(the, 'data-ans'));
@@ -193,7 +195,7 @@
       }
 
       /* ── Điền chuỗi / thả chip: đáp án là CHỮ ở data-ans ──────────────────────────────── */
-      case 'ket-reading-part7': case 'gap-fill': case 'pic-match': {
+      case 'ket-reading-part7': case 'gap-fill': case 'pic-match': case 'spk-reading-part6': {
         const answers = [];
         const nhat = (cls) => {
           h = quetThe(h, cls, (the) => {
@@ -203,6 +205,7 @@
         };
         if (layout === 'gap-fill') nhat('gf-drop');
         else if (layout === 'pic-match') nhat('pm-box');
+        else if (layout === 'spk-reading-part6') nhat('wd-in');
         else { nhat('kp7-drop'); if (!answers.length) nhat('kp7-blank'); }   // 2 chế độ, chỉ 1 có mặt
         return { html: h, dapAn: answers.length ? { kieu: 'chuoi', answers } : null };
       }
@@ -439,7 +442,7 @@
     const chip = (o) => { const c = o.querySelector('.ww-chip'); return c ? (c.dataset.w || '') : null; };
 
     switch (layout) {
-      case 'reading-mcq': case 'mcq-list': case 'quiz': case 'spk-dialogue':
+      case 'reading-mcq': case 'mcq-list': case 'quiz': case 'spk-dialogue': case 'spk-listening-part1':
         return ds('.question-item').map(it => it.dataset.picked === undefined ? null : Number(it.dataset.picked));
 
       case 'spk-reading-part3':
@@ -450,7 +453,7 @@
 
       /* Chỗ GV chưa gán đáp án còn nguyên data-ans="-1" (bocHtml giữ lại) → trả -1 để nó KHÔNG bị
          đếm là "chưa làm"; server thấy answers[i]===null nên vẫn bỏ qua khi chấm. */
-      case 'word-choice':
+      case 'word-choice': case 'spk-reading-part5':
         return ds('.wc-slot').map(s => s.dataset.ans === '-1' ? -1
           : (s.dataset.picked === undefined ? null : Number(s.dataset.picked)));
 
@@ -460,6 +463,7 @@
         return ds('.kp7-blank').map(i => (i.value || '').trim() || null);
       }
       case 'gap-fill': return ds('.gf-drop').map(chip);
+      case 'spk-reading-part6': return ds('.wd-in').map(i => (i.value || '').trim() || null);
       case 'pic-match': return ds('.pm-box').map(chip);
 
       case 'word-web':
@@ -532,7 +536,7 @@
     };
 
     switch (layout) {
-      case 'reading-mcq': case 'mcq-list': case 'quiz': case 'spk-dialogue':
+      case 'reading-mcq': case 'mcq-list': case 'quiz': case 'spk-dialogue': case 'spk-listening-part1':
         ds('.question-item').forEach((item, i) => {
           item.dataset.graded = '1';
           const picked = item.dataset.picked;
@@ -557,7 +561,7 @@
         ds('.cloze-blank').forEach((s, i) => toO(s, dung[i], 'cloze-correct', 'cloze-incorrect'));
         break;
 
-      case 'word-choice':
+      case 'word-choice': case 'spk-reading-part5':
         ds('.wc-slot').forEach((s, i) => {
           s.classList.add('wc-graded'); s.dataset.graded = '1';
           if (dung[i] == null) return;
@@ -578,6 +582,9 @@
         }
         break;
       }
+      case 'spk-reading-part6':
+        ds('.wd-in').forEach((inp, i) => toO(inp, dung[i], 'wd-ok', 'wd-bad'));
+        break;
       case 'gap-fill':
         ds('.gf-drop').forEach((d, i) => toChip(d, dung[i]));
         ds('.ww-chip').forEach(c => c.classList.add('locked'));

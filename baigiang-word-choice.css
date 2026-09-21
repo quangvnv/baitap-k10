@@ -1,0 +1,121 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-word-choice.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'word-choice' — CHỌN PHƯƠNG ÁN ĐÚNG (gạch chân)                      CLAUDE.md §32.12
+   Đi kèm js/baigiang-word-choice.js (module rời). File CSS này nạp TRONG baigiang-soan.html →
+   MÁY HỌC VIÊN vẫn nhận vì mirrorSendCss() gom TOÀN BỘ document.styleSheets sang /style.css.
+   Text bài giảng 15px × var(--bgz) (§32.1); KHÔNG zoom phần UI.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.sl.lay-word-choice{padding:10px}
+.sl.lay-word-choice.has-head{padding-top:0}   /* BẮT BUỘC (§32.9): cùng độ ưu tiên với .sl.has-head → phải viết lại, kẻo header bị đẩy xuống 10px */
+
+.sl .wc-wrap{flex:1;min-height:0;display:flex;flex-direction:column}
+/* Vùng chữ — CUỘN 4px (§7). Là host bút vẽ (ANNO_TEXT_SEL) → nét mở trong đây thành gạch chân.
+   padding-right 3px (tách thanh cuộn khỏi mép .wc-card, KHÔNG scrollbar-gutter — nội dung dài làm
+   thanh cuộn hiện → thẻ nhích thêm 4px như trước) + trái/trên/dưới 0 ⇒ mép trái/trên/dưới cách ảnh/
+   mép slide ĐÚNG 10px (gap .wc-imgwrap + padding .sl), riêng mép PHẢI dư thêm 3px (chủ ý, cho thanh
+   cuộn) = 13px khi không có thanh cuộn. */
+.sl .wc-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:#fff;
+  padding:0 3px 0 0;font-size:calc(15px * var(--bgz,1));line-height:1.75;color:#2c3e50}
+.sl .wc-body::-webkit-scrollbar{width:4px}
+.sl .wc-body::-webkit-scrollbar-thumb{background:#c8ced8;border-radius:2px}
+/* 2 cột — 2 KHỐI FLEX RIÊNG (.wc-col), KHÔNG dùng CSS column-count nữa.
+   ⚠ BUG ĐÃ SỬA (2026-08-09): column-count tạo container "multi-column"; .wc-body có CHIỀU CAO XÁC
+   ĐỊNH (flex:1 trong .wc-wrap) ⇒ khi nội dung (đã zoom to) không vừa 2 cột trong chiều cao đó, theo
+   spec multicol trình duyệt phải SINH THÊM CỘT nằm ngoài khung (tràn ngang) thay vì cho 2 cột đã có
+   cao thêm; đặt overflow-x:hidden chỉ chặn được việc sinh cột — phần nội dung dư bị CẮT MẤT luôn,
+   không cuộn dọc tới được nữa. Nay JS (wcRender) tự chia mảng thẻ thành 2 nhóm theo TRỌNG SỐ (≈ số
+   dòng) rồi bọc mỗi nhóm trong 1 <div class="wc-col"> — layout khối bình thường, không có cơ chế
+   "sinh thêm cột" ⇒ nội dung dư chỉ đơn giản làm 2 cột (và .wc-body) cao hơn, cuộn dọc như mọi bài
+   tập khác (§32.17). */
+.sl .wc-body.wc-2col{display:flex;flex-direction:row;align-items:flex-start}
+.sl .wc-body.wc-2col .wc-col{flex:1;min-width:0;display:flex;flex-direction:column}
+.sl .wc-body.wc-2col .wc-col:first-child{padding-right:7px}
+.sl .wc-body.wc-2col .wc-col:last-child{padding-left:7px;border-left:1px solid #eef1f5}
+/* ── THẺ (.wc-card) — 1 khối ngăn bằng DÒNG TRỐNG trong ô nhập = 1 thẻ ─────────────────────
+   Tham số COPY .option-item (bản .spk-opt của layout 'spk-dialogue', §32.2): padding 6px 8px ·
+   viền 1px #e0e0e0 · bo 6px · nền trắng · line-height 1.4. Bề rộng FLEX (chiếm trọn cột chứa nó).
+   Cách nhau 6px bằng margin-bottom (khớp cả 2 trường hợp: .wc-body 1 cột dạng khối, và .wc-col
+   2 cột dạng flex-column — margin-bottom vẫn có hiệu lực bình thường trong flex item). */
+.sl .wc-card{padding:6px 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;
+  line-height:1.4;margin-bottom:6px}
+.sl .wc-card:last-child{margin-bottom:0}
+.sl .wc-card .wc-item:last-child{margin-bottom:0}   /* mục cuối không đội thêm 6px vào padding đáy thẻ */
+.sl .wc-item{display:flex;gap:6px;margin-bottom:6px}
+.sl .wc-num{flex:0 0 auto;min-width:14px;font-weight:700;color:#1976D2}
+.sl .wc-lines{flex:1;min-width:0}
+.sl .wc-line{display:flex;gap:6px;align-items:baseline}
+.sl .wc-spk{flex:0 0 auto;min-width:16px;font-weight:700;color:#1a2332}
+.sl .wc-txt{flex:1;min-width:0}
+.sl .wc-empty{padding:10px;text-align:center;color:var(--text-muted,#8a94a6);font-size:13px}
+
+/* ── Cặp phương án ─────────────────────────────────────────────────────────────────────────
+   Giữ ĐÚNG hình thức sách: "this/these" hiện cạnh nhau, nghiêng; chọn → GẠCH CHÂN.
+   ⚠ BUG ĐÃ SỬA (2026-08-09): .wc-slot từng có white-space:nowrap ⇒ TOÀN BỘ cụm (số + mọi phương án +
+   dấu /) là MỘT khối không được ngắt dòng. Giữa <sup>/wc-opt/wc-sep/wc-opt> KHÔNG có khoảng trắng
+   trong HTML nên vốn dĩ chúng đã dính liền nhau (số không tách rời phương án đầu); nowrap chỉ CẤM
+   THÊM việc ngắt dòng NGAY TRONG một phương án nhiều từ (vd "had been staying"). Ở bố cục 2 cột
+   (.wc-2col, cột hẹp ~220px) khi zoom to (--bgz), cụm dài này rộng hơn cả cột ⇒ cột bị đẩy rộng ra
+   ⇒ TRÀN NGANG cả trang (khác kiểu cuộn dọc của mọi bài tập khác, §32.17). Bỏ nowrap ở .wc-slot →
+   phương án nhiều từ tự ngắt dòng ở khoảng trắng nội bộ khi cần, cặp 1-từ ("this/these") vẫn dính
+   liền như cũ (không có khoảng trắng nào để ngắt). overflow-x:hidden ở .wc-body (trên) là lớp chặn
+   dự phòng thứ hai. */
+.sl .wc-slot{border-radius:3px}
+.sl .wc-sn{font-size:.62em;font-weight:700;color:#1976D2;vertical-align:super;margin-right:1px}
+.sl .wc-opt{cursor:pointer;padding:0 2px;border-radius:3px;font-style:italic;transition:.1s;word-break:break-word}
+.sl .wc-opt:hover{background:rgba(25,118,210,.12)}
+.sl .wc-sep{color:#9aa4ae;padding:0 1px}
+/* HV/GV đang chọn (chưa chấm) — gạch chân xanh dương */
+.sl .wc-opt.wc-sel{font-style:normal;font-weight:700;color:var(--blue-primary,#1A6FBF);
+  text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+/* Xem trước trong editor: đáp án GV đã chốt — gạch chân xanh lá */
+.sl .wc-opt.wc-ans{font-style:normal;font-weight:700;color:var(--green-primary,#16A34A);
+  text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+/* Sau khi chấm */
+.sl .wc-opt.wc-ok{font-style:normal;font-weight:700;color:var(--green-primary,#16A34A);
+  text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.sl .wc-opt.wc-bad{color:#DC2626;text-decoration:line-through;text-decoration-thickness:2px}
+.sl .wc-slot.wc-graded .wc-opt{cursor:default}
+.sl .wc-slot.wc-graded .wc-opt:hover{background:none}
+/* Editor: slot chưa chốt đáp án → viền cam nhắc GV (không hiện khi trình chiếu) */
+.sl .wc-slot.wc-pending{outline:1px dashed var(--orange-primary,#D4740A);outline-offset:1px}
+
+/* ── Ảnh minh họa (illus dùng chung) ───────────────────────────────────────────────────────
+   §32.17 — CHUẨN gap-fill cho CẢ 4 vị trí: ảnh CỐ ĐỊNH ở mép, .wc-body chiếm phần còn lại và TỰ CUỘN
+   ⇒ thẻ luôn bám mép trên, ảnh không trôi đi khi zoom. (Bỏ kiểu "cuộn chung" ở Trên/Dưới và bỏ luôn
+   hack justify-content:space-between từng dùng để kéo thẻ lên khi pos-bottom = column-reverse.)
+   Trái/Phải: ảnh BÁM MÉP (.gfi-side) — KHÔNG khống chế vùng ¼ như mcq-list; chỉ khống chế CHIỀU CAO
+   (cao lấp đầy vùng nội dung = không vượt mép slide, ảnh contain), bề rộng kéo tới sát mép slide.
+   Rule .gfi-side dùng chung nằm ở baigiang.css. */
+.sl .illus-scroll .wc-body{flex:1 1 auto;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden}
+.sl .wc-imgwrap.pos-left,.sl .wc-imgwrap.pos-right{gap:10px;align-items:stretch;padding:0}   /* padding 0: .illus-scroll có 2px → bỏ để ảnh bám sát mép */
+
+/* Bút vẽ (§32.3): bật bút → vùng chữ KHÔNG cuộn 1 ngón (1 ngón vẽ, 2 ngón cuộn);
+   phương án bấm được nên KHÔNG khởi động nét vẽ (loại trừ ở baigiang-anno.js pointerdown). */
+.player.anno-draw .wc-body{touch-action:none}
+
+/* Panel Thuộc tính — nút "＋ [ ]" NGANG HÀNG với tiêu đề "NỘI DUNG" (đẩy sát phải) */
+.slot-group .slot-title.wc-title-row{display:flex;align-items:center;gap:6px;min-height:20px}
+/* .btn-xs KHÔNG có trong buttons.css (chỉ dich-thuat/cong-cu tự khai) → dùng .btn-sm rồi thu gọn tại đây */
+.wc-ins-btn{margin-left:auto;padding:2px 8px;font-size:11px;line-height:1.5;
+  font-family:Consolas,"Courier New",monospace;letter-spacing:.5px;text-transform:none}
+/* Dòng đếm "N phương án · còn M chỗ chưa chọn đáp án" — PHẢI hiện, nên KHÔNG dùng .hint-tiny
+   (class đó bị `display:none` toàn trang trong baigiang.css để panel gọn). */
+.wc-hint{font-size:11px;line-height:1.45;color:var(--text-muted)}
+/* Panel Thuộc tính — ô nhập nội dung (UI, KHÔNG zoom theo --bgz) */
+.wc-body-in {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    
+    /* Đổi thành pre-wrap để vừa giữ xuống dòng (Enter) vừa tự wrap khi đụng mép */
+    white-space: pre-wrap; 
+    
+    /* Có thể bỏ overflow-x hoặc đổi thành hidden/unset */
+    overflow-x: hidden; 
+    
+    /* Đảm bảo từ quá dài không bị đâm lỏng ra ngoài khung */
+    word-break: break-word; 
+}

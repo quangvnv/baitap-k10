@@ -1,0 +1,33 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-spk-reading-part6.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'spk-reading-part6' — MÔ TẢ TỪ (gõ từ)                              CLAUDE.md §32.36
+   Đi kèm js/baigiang-spk-reading-part6.js. Thẻ/vùng cuộn/ảnh DÙNG CHUNG CSS của 'word-choice'
+   (.wc-*); file này chỉ định dạng dòng mô tả + chữ cái đầu + ô gõ. Text 15px × --bgz (§32.1).
+   Máy học viên nhận qua /style.css; trang web học viên nạp bản chép (tools/dong-bo-web.js).
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.sl.lay-spk-reading-part6{padding:10px}
+.sl.lay-spk-reading-part6.has-head{padding-top:0}   /* §32.9 */
+
+.sl .wd-desc{line-height:1.45}
+.sl .wd-field{display:flex;align-items:baseline;gap:4px;margin-top:4px;flex-wrap:wrap}
+/* DÃY Ô CHỮ kiểu English App — chữ đầu (xanh) + mỗi chữ còn lại 1 ô, CÙNG HÀNG với ô gõ.
+   Màu kết quả theo ô gõ bằng :has() ⇒ không phải port logic tô màu sang máy HV/web. */
+.sl .wd-field{align-items:center;gap:10px}
+.sl .wd-word{display:inline-flex;gap:3px;font-family:Consolas,"Courier New",monospace;font-weight:700;
+  font-size:calc(20px * var(--bgz,1));color:#1a2332;letter-spacing:0;user-select:none}
+.sl .wd-c{display:inline-block;min-width:1ch;text-align:center}
+.sl .wd-first{color:#1976D2}
+.sl .wd-field:has(.wd-in.wd-show) .wd-word,.sl .wd-field:has(.wd-in.wd-reveal) .wd-word,
+.sl .wd-field:has(.wd-in.wd-ok) .wd-word{color:#28a745}
+.sl .wd-field:has(.wd-in.wd-bad) .wd-word{color:#dc3545}
+.sl .wd-in{font-size:calc(16px * var(--bgz,1));font-family:Consolas,"Courier New",monospace;letter-spacing:1px;
+  max-width:100%;padding:1px 6px;border:none;border-bottom:2px solid #9aa4ae;border-radius:0;
+  background:transparent;color:#1a2332;outline:none}
+.sl .wd-in:focus{background:var(--blue-light,#e8f1fb);border-bottom-color:var(--blue-primary,#1A6FBF)}
+.sl .wd-in:disabled{opacity:1;cursor:default}
+.sl .wd-in.wd-show,.sl .wd-in.wd-reveal,.sl .wd-in.wd-ok{border-bottom-color:#28a745;color:#155724;font-weight:700}
+.sl .wd-in.wd-bad{border-bottom-color:#dc3545;color:#721c24}
+.sl .wd-pending{font-size:12px;color:var(--orange-primary,#D4740A);font-style:italic}

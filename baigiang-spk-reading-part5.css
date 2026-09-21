@@ -1,0 +1,38 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-spk-reading-part5.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'spk-reading-part5' — TÌM LỖI SAI                                   CLAUDE.md §32.35
+   Đi kèm js/baigiang-spk-reading-part5.js. Khung (thẻ, vùng cuộn, ảnh minh họa) DÙNG CHUNG CSS
+   của 'word-choice' (.wc-*); file này chỉ đổi HÌNH của cụm phương án:
+     • cụm LUÔN gạch chân (như đề in), chữ thường, không nghiêng
+     • chữ A/B/C/D nhỏ bên dưới cụm = ::after lấy từ data-l (không nằm trong DOM → textContent đúng từ gốc)
+     • đang chọn = nền xanh nhạt · đúng = xanh lá · sai = đỏ (gạch ngang)
+   Máy học viên nhận qua /style.css (mirrorSendCss gom mọi stylesheet). Text 15px × --bgz (§32.1).
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.sl.lay-spk-reading-part5{padding:10px}
+.sl.lay-spk-reading-part5.has-head{padding-top:0}   /* §32.9: phải viết lại, kẻo header bị đẩy xuống */
+
+/* Chỗ cho hàng chữ A/B/C/D dưới mỗi dòng */
+.sl .er-body .wc-card{line-height:2.4}
+.sl .er-body .wc-num{line-height:2.4}
+
+.sl .er-opt{position:relative;display:inline-block;line-height:1.3;font-style:normal;
+  text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;padding:0 3px}
+.sl .er-opt::after{content:attr(data-l);position:absolute;left:0;right:0;top:100%;
+  font-size:.68em;font-weight:700;line-height:1;color:#1976D2;text-align:center;
+  text-decoration:none;font-style:normal;pointer-events:none}
+
+/* Đang chọn (chưa chấm) — ghi đè kiểu của word-choice */
+.sl .er-opt.wc-sel{font-weight:700;color:var(--blue-primary,#1A6FBF);background:rgba(25,118,210,.14);
+  text-decoration:underline;text-decoration-thickness:2px}
+/* Xem trước trong editor + hé lộ / chấm đúng */
+.sl .er-opt.wc-ans,.sl .er-opt.wc-ok{font-weight:700;color:var(--green-primary,#16A34A);
+  background:rgba(22,163,74,.12);text-decoration:underline;text-decoration-thickness:2px}
+.sl .er-opt.wc-bad{color:#DC2626;background:rgba(220,38,38,.10);text-decoration:line-through;text-decoration-thickness:2px}
+
+/* Giải thích — ẩn khi trình chiếu, hiện khi hé lộ câu đó (.on) */
+.sl .er-expl{display:none;margin-top:2px;padding:4px 8px;border-radius:4px;background:#f1f7ff;
+  color:#2c3e50;font-size:calc(14px * var(--bgz,1));line-height:1.45}
+.sl .er-expl.on{display:block}

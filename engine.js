@@ -64,6 +64,21 @@ function wcPick(el){
   slot.dataset.picked=el.dataset.oi;
 }
 
+/* ── wdSyncWord — trích từ baigiang-spk-reading-part6.js ── */
+function wdSyncWord(inp){
+  const fld=inp && inp.closest && inp.closest('.wd-field'), word=fld && fld.querySelector('.wd-word');
+  if(!word) return;
+  const cs=[...word.querySelectorAll('.wd-c:not(.wd-first)')], n=cs.length;
+  const f=String((word.querySelector('.wd-first')||{}).textContent||'').toLowerCase();
+  let v=String(inp.value||'').toLowerCase().split(' ').join('');
+  const p=String(inp.dataset.ans||'').split('/'), rest=(p[0]||'').trim().toLowerCase(), full=(p[1]||'').trim().toLowerCase();
+  if(f && v.charAt(0)===f){
+    if(full){ if(full.indexOf(v)===0 && rest.indexOf(v)!==0) v=v.slice(1); }
+    else if(v.length>n) v=v.slice(1);
+  }
+  cs.forEach((c,i)=>{ c.textContent = i<v.length ? v.charAt(i) : '_'; });
+}
+
 /* ── wireWordWeb — trích từ baigiang-soan.js ── */
 function wireWordWeb(root){
   root.querySelectorAll('.ww-wrap.ww-live').forEach(wrap=>{

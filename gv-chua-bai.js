@@ -26,7 +26,7 @@
     'reading-cloze': 'Điền chỗ trống (chọn)', 'ket-reading-part7': 'Điền từ vào đoạn',
     'gap-fill': 'Điền từ (kéo thả)', 'pic-match': 'Nối từ với hình', 'word-web': 'Sơ đồ từ',
     'word-select': 'Chọn mục từ', 'reorder': 'Sắp xếp thứ tự', 'matching': 'Nối cột',
-    'word-choice': 'Chọn phương án đúng', 'crossword': 'Ô chữ',
+    'word-choice': 'Chọn phương án đúng', 'spk-reading-part5': 'Tìm lỗi sai', 'spk-reading-part6': 'Mô tả từ', 'crossword': 'Ô chữ',
   };
 
   /* Chuẩn hoá chuỗi PHẢI khớp `chuanChuoi` của src/shared/cham-diem.js — lệch là tô xanh/đỏ
@@ -205,6 +205,21 @@
         break;
       }
 
+      /* ── Tìm lỗi sai (spk-reading-part5): MỖI CÂU = 1 .wc-slot chứa cả câu + 4 .wc-opt ─────
+         Ngữ cảnh = CHÍNH câu đó (khác word-choice: thay slot bằng ______ ở đây sẽ mất sạch câu). */
+      case 'spk-reading-part5': {
+        const slot = ds('.wc-slot');
+        slot.forEach((s, i) => {
+          if (!coCau(i)) return;
+          rows.push({
+            raw: i, nhan: 'Câu ' + (i + 1), ctx: chu(s),
+            pa: ds('.wc-opt', s).map(o => ({ k: String(o.dataset.oi), chu: (o.dataset.l ? o.dataset.l + '. ' : '') + chu(o) })),
+            dungKeys: new Set([String(answers[i])]),
+          });
+        });
+        break;
+      }
+
       /* ── Sắp xếp thứ tự: mỗi ô là một vị trí, phương án = các thẻ ────────────────────────── */
       case 'reorder': {
         const the = ds('.ro-card[data-i]').map(c => ({
@@ -285,6 +300,21 @@
             pa: pa,
             dungKeys: new Set(phuongAn(answers[i])),
             chuoi: true,
+          });
+        });
+        break;
+      }
+
+      /* ── Mô tả từ (spk-reading-part6): ô gõ, đáp án "phần còn lại/cả từ" ─────────────────── */
+      case 'spk-reading-part6': {
+        ds('.wd-in').forEach((inp, i) => {
+          if (!coCau(i)) return;
+          const card = inp.closest ? inp.closest('.wd-card') : null;
+          const first = card ? chu(card.querySelector('.wd-first')) : '';
+          rows.push({
+            raw: i, nhan: 'Câu ' + (i + 1) + (first ? ' · chữ đầu "' + first + '"' : ''),
+            ctx: card ? chu(card.querySelector('.wd-desc')) : '',
+            pa: null, dungKeys: new Set(phuongAn(answers[i])), chuoi: true,
           });
         });
         break;

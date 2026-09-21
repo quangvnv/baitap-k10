@@ -1,0 +1,86 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-crossword.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'crossword' — Ô CHỮ                          js/baigiang-crossword.js · CLAUDE.md §32.12
+   Máy học viên vẫn nhận file này: mirrorSendCss() gom TOÀN BỘ document.styleSheets sang /style.css.
+
+   ⚠ ZOOM (§32.1): --bgz CHỈ áp cho panel gợi ý bên phải. LƯỚI KHÔNG zoom — cỡ ô do JS tính cho
+     vừa vùng trống (cwCellPx) và đặt inline `font-size` lên .cw-grid; mọi cỡ chữ trong ô dùng `em`
+     ⇒ đổi cỡ ô là chữ theo. Đây là NGOẠI LỆ có chủ đích (người dùng chốt 2026-07-24): ô cố định mà
+     phóng chữ thì chữ tràn ô, còn để lưới zoom thì lưới tràn khỏi khung 960×540.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.sl.lay-crossword{padding:10px}
+.sl.lay-crossword.has-head{padding-top:0}   /* BẮT BUỘC §32.9: cùng độ ưu tiên với .sl.has-head → phải viết lại, kẻo header bị đẩy xuống 10px */
+
+.sl .cw-wrap{flex:1;min-height:0;display:flex;gap:8px}
+/* Ảnh minh họa CHỈ BÊN TRÁI (.gfi-side, khai chung ở baigiang.css) — bám mép, cao lấp đầy. */
+.sl .cw-imgwrap.pos-left{gap:10px;align-items:stretch}
+
+/* ── Vùng lưới ─────────────────────────────────────────────────────────────────────────── */
+/* Lưới lấy ĐÚNG kích thước của nó (flex:0 1 auto — không giãn), nhường phần thừa cho panel phải. */
+/* overflow:hidden — KHÔNG để mọc scrollbar: cwCellPx đã tính cỡ ô cho lưới LUÔN vừa khung (kèm biên
+   CW_SAFE). Trước đây để `auto`: slide bị transform:scale nên lệch phần px → tràn 1px → hiện thanh dọc
+   → mất 4px bề ngang → hiện nốt thanh ngang (2 thanh thừa, 2026-08-10).
+   Trang HTML xuất riêng (CW_EXPORT_CSS trong baigiang-crossword.js) TỰ khai overflow:auto cho màn hẹp. */
+.sl .cw-left{flex:0 1 auto;min-width:0;min-height:0;position:relative;
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.sl .cw-empty{color:#94a3b8;font-size:calc(15px * var(--bgz,1));text-align:center;padding:0 20px}
+
+.sl .cw-grid{display:grid;gap:1px;background:#334155;padding:1px;flex:0 0 auto;line-height:1}
+.sl .cw-cell{position:relative;background:#fff}
+.sl .cw-cell.cw-blk{background:#334155}
+.sl .cw-num{position:absolute;top:0;left:1px;font-size:.36em;line-height:1.1;color:#64748b;
+  font-weight:700;pointer-events:none;z-index:1}
+/* Ô SOẠN (chữ tĩnh — GV thấy ngay lưới đã điền để kiểm tra bố cục) */
+.sl .cw-ch{display:flex;width:100%;height:100%;align-items:center;justify-content:center;
+  font-size:.62em;font-weight:700;color:#1e293b}
+/* Ô TRÌNH CHIẾU */
+.sl .cw-in{width:100%;height:100%;border:0;padding:0;margin:0;background:transparent;outline:none;
+  text-align:center;text-transform:uppercase;font-family:inherit;font-size:.62em;font-weight:700;color:#111}
+.sl .cw-cell.cw-hl{background:#e0ecff}       /* cả TỪ đang làm */
+.sl .cw-cell.cw-cur{background:#bfdbfe}      /* ô đang đứng */
+.sl .cw-cell.cw-wrong{background:#fee2e2}    /* chấm điểm: ô đã điền SAI */
+.sl .cw-in.cw-hinted{background:#eef2ff;color:var(--blue-primary)}   /* 💡 Gợi ý: chữ do GV hé lộ */
+.sl .cw-in.cw-ok{color:var(--green-primary,#15803d)}
+.sl .cw-in.cw-bad{color:#b91c1c}
+.sl .cw-in.cw-reveal{color:var(--green-primary,#15803d)}             /* máy GV hé lộ đáp án đúng (§32.4) */
+
+/* ── Panel phải: [vùng cuộn gợi ý ⇄ bảng từ] + [hàng 2 nút GV ở MÉP DƯỚI] ─────────────────
+   Panel gợi ý FLEX chiều rộng: giãn chiếm hết chỗ còn thừa sau khi lưới lấy phần của nó, 240px chỉ
+   là mức TỐI THIỂU (khớp CW_SIDE_W trong JS — mức grid phải chừa cho panel khi tính cỡ ô).
+   Panel = cột dọc: .cw-sidescroll (gợi ý/bảng từ) chiếm phần trên và tự cuộn; .cw-bar ghim đáy. */
+.sl .cw-side{flex:1 1 240px;min-width:200px;min-height:0;display:flex;flex-direction:column;
+  font-size:calc(13px * var(--bgz,1));line-height:1.35;color:#1e293b; align-items: center;}
+.sl .cw-sidescroll{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-gutter:stable;display:flex;flex-direction:column;justify-content:center;}
+.sl .cw-sidescroll::-webkit-scrollbar{width:4px}
+.sl .cw-sidescroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}
+
+/* Hàng 2 nút CÔNG CỤ CỦA GV ở mép dưới panel — KHÔNG zoom (font/cỡ đặt cứng, không dùng --bgz).
+   Máy HV ẩn hàng nút (.cw-bar{display:none} trong STUDENT_PAGE, src/main/mirror-host.js): vùng cuộn
+   gợi ý lấp nốt chỗ, lưới KHÔNG lệch vì cỡ ô không phụ thuộc hàng nút này. */
+.sl .cw-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:flex-end;gap:6px;
+  margin-top:6px;padding-top:6px;border-top:1px solid var(--blue-light,#cfe0f7)}
+.sl .cw-tbtn{height:24px;padding:0 10px;border:1px solid var(--blue-light,#cfe0f7);border-radius:12px;
+  background:#fff;color:var(--blue-primary,#1976D2);font-family:var(--font-base);font-size:12px;
+  font-weight:600;line-height:22px;cursor:pointer;white-space:nowrap}
+.sl .cw-tbtn:hover{background:var(--blue-light,#e8f1fd)}
+.sl .cw-grp{font-weight:700;color:var(--blue-primary);letter-spacing:.4px;margin-bottom:4px}
+.sl .cw-grp ~ .cw-grp{margin-top:8px}
+.sl .cw-clue{display:flex;gap:6px;padding:2px 4px;border-radius:4px}
+.sl .cw-clue b{flex:0 0 auto;color:#475569}
+.sl .cw-clue.cw-clue-on{background:#e0ecff}
+/* Bảng từ dùng .ww-bank/.ww-chip chuẩn (§32.15) — chỉ nới cho vừa cột hẹp 240px. */
+.sl .cw-bank{align-content:flex-start}
+.sl .cw-bankwrap{display:none}
+.sl .cw-side.cw-show-bank .cw-bankwrap{display:block}
+.sl .cw-side.cw-show-bank .cw-cluewrap{display:none}
+
+/* ── Panel Thuộc tính (editor) ─────────────────────────────────────────────────────────── */
+.cw-title-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.cw-mix-btn{flex:0 0 auto}
+.cw-words-in{width:100%;box-sizing:border-box;resize:vertical;font-family:Consolas,'Courier New',monospace;
+  font-size:12px;line-height:1.5}
+/* .hint-tiny bị display:none toàn trang trong baigiang.css (panel gọn) → dòng đếm phải dùng class riêng (§32.13). */
+.cw-hint{margin-top:6px;font-size:11px;line-height:1.45;color:#475569}

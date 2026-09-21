@@ -250,6 +250,12 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') chuyen(-1);
   if (e.key === 'ArrowRight') chuyen(1);
 });
+/* Mô tả từ: gõ → điền dãy ô chữ "l i b r _ _ _" cạnh ô gõ (wdSyncWord lấy thẳng từ app qua engine.js).
+   Trang web đã bóc data-ans nên hàm tự rơi về quy tắc độ dài để nhận ra khi học viên gõ lại cả từ. */
+$('sanKhau').addEventListener('input', e => {
+  const t = e.target;
+  if (t && t.classList && t.classList.contains('wd-in') && typeof wdSyncWord === 'function') wdSyncWord(t);
+});
 /* Bấm/thả chuột trong slide → cập nhật dấu ✓ trong mục lục (chọn đáp án, thả chip, gõ ô chữ). */
 ['click', 'pointerup', 'input', 'change'].forEach(ev =>
   $('sanKhau').addEventListener(ev, () => setTimeout(veMucLuc, 0)));

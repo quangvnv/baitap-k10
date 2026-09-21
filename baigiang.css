@@ -437,7 +437,7 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 /* Điền chỗ trống (layout='reading-cloze') — Reading S4: đoạn văn 1 cột, dropdown tại (1)(2)…,
    ảnh (nếu có) float góc trên-phải, text bao quanh. */
 .sl .qp-rs4{flex:1;min-height:0;width:100%;display:flex;font-family:var(--font-base)}
-.sl .qp-rs4 .cloze-panel{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;
+.sl .qp-rs4 .cloze-panel{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;background:#fff;
   border:1px solid #ccc;padding:10px;overflow:hidden}
 .sl .qp-rs4 .passage-title{font-size:calc(18px * var(--bgz,1));font-weight:700;color:#1976D2;margin-bottom:8px;
   text-align:center;border-bottom:1px solid #eee;padding-bottom:4px;flex-shrink:0}
@@ -538,6 +538,11 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .illus-thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .illus-th{position:relative;width:56px;height:56px;border:1px solid var(--blue-light);border-radius:4px;overflow:hidden;background:#fff}
 .illus-th img{width:100%;height:100%;object-fit:cover;display:block}
+.illus-th .illus-th-crop{position:absolute;top:2px;left:2px;width:18px;height:18px;padding:0;line-height:1;
+  font-size:11px;border-radius:3px;display:flex;align-items:center;justify-content:center}   /* cắt ảnh — baigiang-crop.js */
+.illus-th img{cursor:zoom-in}
+.pm-th .pm-th-crop{position:absolute;top:1px;left:1px;width:16px;height:16px;min-height:0;padding:0;line-height:1;
+  font-size:10px;border-radius:3px;display:flex;align-items:center;justify-content:center}   /* cắt ảnh pic-match (pmCrop) */
 .illus-th .illus-th-del{position:absolute;top:2px;right:2px;width:18px;height:18px;padding:0;line-height:1;
   font-size:11px;border-radius:3px;display:flex;align-items:center;justify-content:center}
 /* HOÀN THÀNH HỘI THOẠI (layout='spk-dialogue', English app Speakout Reading Exercise 2) — mỗi câu là 1
@@ -596,7 +601,7 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .player.anno-draw .gf-foot-block,.player.anno-draw .pptx-text,.player.anno-draw .ws-box,
 .player.anno-draw .kp7-passage,.player.anno-draw .kp7-bank,.player.anno-draw .cw-side,.player.anno-draw .cw-left,
 .player.anno-draw .pptx-tbl-el td,.player.anno-draw .mt-body,.player.anno-draw .ro-list,
-.player.anno-draw .wc-body,.player.anno-draw .vf-body,.player.anno-draw .sw8-body,.player.anno-draw .sw9-body{touch-action:none}
+.player.anno-draw .wc-body,.player.anno-draw .vf-body,.player.anno-draw .sw8-body,.player.anno-draw .sw9-body,.player.anno-draw .tb-text{touch-action:none}
 .bg-anno-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:6}
 .bg-anno-shape{fill:none}
 /* Lớp bắt nét trên deck iSpring khi BẬT BÚT — z6 để nằm TRÊN .isp-guard (z4): bật bút thì nét vẽ
