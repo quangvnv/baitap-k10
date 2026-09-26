@@ -34,6 +34,11 @@
   const chuan = (s) => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
   const phuongAn = (a) => String(a == null ? '' : a).split('/').map(chuan).filter(Boolean);
   const chuanO = (s) => String(s == null ? '' : s).trim().normalize('NFC').toUpperCase();
+  /* Câu viết (spk-writing-part8/9): bỏ luôn DẤU CÂU — PHẢI khớp `chuanCau` của cham-diem.js,
+     lệch là tô xanh/đỏ một đằng, máy chủ chấm một nẻo. */
+  const chuanCau = (s) => String(s == null ? '' : s)
+    .replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"')
+    .toLowerCase().replace(/[.,;:!?"()\[\]…]/g, ' ').replace(/\s+/g, ' ').trim();
 
   let CAU = [];          // danh sách câu đã tổng hợp
   let I = 0;             // câu đang xem
@@ -339,6 +344,26 @@
         break;
       }
 
+      /* ── Viết lại câu / Đặt câu (spk-writing-part8/9): ô GÕ, đáp án là MẢNG phương án ────
+         ⚠ `answers[i]` ở đây là MẢNG (không phải chuỗi ngăn bằng "/") ⇒ KHÔNG dùng `phuongAn`. */
+      case 'spk-writing-part8': case 'spk-writing-part9': {
+        const pfx = layout === 'spk-writing-part8' ? 'sw8' : 'sw9';
+        ds('.' + pfx + '-in').forEach((inp, i) => {
+          if (!coCau(i)) return;
+          const card = inp.closest ? inp.closest('.' + pfx + '-card') : null;
+          const de = card ? chu(card.querySelector('.' + pfx + (pfx === 'sw8' ? '-orig' : '-words'))) : '';
+          const mo = (pfx === 'sw8' && card) ? chu(card.querySelector('.sw8-starter')) : '';
+          const ds2 = Array.isArray(answers[i]) ? answers[i] : [answers[i]];
+          rows.push({
+            raw: i,
+            nhan: 'Câu ' + (i + 1),
+            ctx: de + (mo ? '   →   ' + mo : ''),
+            pa: null, dungKeys: new Set(ds2.map(chuanCau).filter(Boolean)), cau: true,
+          });
+        });
+        break;
+      }
+
       /* ── Ô chữ: mỗi Ô LƯỚI là một câu (đúng đơn vị của ChamDiem) ─────────────────────────── */
       case 'crossword': {
         const goiY = {};
@@ -383,6 +408,7 @@
   function khoaCua(v, row) {
     if (v === null || v === undefined || v === '') return null;
     if (row.oChu) return chuanO(v);
+    if (row.cau) return chuanCau(v);
     if (row.chuoi) return chuan(v);
     return String(v);
   }

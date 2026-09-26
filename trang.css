@@ -425,3 +425,45 @@ select.o {
      hẹp. Giữ nguyên tỉ lệ và cho cuộn ngang trong chính khung đó (mấu chốt là min-width:0). */
   .san .sl .pm-canvas, .san .sl .ww-webs { min-width: 0; max-width: 100%; overflow-x: auto; }
 }
+
+/* ══ THANH PHÁT AUDIO CỦA BÀI NGHE (§41.29) ═══════════════════════════════════════════════
+   Nằm TRONG `.san`, DƯỚI slide. `.san` vì thế phải xếp dọc — 2 nút ‹ › là `position:absolute`
+   nên không bị ảnh hưởng. Ẩn bằng class `.an` khi slide không có audio.
+   ⚠ Ở NGOÀI `#khungTyLe` (không bị transform:scale) nên chữ/nút giữ đúng cỡ ở mọi tỉ lệ. */
+.san { flex-direction: column; gap: 8px; }
+.au-bar {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  justify-content: center; max-width: 100%;
+  padding: 6px 10px; border: 1px solid var(--vien, #d8dde3); border-radius: 10px;
+  background: #f4f7fa;
+}
+.au-bar.an { display: none; }
+.au-bar audio { height: 34px; max-width: 100%; }
+.au-nhom { display: flex; gap: 4px; flex-wrap: wrap; }
+.au-nut {
+  min-width: 30px; height: 28px; padding: 0 8px; cursor: pointer;
+  border: 1px solid var(--vien, #d8dde3); border-radius: 6px; background: #fff;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--chu, #1a3350);
+}
+.au-nut:hover { background: #e9eef4; }
+.au-nut.on { background: var(--xanh, #1976d2); border-color: var(--xanh, #1976d2); color: #fff; }
+
+/* ══ Ô GÕ của Viết lại câu / Đặt câu (spk-writing-part8/9 — §41.30) ════════════════════════
+   Ô này CHỈ có trên web: app không có ô nhập cho học viên (§34.4), `bocHtml` chèn vào đúng chỗ
+   khối đáp án gợi ý vừa bị cắt bỏ. */
+.san .sl .sw8-in-wrap, .san .sl .sw9-in-wrap { margin-top: 4px; }
+.san .sl .sw-in {
+  width: 100%; box-sizing: border-box; padding: 5px 8px;
+  border: 1px solid #b9c4d0; border-radius: 6px; background: #fff;
+  font: inherit; font-size: calc(15px * var(--bgz, 1)); color: #1a3350;
+}
+.san .sl .sw-in:focus { outline: none; border-color: var(--xanh, #1976d2); box-shadow: 0 0 0 2px rgba(25,118,210,.15); }
+.san .sl .sw-in.sw-ok { border-color: #2e7d32; background: #e8f5e9; }
+.san .sl .sw-in.sw-bad { border-color: #c62828; background: #ffebee; }
+.san .sl .sw-goi { margin-top: 3px; font-size: calc(14px * var(--bgz, 1)); color: #2e7d32; font-weight: 600; }
+
+/* ⚠ Ô NHẬP < 16px làm iOS TỰ PHÓNG cả trang, và trang đã phóng thì mọi `position:fixed`
+   (2 nút ‹ ›, nút Nộp bài) TRÔI RA NGOÀI MÀN HÌNH — xem §41.20. */
+@media (max-width: 820px) {
+  .san .sl .sw-in { font-size: 16px; }
+}

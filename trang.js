@@ -153,6 +153,8 @@ function veSlide() {
   $('btTruoc').disabled = CHI_SO === 0;
   $('btSau').disabled = CHI_SO >= ds.length - 1;
   veMucLuc();
+  AU_I = 0;
+  auNapSlide();     // ⚠ PHẢI gọi mỗi lần đổi slide: dừng tiếng slide trước + nạp audio slide này
   vuaKhung();
 }
 
@@ -172,8 +174,12 @@ function vuaKhung() {
     return;
   }
   const cs = getComputedStyle(san);
+  /* ⚠ Thanh audio nằm TRONG `.san` và CHIẾM CHỖ THẬT (khác 2 nút ‹ › vốn absolute) ⇒ phải trừ
+     chiều cao của nó, nếu không slide bị đẩy tràn khỏi vùng nhìn ở bài nghe. */
+  const au = $('thanhAudio');
+  const hAu = (au && !au.classList.contains('an')) ? (au.offsetHeight + 8) : 0;
   const w = san.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0) - 80; // 80 = chỗ cho 2 nút ‹ ›
-  const h = san.clientHeight - parseFloat(cs.paddingTop || 0) - parseFloat(cs.paddingBottom || 0);
+  const h = san.clientHeight - parseFloat(cs.paddingTop || 0) - parseFloat(cs.paddingBottom || 0) - hAu;
   const sc = Math.max(0.3, Math.min(Math.max(120, w) / 960, Math.max(120, h) / 540, 2));
   khung.style.width = Math.round(960 * sc) + 'px';
   khung.style.height = Math.round(540 * sc) + 'px';
@@ -406,6 +412,96 @@ $('btVeDau').addEventListener('click', () => {
 });
 
 /* ── Hàng đợi gửi lại ────────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   ÂM THANH CỦA BÀI NGHE (§41.29)
+   Hợp đồng dữ liệu do app đặt (baigiang-day-web.js → dayAudio):
+       de.slides[i].audios = [{ n:tên, u:URL Supabase Storage, st:cắt đầu(giây),
+                                en:cắt cuối(giây), b:[{t:giây TUYỆT ĐỐI, nm:tên mốc}] }]
+   • Nghe KHÔNG GIỚI HẠN (đã chốt) — `<audio controls>` tiêu chuẩn, học viên tự tua.
+   • PHẢI tôn trọng ĐOẠN CẮT `st`/`en`: phát cả file là phát luôn phần giáo viên đã cắt bỏ —
+     lỗi âm thầm, chỉ lộ ra khi đứng lớp. Port `auGuardTrim` của app qua timeupdate + seeked.
+   • Nút MỐC (bookmark) hiện như trang tự học (đã chốt) — `<audio controls>` là thành phần đóng
+     của trình duyệt, không vẽ vạch vào thanh seek được nên mốc phải là nút RIÊNG (§32.6).
+   ⚠ Mốc đã quy về thời gian TUYỆT ĐỐI ngay lúc đẩy ⇒ ở đây KHÔNG cộng `st` lần nữa.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+let AU_I = 0;                                   // audio đang chọn trong slide hiện tại
+function auDs() { const s = slides()[CHI_SO]; return (s && s.audios) || []; }
+function auNay() { return auDs()[AU_I]; }
+function auGio(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+/* Gọi sau MỖI lần đổi slide. Slide không có audio ⇒ ẩn thanh + dừng tiếng đang phát (không để
+   tiếng của slide trước chạy tiếp sang slide sau). */
+function auNapSlide() {
+  const box = $('thanhAudio'), el = $('auEl');
+  if (!box || !el) return;
+  const ds = auDs();
+  try { el.pause(); } catch (e) { }
+  box.classList.toggle('an', ds.length === 0);
+  if (!ds.length) { el.removeAttribute('src'); el.dataset.src = ''; vuaKhung(); return; }
+  if (AU_I >= ds.length) AU_I = 0;
+  auDat(AU_I, false);
+  vuaKhung();                                   // thanh chiếm chỗ ⇒ tính lại tỉ lệ slide
+}
+
+function auDat(i, phat) {
+  const ds = auDs(), a = ds[i], el = $('auEl');
+  if (!a || !el) return;
+  AU_I = i;
+  if (el.dataset.src !== a.u) { el.src = a.u; el.dataset.src = a.u; }
+  try { el.currentTime = a.st || 0; } catch (e) { }
+  if (phat) el.play().catch(() => { });
+
+  /* Nút chọn audio — chỉ hiện khi slide có nhiều hơn một track. */
+  const tabs = $('auTabs');
+  tabs.innerHTML = ds.length > 1 ? ds.map((x, k) =>
+    '<button type="button" class="au-nut' + (k === i ? ' on' : '') + '" data-au="' + k + '" title="'
+    + String(x.n || '').replace(/"/g, '&quot;') + '">\u{1F50A} ' + (k + 1) + '</button>').join('') : '';
+
+  /* Nút mốc thời gian — nhãn là SỐ THỨ TỰ (tên PowerPoint tự sinh "Bookmark 1" vô nghĩa, §32.6). */
+  $('auBmks').innerHTML = (a.b || []).map((b, bi) =>
+    '<button type="button" class="au-nut au-nut-moc" data-moc="' + bi + '" title="'
+    + String(b.nm || ('Mốc ' + (bi + 1))).replace(/"/g, '&quot;') + ' — ' + auGio(b.t) + '">'
+    + (bi + 1) + '</button>').join('');
+}
+
+(function auGan() {
+  const el = $('auEl'), box = $('thanhAudio');
+  if (!el || !box) return;
+  /* Ủy quyền: hai hàng nút được vẽ lại mỗi lần đổi slide. */
+  box.addEventListener('click', (e) => {
+    const nt = e.target.closest && e.target.closest('[data-au]');
+    if (nt) { auDat(+nt.dataset.au, true); return; }
+    const nm = e.target.closest && e.target.closest('[data-moc]');
+    if (nm) {
+      const a = auNay(); if (!a) return;
+      const b = (a.b || [])[+nm.dataset.moc]; if (!b) return;
+      try { el.currentTime = b.t; } catch (e2) { }
+      el.play().catch(() => { });
+    }
+  });
+  /* Đặt currentTime TRƯỚC khi có metadata thường không ăn ⇒ đặt lại khi đã nạp. */
+  el.addEventListener('loadedmetadata', () => {
+    const a = auNay(); if (a && a.st) { try { el.currentTime = a.st; } catch (e) { } }
+  });
+  el.addEventListener('timeupdate', () => {
+    const a = auNay(); if (!a) return;
+    const t = el.currentTime;
+    if (a.en && t >= a.en - 0.02) { el.pause(); try { el.currentTime = a.en; } catch (e) { } }
+    else if (a.st && t < a.st - 0.02) { try { el.currentTime = a.st; } catch (e) { } }
+    const nut = box.querySelectorAll('[data-moc]'), ds = a.b || [];
+    let cur = -1;
+    for (let i = 0; i < ds.length; i++) if (t >= ds[i].t - 0.15) cur = i;
+    nut.forEach((n, j) => n.classList.toggle('on', j === cur));
+  });
+  el.addEventListener('seeked', () => {
+    const a = auNay(); if (!a) return;
+    if (a.st && el.currentTime < a.st - 0.02) { try { el.currentTime = a.st; } catch (e) { } }
+    if (a.en && el.currentTime > a.en) { try { el.currentTime = a.en; } catch (e) { } }
+  });
+  /* Học viên nộp bài / rời màn làm bài thì tắt tiếng. */
+  window.addEventListener('beforeunload', () => { try { el.pause(); } catch (e) { } });
+})();
+
 function docHangDoi() {
   try { return JSON.parse(localStorage.getItem(KHOA_HANG_DOI) || '[]'); } catch { return []; }
 }

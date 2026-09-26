@@ -67,6 +67,7 @@
     'word-select',                                           // chọn nhiều từ đúng
     'reorder', 'matching',                                   // sắp thứ tự / nối cột
     'crossword',                                             // ô chữ
+    'spk-writing-part8', 'spk-writing-part9',                // viết lại câu / đặt câu — Ô GÕ, so khớp BỎ DẤU CÂU
   ];
 
   /* ══════════════════════════════════════════════════════════════════════════════════════════
@@ -124,6 +125,37 @@
   const chuanChuoi = (s) => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
   /* ĐA ĐÁP ÁN ngăn bằng "/" — ket-reading-part7 (§32.11). Gõ trúng phương án nào cũng đúng. */
   const phuongAn = (a) => String(a == null ? '' : a).split('/').map(chuanChuoi).filter(Boolean);
+
+  /* Chuẩn hoá một CÂU VIẾT (spk-writing-part8/9) — lỏng hơn `chuanChuoi`: bỏ luôn DẤU CÂU.
+     Học viên viết đúng câu mà quên dấu `?`/`.` cuối thì không đáng tính sai; ngược lại dấu
+     nháy thì GIỮ (`don't` ≠ `dont` về chính tả) nhưng quy nháy cong `’` về nháy thẳng vì bản
+     Word hay dùng nháy cong trong đáp án mà học viên gõ nháy thẳng.
+     ⚠ KHÔNG dùng cho các layout khác — ở đó `chuanChuoi` phải khớp `norm` của app (gapSubmit…). */
+  const chuanCau = (s) => String(s == null ? '' : s)
+    .replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"')
+    .toLowerCase()
+    .replace(/[.,;:!?"()\[\]…]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+
+  /* Cắt MỘT khối phần tử mang class `cls` ra khỏi html (tính lồng thẻ cùng tên).
+     Trả `[{vt, het, trong}]` theo thứ tự xuất hiện; `trong` = nội dung bên trong khối.
+     ⚠ Phải đếm lồng: khối .sw8-ans chứa các <div class="sw8-a"> con, dùng regex non-greedy
+       `[\s\S]*?</div>` là cắt ở thẻ đóng của CON ⇒ để lại rác + lọt đáp án. */
+  function catKhoi(html, cls) {
+    const h = String(html), ra = [];
+    timThe(h, cls).forEach(({ the, vt }) => {
+      const ten = (/^<([a-zA-Z][a-zA-Z0-9-]*)/.exec(the) || [])[1];
+      if (!ten) return;
+      const re = new RegExp("<" + ten + "(?:\"[^\"]*\"|'[^']*'|[^>\"'])*>|</" + ten + "\s*>", 'gi');
+      re.lastIndex = vt;
+      let sau = 0, m;
+      while ((m = re.exec(h))) {
+        if (m[0][1] === '/') { sau--; if (sau === 0) { ra.push({ vt, het: re.lastIndex, trong: h.slice(vt + the.length, m.index) }); return; } }
+        else sau++;
+      }
+    });
+    return ra;
+  }
 
   /* ══════════════════════════════════════════════════════════════════════════════════════════
      LỚP 1 — bocDe(slide) → { de, giaiThich }             [THUẦN]
@@ -208,6 +240,32 @@
         else if (layout === 'spk-reading-part6') nhat('wd-in');
         else { nhat('kp7-drop'); if (!answers.length) nhat('kp7-blank'); }   // 2 chế độ, chỉ 1 có mặt
         return { html: h, dapAn: answers.length ? { kieu: 'chuoi', answers } : null };
+      }
+
+      /* ── Viết lại câu / Đặt câu từ từ cho sẵn: KHỐI đáp án gợi ý → thay bằng Ô GÕ ──────
+         ⚠ VÁ MỘT LỖ RÒ ĐÁP ÁN: app render sẵn `<div class="sw8-a">There are over 800…</div>`
+           rồi chỉ dùng CSS giấu (hé lộ dần bằng nhịp bấm khi trình chiếu — §34.4). Trên web
+           CSS không bảo vệ được gì: mở DevTools là đọc trọn đáp án. Ở đây khối đó bị CẮT HẲN
+           khỏi HTML, đáp án chuyển vào khóa riêng.
+         Nhiều đáp án gợi ý cho một câu ⇒ mảng con; gõ trúng phương án nào cũng đúng. */
+      case 'spk-writing-part8': case 'spk-writing-part9': {
+        const pfx = layout === 'spk-writing-part8' ? 'sw8' : 'sw9';
+        const answers = [];
+        /* Cắt từ CUỐI lên ĐẦU để các vị trí phía trước không bị xê dịch; đáp án gom rồi đảo lại. */
+        const khoi = catKhoi(h, pfx + '-ans');
+        khoi.slice().reverse().forEach(k => {
+          const ds = [];
+          catKhoi(k.trong, pfx + '-a').forEach(x => {
+            const t = giaiMaHtml(String(x.trong).replace(/<[^>]*>/g, '')).trim();
+            if (t) ds.push(t);
+          });
+          answers.unshift(ds.length ? ds : null);
+          h = h.slice(0, k.vt)
+            + '<div class="' + pfx + '-in-wrap"><input class="' + pfx + '-in sw-in" type="text"'
+            + ' data-ans="" autocomplete="off" spellcheck="false" placeholder="Viết câu của bạn…"></div>'
+            + h.slice(k.het);
+        });
+        return { html: h, dapAn: answers.some(a => a) ? { kieu: 'cau', answers } : null };
       }
 
       /* ── Sơ đồ mạng từ: mỗi .ww-web mang TẬP đáp án "a||b||c" ────────────────────────────
@@ -323,6 +381,7 @@
     if (!da) return 0;
     switch (da.kieu) {
       case 'chiSo': case 'chuoi': return da.answers.filter(a => a !== null).length;
+      case 'cau': return da.answers.filter(a => a && a.length).length;
       case 'tapHop': return da.webs.reduce((s, w) => s + w.length, 0);   // ước lượng: số ô ≈ số đáp án
       case 'chonTu': return da.dung.filter(Boolean).length;
       case 'oChu': return da.answers.length;
@@ -346,6 +405,12 @@
 
       case 'chuoi':
         return ketQua(dapAn.answers.map((a, i) => a === null ? null : khopChuoi(bl[i], a)));
+
+      /* Câu viết: mảng con = các phương án gợi ý; so khớp BỎ DẤU CÂU (`chuanCau`). Câu GV để
+         trống đáp án ⇒ null = KHÔNG tính điểm (giữ đúng tinh thần "đáp án âm thì luôn sai"
+         của khopSo: không bao giờ cho điểm câu chưa có khóa). */
+      case 'cau':
+        return ketQua(dapAn.answers.map((a, i) => (!a || !a.length) ? null : khopCau(bl[i], a)));
 
       /* word-web: mỗi web có TẬP đáp án dùng chung cho các ô của web đó. Chấm GREEDY theo đúng
          webSubmit: mỗi đáp án chỉ khớp được MỘT ô (đáp án trùng chữ vẫn đủ số lượt). */
@@ -401,6 +466,13 @@
     const ds = phuongAn(ans);
     if (!ds.length) return false;                     // GV để trống đáp án ⇒ luôn sai
     return ds.indexOf(chuanChuoi(bai)) >= 0;
+  }
+  /* Câu viết: `ans` là MẢNG phương án gợi ý. KHÔNG tách theo "/" — câu tiếng Anh có dấu gạch
+     chéo thật ("and/or"), mà đáp án nhiều phương án ở đây đã là mảng sẵn. */
+  function khopCau(bai, ans) {
+    const v = chuanCau(bai);
+    if (!v) return false;
+    return (Array.isArray(ans) ? ans : [ans]).map(chuanCau).filter(Boolean).indexOf(v) >= 0;
   }
 
   function ketQua(dung) {
@@ -493,6 +565,10 @@
 
       case 'crossword':
         return ds('.cw-in').map(i => (i.value || '').trim() || null);
+
+      /* Ô gõ do `bocHtml` chèn vào chỗ khối đáp án — CHỈ có trên web (app không có ô nhập). */
+      case 'spk-writing-part8': return ds('.sw8-in').map(i => (i.value || '').trim() || null);
+      case 'spk-writing-part9': return ds('.sw9-in').map(i => (i.value || '').trim() || null);
     }
     return null;
   }
@@ -585,6 +661,22 @@
       case 'spk-reading-part6':
         ds('.wd-in').forEach((inp, i) => toO(inp, dung[i], 'wd-ok', 'wd-bad'));
         break;
+
+      case 'spk-writing-part8': case 'spk-writing-part9': {
+        const pfx = layout === 'spk-writing-part8' ? 'sw8' : 'sw9';
+        ds('.' + pfx + '-in').forEach((inp, i) => {
+          toO(inp, dung[i], 'sw-ok', 'sw-bad');
+          /* Hé lộ đáp án gợi ý — CHỈ khi server gửi khóa về (answerVisibility ≠ NONE). */
+          const g = lo && lo.answers && lo.answers[i];
+          if (g && g.length && !inp.parentNode.querySelector('.sw-goi')) {
+            const d = inp.ownerDocument.createElement('div');
+            d.className = 'sw-goi';
+            d.textContent = '✔ ' + (Array.isArray(g) ? g.join('  /  ') : g);
+            inp.parentNode.appendChild(d);
+          }
+        });
+        break;
+      }
       case 'gap-fill':
         ds('.gf-drop').forEach((d, i) => toChip(d, dung[i]));
         ds('.ww-chip').forEach(c => c.classList.add('locked'));
