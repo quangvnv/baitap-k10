@@ -159,9 +159,6 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .sl p{margin:0 0 10px}
 .sl ul{margin:0 0 10px 26px;display:flex;flex-direction:column;gap:8px}
 .sl b{color:var(--orange-primary)}
-.sl-img{border-radius:8px;overflow:hidden;flex:1;display:flex;align-items:center;justify-content:center;
-  background:var(--blue-light)}
-.sl-img img,.sl-img svg{width:100%;height:100%;object-fit:cover}
 .sl-media{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
   background:#0d1826;color:#fff;border-radius:8px}
 .sl-media .play{width:74px;height:74px;border-radius:50%;background:rgba(255,255,255,.14);
@@ -224,6 +221,11 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .pptx-pic img{width:100%;height:100%;object-fit:fill;display:block;pointer-events:none}
 .pptx-pic-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
   background:#eee;color:#888;font-size:11px;text-align:center;padding:4px}
+/* Khối VIDEO chèn tay trên slide PowerPoint (§32.13 mở rộng) — khung báo .tb-vid-ph dùng CHUNG
+   với khối tự do (khai ở baigiang-textbox.css) nên chỉ cần style phần vỏ. */
+.pptx-video{background:#000;overflow:hidden;display:flex}
+.pptx-video > video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.pptx-shape-edit.pptx-video > video{pointer-events:none}   /* khi soạn: bấm = chọn/kéo khối */
 /* overflow-y:auto → khi zoom (--bgz) chữ tràn cao hơn khung text thì hiện thanh cuộn dọc
    (thay overflow:hidden cắt chữ cũ). Scrollbar mảnh 4px + gutter stable theo §7. */
 .pptx-text{width:100%;height:100%;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
@@ -916,17 +918,8 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
   background:#fff;color:var(--blue-primary);cursor:pointer;font-size:10px;line-height:1}
 .bmkp-play:hover{background:var(--blue-light);border-color:var(--blue-primary)}
 
-/* ── Popup soạn thảo WYSIWYG khối Text (16:9, sửa trực tiếp vùng nội dung của slide).
-   z9300 (dưới uiConfirm 9950 để hộp "bỏ thay đổi" nổi trên — §31). ── */
-.tw-overlay{position:fixed;inset:0;background:rgba(10,20,40,.5);z-index:9300;display:none;
-  align-items:center;justify-content:center}
-.tw-overlay.on{display:flex}
-.tw-box{background:#fff;border:1.5px solid var(--border);border-radius:8px;
-  box-shadow:0 20px 60px rgba(20,40,80,.3);display:flex;flex-direction:column;overflow:hidden;
-  width:min(96vw,1120px);height:min(94vh,780px)}
-.tw-head{height:40px;min-height:40px;display:flex;align-items:center;padding:0 12px;
-  border-bottom:1px solid var(--border);font-weight:700;font-size:14px;color:var(--text-primary)}
-.tw-head .tw-hbtns{margin-left:auto;display:flex;gap:6px}
+/* ── Thanh định dạng chữ (nút B/I/U, màu, căn lề…) — dùng cho thanh NỔI của khối tự do
+   (js/baigiang-textbox.js #tbToolbar) và mọi nơi cần cùng bộ nút. ── */
 .tw-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 10px;
   border-bottom:1px solid var(--border);background:#FAFBFD}
 .tw-toolbar .tw-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
@@ -936,11 +929,6 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .tw-tb:hover{background:var(--blue-light);border-color:var(--blue-primary)}
 .tw-tb b{font-weight:800}
 .tw-sw{width:20px;height:20px;border-radius:4px;border:1px solid rgba(0,0,0,.15);cursor:pointer;padding:0}
-.tw-stagewrap{flex:1;min-height:0;background:#0f172a;display:flex;align-items:center;justify-content:center;
-  overflow:auto;padding:14px}
-.tw-stagebox{position:relative;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.5)}
-.tw-stage{width:960px;height:540px;transform-origin:top left}
-.tw-stage .tw-edit-active{outline:2px dashed var(--accent);outline-offset:2px;cursor:text}
 
 /* ── Theme .dialog-* cho window.uiConfirm (js/ui-dialog.js, §13/§4) — trang này
    không nạp css riêng nào định nghĩa sẵn class này (khác các trang khác), nên
@@ -981,13 +969,30 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .ww-ghost{position:fixed;z-index:9990;transform:translate(-50%,-50%);pointer-events:none;
   cursor:grabbing;box-shadow:0 8px 22px rgba(20,40,80,.32)}
 
-/* Lưới web 2/hàng; 1 web → 1 cột hẹp; web lẻ cuối (n=3) trải giữa 2 cột */
+/* Lưới web 2/hàng; 1 web → 1 cột hẹp; web lẻ cuối (n=3) trải giữa 2 cột.
+   5–6 sơ đồ → 3 CỘT × 2 HÀNG: 2 cột × 3 hàng cần 441px trong khi vùng lưới chỉ còn ~340px (slide 540
+   − header 15% − ngân hàng từ) nên KHÔNG vừa. Chia 6 cột-đơn vị (mỗi web span 2) để hàng 2 của n=5
+   căn được giữa. */
 .ww-webs{flex:1;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
   gap:30px 64px;justify-items:center;align-content:center;padding:2px 4px}
 .ww-webs.ww-n1{grid-template-columns:minmax(0,320px)}
 .ww-webs.ww-n3 .ww-web:last-child{grid-column:1 / -1;justify-self:center}
+.ww-webs.ww-n5,.ww-webs.ww-n6{grid-template-columns:repeat(6,minmax(0,1fr));gap:26px 40px}
+.ww-webs.ww-n5 .ww-web,.ww-webs.ww-n6 .ww-web{grid-column:span 2}
+.ww-webs.ww-n5 .ww-web:nth-child(4){grid-column:2 / span 2}
 .ww-web{position:relative;width:100%;max-width:200px;aspect-ratio:313 / 199}
-.ww-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+/* CHẾ ĐỘ 5 CHÂN (.ww-5, đặt trên .ww-webs khi có ÍT NHẤT MỘT sơ đồ dùng chân thứ 5): khung cao thêm
+   để chừa chỗ cho chân dọc phía trên. 5–6 sơ đồ ở chế độ này phải thu nhỏ còn 180px, nếu không
+   2 hàng × 160px = 350px > chỗ trống. */
+.ww-webs.ww-5 .ww-web{aspect-ratio:313 / 250}
+.ww-webs.ww-5.ww-n5 .ww-web,.ww-webs.ww-5.ww-n6 .ww-web{max-width:180px}
+/* Hình nền = SVG INLINE (không còn <img src="images/wordweb.png"> — xem chú thích wwSvg ở
+   baigiang-soan.js). Bóng đổ bằng CSS filter, KHÔNG dùng <defs><filter id> vì 6 sơ đồ trên một
+   slide sẽ cho 6 id trùng nhau. */
+.ww-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ww-bg .ww-leg{fill:none;stroke:#2C5E5B;stroke-width:2.5;stroke-linecap:round}
+.ww-bg .ww-cap{fill:#E0F2F1;stroke:#2C5E5B;stroke-width:3.5;
+  filter:drop-shadow(3px 3px 2px rgba(0,0,0,.25))}
 .ww-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:52%;
   text-align:center;font-size:15px;font-weight:700;color:#1A2332;
   overflow:hidden;pointer-events:none}
@@ -1150,6 +1155,10 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
   padding:3px 8px;font-size:13.5px;font-family:var(--font-base);text-align:center;background:#FFF8EE;color:#1A2332}
 .ww-free .ww-freein:focus{outline:none;box-shadow:0 0 0 3px rgba(217,119,6,.18)}
 .c-tl{left:-26px;top:-10px}.c-tr{right:-26px;top:-10px}.c-bl{left:-26px;bottom:-10px}.c-br{right:-26px;bottom:-10px}
+/* Chân thứ 5 (dọc, trên-giữa): ô phải nhô HẲN lên trên khung và 2 ô góc trên tụt xuống 14%, nếu
+   không ô giữa (rộng tới 48%) chồng lên cả hai ô góc trên. */
+.c-tc{left:50%;transform:translateX(-50%);top:-14px}
+.ww-5 .c-tl,.ww-5 .c-tr{top:14%}
 
 /* editor: checkbox tự-viết + nút xóa sơ đồ */
 .ww-cbx{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-primary);cursor:pointer}
@@ -1406,3 +1415,9 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 /* Dòng gợi ý PHẢI hiện → KHÔNG dùng .hint-tiny (class đó bị display:none toàn trang, §32.13) */
 .sw-hint{font-size:11px;line-height:1.45;color:var(--text-muted)}
 .sw-hint--warn{color:var(--orange-primary,#D4740A);font-weight:600}
+
+/* Khối chữ slide PowerPoint đang được GÕ TẠI CHỖ (§ gõ chữ pptx 2026-09-26) — viền nét đứt báo
+   đang sửa, con trỏ chữ; tay cầm resize vẫn dùng được. */
+.pptx-shape.pptx-editing{outline:2px dashed var(--accent);outline-offset:1px}
+.pptx-shape.pptx-editing .pptx-text{cursor:text;user-select:text}
+.pptx-shape.pptx-editing .pptx-text:focus{outline:none}
