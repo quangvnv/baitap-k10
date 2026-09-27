@@ -29,6 +29,16 @@ let NHIP = null;            // id setInterval
 let TAB = 'phien';          // tab đang mở: 'phien' | 'theodoi' | 'taikhoan' | 'dungluong'
 
 const $ = (id) => document.getElementById(id);
+
+/* ── CHẾ ĐỘ CHIẾU (§41.32) ─ gv.html?chieu=<mã phiên> ──────────────────────────────────────
+   App mở trang này trong cửa sổ "Tiến độ lớp" để GV chiếu cho CẢ LỚP xem ai đã vào / đã nộp.
+   Chỉ còn phần nội dung chi tiết phiên (4 thẻ + bảng học viên), BỎ thanh trên, hàng tab và mọi
+   nút thao tác — CSS `body.chieu` ở gv.css. Esc = đóng cửa sổ. */
+const CHIEU = (new URLSearchParams(location.search).get('chieu') || '').replace(/\D/g, '');
+if (CHIEU) {
+  document.body.classList.add('chieu');
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.close(); });
+}
 const hien = (id, on) => $(id).classList.toggle('an', !on);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -124,6 +134,7 @@ async function sauDangNhap(email) {
   $('tabDungLuong').classList.toggle('an', !laAdmin);   // §41.23 — chỉ CB
 
   hien('manVao', false);
+  if (CHIEU) { await moChieu(); return; }
   hien('thanhTren', true);
   hien('thanhTab', true);
 
@@ -133,6 +144,24 @@ async function sauDangNhap(email) {
   await doiTab(moDuoc ? muon : 'phien');
   // Chấm đỏ trên nút tab Dung lượng khi có hạn mức ≥80% — chạy nền, không chặn việc vào trang.
   if (laAdmin && window.DungLuong && muon !== 'dungluong') window.DungLuong.kiemNen();
+}
+
+/* Chế độ chiếu: tìm phiên theo MÃ rồi vào thẳng màn chi tiết. RLS chỉ cho GV đọc phiên CỦA MÌNH
+   (admin đọc hết) ⇒ không thấy phiên thì báo rõ, đừng để bảng trống như "chưa ai vào". */
+async function moChieu() {
+  TAB = 'phien';
+  let ds = [];
+  try { ds = await api('/rest/v1/phien?select=*,bai_tap(ten,so_cau,chu_gv)&ma_phien=eq.' + CHIEU + '&limit=1'); }
+  catch (e) { ds = []; bao(e.message, 'nhac'); }
+  if (!ds || !ds.length) {
+    hien('manCT', true);
+    $('ctMa').textContent = CHIEU;
+    $('ctBody').innerHTML = '<tr><td colspan="6" class="giua mo-nhat" style="padding:24px">'
+      + 'Không thấy phiên ' + esc(CHIEU) + ' — phiên đã bị xoá, hoặc do tài khoản khác mở. '
+      + 'Đăng nhập đúng tài khoản đã đẩy bài lên web.</td></tr>';
+    return;
+  }
+  await moChiTiet(ds[0]);
 }
 
 $('btRa').addEventListener('click', () => {

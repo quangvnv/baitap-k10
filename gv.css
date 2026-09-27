@@ -317,3 +317,7 @@ body.gv > .man { flex: 1 1 auto; }
 .dl-khoa td { color: #9aa4ae; }
 .dl-khoi h2 .mo-nhat { font-weight: 400; font-size: 12px; margin-left: 6px; }
 .dl-khoi td .badge { font-size: 10px; padding: 0 5px; }
+
+/* ══ CHẾ ĐỘ CHIẾU (§41.32) — gv.html?chieu=<mã phiên>, mở trong cửa sổ "Tiến độ lớp" của app ══
+   Cả lớp cùng xem ⇒ chỉ giữ 4 thẻ + bảng học viên; bỏ thanh trên, hàng tab, thanh nút của phiên. */
+body.chieu #thanhTren, body.chieu #thanhTab, body.chieu #manCT > header.tb { display: none !important; }
