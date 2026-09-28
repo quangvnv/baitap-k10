@@ -1076,7 +1076,7 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .sl .kp7-content::after{content:"";display:table;clear:both}
 .sl .kp7-passage::-webkit-scrollbar{width:4px} .sl .kp7-passage::-webkit-scrollbar-thumb{background:#c8ced8;border-radius:2px}
 /* Ảnh đoạn văn FLOAT (chữ quấn) — kéo góc đổi bề rộng (.kp7-edit trong editor) */
-.sl .kp7-img{position:relative;box-sizing:border-box;border:0px solid #e0e0e0;border-radius:6px;background:#fff;padding: 10px 10px 0px 0px}
+.sl .kp7-img{position:relative;box-sizing:border-box;border:0px solid #e0e0e0;border-radius:6px;background:#fff;padding: 10px 10px 0px 0px;max-width:100%}   /* max-width: khung bài tập thu hẹp (§32.41) thì ảnh không tràn */
 .sl .kp7-img.kp7-left{float:left;margin:0 10px 6px 0}
 .sl .kp7-img.kp7-right{float:right;margin:0 0 6px 10px}
 .sl .kp7-img img{width:100%;height:auto;display:block;object-fit:contain}
