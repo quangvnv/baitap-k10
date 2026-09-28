@@ -1421,3 +1421,17 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .pptx-shape.pptx-editing{outline:2px dashed var(--accent);outline-offset:1px}
 .pptx-shape.pptx-editing .pptx-text{cursor:text;user-select:text}
 .pptx-shape.pptx-editing .pptx-text:focus{outline:none}
+
+/* ══ §32.41 KHUNG BÀI TẬP KÉO ĐỔI BỀ RỘNG — DÙNG CHUNG (verb-form · word-choice · mcq-list) ═════
+   Markup do bwBoxHtml (baigiang-soan.js) sinh. Bề rộng/lề trái đặt INLINE (slots.<P>W/<P>L, px) —
+   không đặt ⇒ chiếm trọn bề rộng như trước. Tay cầm CHỈ có khi soạn (không phải thumbnail/chiếu).
+   Chấm tròn 10px giữa mép trái/phải — ngôn ngữ tay cầm của shape PowerPoint (.pptx-rh).
+   Kéo mép PHẢI = đổi bề rộng · kéo mép TRÁI = đổi bề rộng + dịch khung (mép phải đứng yên). */
+.sl .bw-wrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.sl .bw-rh{position:absolute;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:10px;
+  background:var(--blue-primary);opacity:.35;cursor:ew-resize;z-index:8}
+.sl .bw-wrap:hover .bw-rh{opacity:1}
+.sl .bw-rh-w{left:-5px}
+.sl .bw-rh-e{right:-5px}
+#previewStage.bg-capturing .bw-rh{display:none!important}   /* chụp ảnh mẫu (nút 📷) → ảnh sạch */
+.bw-hint{font-size:11px;line-height:1.45;color:var(--text-muted)}
