@@ -202,14 +202,29 @@
     } catch (e) { $('dlXemPhien').textContent = $('dlXemBT').textContent = e.message; }
   }
 
+  /* File mồ côi trong kho (thư mục không còn bài tập nào, §41.34) — không phụ thuộc mốc ngày. */
+  let MO_COI = null;
+  async function xemMoCoi() {
+    MO_COI = null; $('btDonTep').disabled = true;
+    $('dlXemTep').textContent = 'Đang tính…';
+    try {
+      MO_COI = await rpc('media_mo_coi');
+      const n = (MO_COI.tep || []).length;
+      $('dlXemTep').innerHTML = `<b>${n}</b> file · ~${coByte(MO_COI.byte)}`;
+      $('btDonTep').disabled = !n;
+    } catch (e) { $('dlXemTep').textContent = e.message; }
+  }
+
   /* §26 — gõ đúng "OK" mới bật nút Xoá. Trang web dùng popup riêng (không native prompt) để
      nút Xoá disabled tới khi gõ đúng. */
   let viecXoa = null;
   function hoiXoa(viec) {
-    if (!XEM) return;
+    if (viec === 'tep' ? !MO_COI : !XEM) return;
     viecXoa = viec;
     const moc = $('dlMoc').value.split('-').reverse().join('/');
-    $('dxThan').innerHTML = viec === 'phien'
+    $('dxThan').innerHTML = viec === 'tep'
+      ? `Xoá VĨNH VIỄN <b>${(MO_COI.tep || []).length}</b> file ảnh/audio trong kho không còn thuộc bài tập nào.`
+      : viec === 'phien'
       ? `Xoá VĨNH VIỄN <b>${XEM.so_phien}</b> phiên đã đóng trước ngày <b>${moc}</b> cùng <b>${XEM.so_luot}</b> lượt làm bài.<br>
          Kết quả của các phiên này sẽ mất và <b>không khôi phục được</b>. Nếu cần giữ điểm, hãy “Tải kết quả” từng phiên trước.`
       : `Xoá VĨNH VIỄN <b>${XEM.so_bai_tap}</b> bài tập (kèm đáp án) tạo trước ngày <b>${moc}</b> và không còn phiên nào dùng.<br>
@@ -230,12 +245,19 @@
       if (viecXoa === 'phien') {
         const r = await rpc('don_phien', { p_truoc: moc });
         bao('Đã xoá ' + r.so_phien + ' phiên, ' + r.so_luot + ' lượt.', 'ok');
-      } else {
+      } else if (viecXoa === 'bai_tap') {
         const r = await rpc('don_bai_tap', { p_truoc: moc });
-        bao('Đã xoá ' + r.so_bai_tap + ' bài tập.', 'ok');
+        const tep = await WebGV.xoaTep(r.tep);
+        bao('Đã xoá ' + r.so_bai_tap + ' bài tập' + (tep > 0 ? ' và ' + tep + ' file ảnh/audio.' : '.')
+          + (tep < 0 ? ' ⚠ Chưa xoá được file trong kho — bấm "Xoá file không còn bài tập".' : ''), tep < 0 ? 'nhac' : 'ok');
+      } else {
+        const r = await rpc('media_mo_coi');
+        const tep = await WebGV.xoaTep(r.tep);
+        if (tep < 0) throw new Error('Không xoá được file trong kho.');
+        bao('Đã xoá ' + tep + ' file.', 'ok');
       }
       dongXoa();
-      await Promise.all([taiSB(), taiNhatKy(), xemTruoc()]);
+      await Promise.all([taiSB(), taiNhatKy(), xemTruoc(), xemMoCoi()]);
     } catch (e) { $('dxLoi').textContent = e.message; }
     finally { b.textContent = 'Xoá'; }
   });
@@ -243,6 +265,7 @@
   $('dlMoc').addEventListener('change', xemTruoc);
   $('btDonPhien').addEventListener('click', () => hoiXoa('phien'));
   $('btDonBT').addEventListener('click', () => hoiXoa('bai_tap'));
+  $('btDonTep').addEventListener('click', () => hoiXoa('tep'));
 
   /* ── Mở tab / làm mới ────────────────────────────────────────────────────────────────── */
   async function taiSB() {
@@ -260,7 +283,7 @@
       $('dlMoc').value = ngayISO(d);
     }
     $('dlLuc').textContent = 'Đang tải…';
-    await Promise.all([taiSB(), taiGH(epMoi), taiNhatKy(), xemTruoc()]);
+    await Promise.all([taiSB(), taiGH(epMoi), taiNhatKy(), xemTruoc(), xemMoCoi()]);
     S.luc = new Date();
     $('dlLuc').textContent = 'Cập nhật ' + gio7(S.luc);
     capNhatCham();

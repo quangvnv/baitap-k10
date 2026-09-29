@@ -65,7 +65,26 @@ async function api(duong, tuyChon = {}) {
 
 /* Mặt tiền dùng chung cho admin.js + gv-theo-doi.js — đừng để tab khác tự dựng lại phiên đăng
    nhập. `moPhien` để tab "Theo dõi lớp" bấm tiêu đề cột là nhảy sang chi tiết phiên đó. */
-window.WebGV = { api, bao, esc, $, hien, toi: () => TOI, moPhien, veChiTiet };
+/* Xoá file trong kho media bt-media (ảnh/audio của bài tập, §41.34). `ten` = tên đầy đủ trong
+   bucket do máy chủ trả về (xoa_phien / don_bai_tap / media_mo_coi) — Supabase chặn xoá tệp bằng
+   SQL nên phải đi Storage API. Trả số file đã xoá; LỖI thì trả -1 chứ không ném: dữ liệu CSDL đã
+   xoá xong rồi, file sót lại vẫn dọn được ở tab Dung lượng ("file không còn bài tập"). */
+async function xoaTep(ten) {
+  const ds = (ten || []).filter(Boolean);
+  if (!ds.length) return 0;
+  let so = 0;
+  try {
+    for (let i = 0; i < ds.length; i += 500) {
+      const kq = await api('/storage/v1/object/bt-media', {
+        method: 'DELETE', body: JSON.stringify({ prefixes: ds.slice(i, i + 500) }),
+      });
+      so += Array.isArray(kq) ? kq.length : 0;
+    }
+  } catch (e) { return -1; }
+  return so;
+}
+
+window.WebGV = { api, bao, esc, $, hien, toi: () => TOI, moPhien, veChiTiet, xoaTep };
 
 /* Màn chữa bài quay về chi tiết phiên — phải BẬT LẠI nhịp hỏi máy chủ, nếu không bảng đứng
    im mà nhìn vẫn như đang chạy. */
@@ -410,8 +429,12 @@ async function xoaPhien(p) {
     + 'Toàn bộ kết quả làm bài của phiên này sẽ bị xoá, không khôi phục được.')) return;
   try {
     const kq = await api('/rest/v1/rpc/xoa_phien', { method: 'POST', body: JSON.stringify({ p_id: p.id }) });
+    // Bài tập bị xoá theo ⇒ xoá luôn ảnh/audio của nó trong kho (§41.34)
+    const tep = await xoaTep(kq && kq.tep);
     bao('Đã xoá phiên' + (kq && kq.so_luot ? ` và ${kq.so_luot} lượt làm bài` : '')
-      + (kq && kq.xoa_bai_tap ? ' (bài tập không còn phiên nào nên đã xoá luôn).' : '.'), 'ok');
+      + (kq && kq.xoa_bai_tap ? ' (bài tập không còn phiên nào nên đã xoá luôn'
+        + (tep > 0 ? `, kèm ${tep} file ảnh/audio` : '') + ').' : '.')
+      + (tep < 0 ? ' ⚠ Chưa xoá được file trong kho — CB dọn ở tab Dung lượng.' : ''), tep < 0 ? 'nhac' : 'ok');
     await veDS();
   } catch (e) { bao(e.message, 'nhac'); }
 }
