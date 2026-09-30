@@ -364,6 +364,29 @@
         break;
       }
 
+      /* ── Chia động từ (verb-form): ô GÕ giữa câu, đáp án là MẢNG phương án (như sw8/9) ─────
+         Ngữ cảnh = cả câu, ô đang chữa thay bằng "______" (các ô khác trong câu giữ gợi ý). */
+      case 'verb-form': {
+        ds('.vf-in').forEach((inp, i) => {
+          if (!coCau(i)) return;
+          const row = inp.closest ? inp.closest('.vf-row') : null;
+          let ngu = '';
+          if (row) {
+            const c = row.cloneNode(true);
+            const all = [].slice.call(c.querySelectorAll('.vf-in')), vt = [].slice.call(row.querySelectorAll('.vf-in')).indexOf(inp);
+            all.forEach((x, k) => { x.replaceWith(c.ownerDocument.createTextNode(k === vt ? ' ______ ' : ' … ')); });
+            const so = c.querySelector('.vf-num'); if (so) so.remove();
+            ngu = chu(c);
+          }
+          const ds2 = Array.isArray(answers[i]) ? answers[i] : [answers[i]];
+          rows.push({
+            raw: i, nhan: 'Chỗ trống ' + (i + 1), ctx: ngu,
+            pa: null, dungKeys: new Set(ds2.map(chuanCau).filter(Boolean)), cau: true,
+          });
+        });
+        break;
+      }
+
       /* ── Ô chữ: mỗi Ô LƯỚI là một câu (đúng đơn vị của ChamDiem) ─────────────────────────── */
       case 'crossword': {
         const goiY = {};

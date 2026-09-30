@@ -1,0 +1,61 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-spk-listening-part1.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'spk-listening-part1' — NGHE VÀ CHỌN                                    CLAUDE.md §32.37
+   Đi kèm js/baigiang-spk-listening-part1.js. Màu đáp án (chọn/đúng/sai) DÙNG CHUNG .option-item (§32.2)
+   — file này chỉ lo BỐ CỤC: 1 câu chiếm trọn slide, ảnh co giãn lấp chỗ còn lại.
+   Text 15px × --bgz (§32.1); nút ▶ là UI nên KHÔNG zoom.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+.sl.lay-spk-listening-part1{padding:10px}
+.sl.lay-spk-listening-part1.has-head{padding-top:0}     /* §32.9: cùng độ ưu tiên .sl.has-head nên phải viết lại */
+
+/* Câu hỏi chiếm TRỌN vùng nội dung: hàng câu hỏi (52px) · ảnh/đáp án (flex:1) · audioscript (cố định 38%, tự cuộn) */
+.sl .mcql.sl1-wrap{overflow:hidden}
+.sl .mcql.sl1-wrap .question-item.sl1-item{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px}
+/* KÍCH THƯỚC ẢNH KHÔNG ĐỔI KHI ZOOM (§32.1 --bgz): mọi phần quanh ảnh có chiều cao CỐ ĐỊNH (hàng câu hỏi
+   52px · hàng A/B/C 40px · audioscript 38%) — chữ bên trong phóng to thì TỰ CUỘN trong ô của nó chứ không
+   đẩy ảnh. Ảnh (flex:1) nhận phần còn lại, luôn như nhau ở mọi mức zoom và mọi slide. */
+.sl .sl1-qrow{display:flex;align-items:center;gap:8px;flex:0 0 52px;height:52px;min-height:0}
+.sl .sl1-qrow .question-text{flex:1;margin:0;max-height:100%;overflow-y:auto}
+.sl .sl1-qrow .question-text::-webkit-scrollbar{width:4px}
+.sl .sl1-qrow .question-text::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* Nút ▶ / nhãn trạng thái audio — góc phải hàng câu hỏi */
+.sl .sl1-play{flex:0 0 auto;height:30px;padding:0 10px;border-radius:15px;border:1px solid #1976D2;
+  background:#fff;color:#1976D2;font-size:14px;font-weight:600;cursor:pointer;line-height:28px;white-space:nowrap}
+.sl .sl1-play:hover{background:#e3f2fd}
+.sl .sl1-play.on{background:#1976D2;color:#fff}
+.sl .sl1-play--off{cursor:default}
+.sl .sl1-play--miss{border-color:var(--orange-primary,#D4740A);color:var(--orange-primary,#D4740A);cursor:default;font-size:12px}
+
+/* Dạng 1 — 3 ảnh là 3 đáp án */
+.sl .options-container.sl1-imgs{flex:1 1 auto;min-height:0;display:grid;grid-auto-flow:column;
+  grid-auto-columns:minmax(0,1fr);gap:10px;padding:0}
+.sl .sl1-imgs .option-item.sl1-opt{flex-direction:column;justify-content:center;min-height:0;padding:6px;gap:6px;border-width:2px}
+.sl .sl1-imgs .sl1-img{flex:1 1 auto;min-height:0;width:100%;object-fit:contain;display:block;-webkit-user-drag:none}
+.sl .sl1-imgs .option-item input[type="radio"]{width:18px;height:18px}
+
+/* Dạng 2 — 1 ảnh chung + đáp án chữ A/B/C (ký hiệu trong ảnh) trên 1 hàng */
+.sl .sl1-main{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center}
+.sl .sl1-main .sl1-img{max-width:100%;max-height:100%;object-fit:contain;-webkit-user-drag:none}
+.sl .options-container.sl1-txt{flex:0 0 40px;height:40px;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px}
+.sl .sl1-txt .option-item{justify-content:center;font-weight:600;font-size:calc(15px * var(--bgz,1));height:100%;overflow:hidden}
+
+.sl .sl1-noimg{color:#999;font-style:italic;font-size:13px;display:flex;align-items:center;justify-content:center;flex:1}
+
+/* Audioscript (trong .explanation-section — rmcqRevealItem bật .show khi hé lộ).
+   GIỮ CHỖ CỐ ĐỊNH 38% cho MỌI câu (visibility thay vì display:none; câu không có lời thoại vẫn có ô rỗng)
+   ⇒ ảnh cùng kích thước + vị trí trước/sau hé lộ và giữa các slide. Chữ dài/zoom to thì tự cuộn. */
+.sl .explanation-section.sl1-ts{display:block;visibility:hidden;flex:0 0 38%;height:38%;min-height:0;overflow-y:auto;
+  margin-top:0;font-style:normal;font-size:calc(15px * var(--bgz,1));line-height:1.5}
+.sl .explanation-section.sl1-ts.show{visibility:visible}
+.sl .explanation-section.sl1-ts--empty{visibility:hidden !important}   /* câu không có lời thoại: chỉ giữ chỗ */
+.sl .sl1-ts::-webkit-scrollbar{width:4px}
+.sl .sl1-ts::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sl .sl1-ts-body{margin-top:2px}
+.sl .sl1-ts b{font-style:normal}
+.sl .sl1-ex{margin-top:4px}
+.sl .sl1-hl{padding:0 2px;border-radius:3px}
+.sl .sl1-hl-1{background:#fff3a0}
+.sl .sl1-hl-2{background:#b3e5fc}

@@ -1,0 +1,51 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-spk-writing-part9.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'spk-writing-part9' — ĐẶT CÂU TỪ TỪ CHO SẴN (hiện dần đáp án)         CLAUDE.md §32.12
+   Đi kèm js/baigiang-spk-writing-part9.js (module rời). File CSS này nạp TRONG baigiang-soan.html →
+   MÁY HỌC VIÊN vẫn nhận vì mirrorSendCss() gom TOÀN BỘ document.styleSheets sang /style.css.
+   Text bài giảng 15px × var(--bgz) (§32.1); KHÔNG zoom phần UI.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.sl.lay-spk-writing-part9{padding:10px}
+.sl.lay-spk-writing-part9.has-head{padding-top:0}   /* BẮT BUỘC (§32.9): cùng độ ưu tiên với .sl.has-head */
+
+.sl .sw9-wrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+
+/* Vùng nội dung — CUỘN 4px (§7). Là host bút vẽ (ANNO_TEXT_SEL) → nét mở trong đây thành gạch chân. */
+.sl .sw9-body{flex:1;min-height:0;overflow-y:auto;background:#fff;padding:0;
+  font-size:calc(15px * var(--bgz,1));line-height:1.5;color:#2c3e50}
+.sl .sw9-body::-webkit-scrollbar{width:4px}
+.sl .sw9-body::-webkit-scrollbar-thumb{background:#c8ced8;border-radius:2px}
+
+/* ── THẺ 1 câu — tham số copy .option-item của 'spk-dialogue' (§32.2) như .wc-card / .vf-card ── */
+.sl .sw9-card{padding:6px 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;
+  margin-bottom:6px}
+.sl .sw9-card:last-child{margin-bottom:0}
+/* Editor: câu chưa gõ đáp án → viền cam nhắc GV (không hiện khi trình chiếu vì câu đó không có bước) */
+.sl .sw9-card.sw9-pending{border-color:var(--orange-primary,#D4740A);border-style:dashed}
+
+/* Nhóm TỪ CHO SẴN — thứ DUY NHẤT hiện trước khi hé lộ (HV tự viết ra giấy) */
+.sl .sw9-q{display:flex;gap:6px;align-items:baseline}
+.sl .sw9-num{flex:0 0 auto;min-width:16px;font-weight:700;color:#1976D2}
+.sl .sw9-words{flex:1;min-width:0;font-weight:600}
+
+/* Đáp án gợi ý — hiện NGAY BÊN DƯỚI nhóm từ của chính câu đó */
+.sl .sw9-ans{display:none;margin-top:4px;padding-left:22px}
+.sl .sw9-ans.on{display:block;animation:sw9In .18s ease-out}
+@keyframes sw9In{from{opacity:0}to{opacity:1}}
+.sl .sw9-a{font-weight:700;color:var(--green-primary,#16A34A)}
+.sl .sw9-a + .sw9-a{margin-top:2px}
+.sl .sw9-a::before{content:'→ ';font-weight:400;color:#9aa4ae}
+
+.sl .sw9-empty{padding:10px;text-align:center;color:var(--text-muted,#8a94a6);font-size:13px}
+
+/* ── Ảnh minh họa (illus dùng chung) — §32.17: ảnh CỐ ĐỊNH ở mép, vùng chữ tự cuộn ───────── */
+.sl .illus-scroll .sw9-body{flex:1 1 auto;min-width:0;min-height:0;overflow-y:auto}
+.sl .sw9-imgwrap.pos-left,.sl .sw9-imgwrap.pos-right{gap:10px;align-items:stretch;padding:0}
+
+/* Bút vẽ (§32.3): bật bút → vùng chữ KHÔNG cuộn 1 ngón (1 ngón vẽ, 2 ngón cuộn) */
+.player.anno-draw .sw9-body{touch-action:none}
+
+/* ── Panel Thuộc tính: xem §34.4 — style dùng chung .sw-* nằm ở css/baigiang.css ─────────── */

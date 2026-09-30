@@ -68,6 +68,7 @@
     'reorder', 'matching',                                   // sắp thứ tự / nối cột
     'crossword',                                             // ô chữ
     'spk-writing-part8', 'spk-writing-part9',                // viết lại câu / đặt câu — Ô GÕ, so khớp BỎ DẤU CÂU
+    'verb-form',                                             // chia động từ — Ô GÕ thay chỗ trống (chỉ trên web)
   ];
 
   /* ══════════════════════════════════════════════════════════════════════════════════════════
@@ -266,6 +267,28 @@
             + h.slice(k.het);
         });
         return { html: h, dapAn: answers.some(a => a) ? { kieu: 'cau', answers } : null };
+      }
+
+      /* ── Chia động từ (verb-form): chỗ trống "(know) ………" → Ô GÕ ─────────────────────────────
+         App không có ô nhập (GV hé lộ dần bằng nhịp bấm §32.27), đáp án nằm sẵn trong
+         `<span class="vf-ans">` chỉ bị CSS giấu ⇒ ở đây CẮT HẲN khỏi HTML, thay bằng ô gõ ngay
+         sau phần gợi ý; bỏ luôn dấu chấm lửng "………" (ô gõ thay chỗ của nó).
+         Đáp án nhiều phương án ngăn bằng "/" (vd "had known/knew"). Chỗ GV chưa gõ đáp án
+         (hiện "?") ⇒ KHÔNG chèn ô, không tính điểm. So khớp theo `chuanCau` (bỏ dấu câu, hoa/thường). */
+      case 'verb-form': {
+        const answers = [];
+        const khoi = catKhoi(h, 'vf-ans');
+        khoi.slice().reverse().forEach(k => {
+          const t = giaiMaHtml(String(k.trong).replace(/<[^>]*>/g, '')).trim();
+          const ds = (t && t !== '?') ? t.split('/').map(x => x.trim()).filter(Boolean) : [];
+          if (ds.length) answers.unshift(ds);
+          h = h.slice(0, k.vt)
+            + (ds.length ? '<input class="vf-in sw-in" type="text" data-ans="" autocomplete="off"'
+              + ' autocapitalize="off" spellcheck="false">' : '')
+            + h.slice(k.het);
+        });
+        catKhoi(h, 'vf-dots').slice().reverse().forEach(k => { h = h.slice(0, k.vt) + h.slice(k.het); });
+        return { html: h, dapAn: answers.length ? { kieu: 'cau', answers } : null };
       }
 
       /* ── Sơ đồ mạng từ: mỗi .ww-web mang TẬP đáp án "a||b||c" ────────────────────────────
@@ -569,6 +592,7 @@
       /* Ô gõ do `bocHtml` chèn vào chỗ khối đáp án — CHỈ có trên web (app không có ô nhập). */
       case 'spk-writing-part8': return ds('.sw8-in').map(i => (i.value || '').trim() || null);
       case 'spk-writing-part9': return ds('.sw9-in').map(i => (i.value || '').trim() || null);
+      case 'verb-form': return ds('.vf-in').map(i => (i.value || '').trim() || null);
     }
     return null;
   }
@@ -662,17 +686,18 @@
         ds('.wd-in').forEach((inp, i) => toO(inp, dung[i], 'wd-ok', 'wd-bad'));
         break;
 
-      case 'spk-writing-part8': case 'spk-writing-part9': {
-        const pfx = layout === 'spk-writing-part8' ? 'sw8' : 'sw9';
+      case 'spk-writing-part8': case 'spk-writing-part9': case 'verb-form': {
+        const pfx = layout === 'spk-writing-part8' ? 'sw8' : (layout === 'verb-form' ? 'vf' : 'sw9');
         ds('.' + pfx + '-in').forEach((inp, i) => {
           toO(inp, dung[i], 'sw-ok', 'sw-bad');
           /* Hé lộ đáp án gợi ý — CHỈ khi server gửi khóa về (answerVisibility ≠ NONE). */
           const g = lo && lo.answers && lo.answers[i];
           if (g && g.length && !inp.parentNode.querySelector('.sw-goi')) {
-            const d = inp.ownerDocument.createElement('div');
-            d.className = 'sw-goi';
+            /* verb-form: ô gõ nằm GIỮA câu (span nowrap) ⇒ đáp án gợi ý là SPAN ngay sau ô, không phải div xuống dòng */
+            const d = inp.ownerDocument.createElement(pfx === 'vf' ? 'span' : 'div');
+            d.className = pfx === 'vf' ? 'sw-goi vf-goi' : 'sw-goi';
             d.textContent = '✔ ' + (Array.isArray(g) ? g.join('  /  ') : g);
-            inp.parentNode.appendChild(d);
+            if (pfx === 'vf') inp.parentNode.insertBefore(d, inp.nextSibling); else inp.parentNode.appendChild(d);
           }
         });
         break;

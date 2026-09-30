@@ -479,3 +479,102 @@ select.o {
 @media (max-width: 820px) {
   .san .sl .sw-in { font-size: 16px; }
 }
+
+/* ══ SỬA HIỂN THỊ ĐIỆN THOẠI DỌC (2026-09-30 — rà bằng tools/kiem-tra-web-dien-thoai.js) ══════ */
+@media (max-width: 700px) {
+  /* ① Nút ☰ (fixed, góc trái-trên 40px) đè lên CHỮ ĐẦU của mọi slide ⇒ chừa một dải trên cùng. */
+  .san { padding-top: 56px; }
+
+  /* ② ẢNH MINH HỌA TRÁI/PHẢI (§32.17): khung ảnh mang width px INLINE tính cho slide 960px, lại thêm
+     padding-left/right INLINE (§32.17.1) ⇒ trên màn hẹp ảnh nuốt hết bề ngang và ĐẨY CÂU HỎI RA
+     NGOÀI MÉP TRÁI. Xếp chồng: ảnh Trái → ở TRÊN nội dung, ảnh Phải → ở DƯỚI (theo thứ tự đọc). */
+  .san .sl .illus-wrap {
+    display: flex !important; flex: 0 0 auto !important; min-height: 0 !important;
+    padding-left: 0 !important; padding-right: 0 !important; gap: 8px;
+  }
+  .san .sl .illus-wrap.pos-left, .san .sl .illus-wrap.pos-top { flex-direction: column !important; }
+  .san .sl .illus-wrap.pos-right, .san .sl .illus-wrap.pos-bottom { flex-direction: column-reverse !important; }
+  .san .sl .illus-wrap > * { min-width: 0 !important; max-width: 100% !important; }
+  .san .sl .illus-wrap > .gfi-box {
+    flex: 0 0 auto !important; width: auto !important; height: auto !important;
+    max-height: none !important; align-self: center !important; margin: 0 auto !important;
+  }
+  .san .sl .illus-wrap .gfi-strip {
+    height: auto !important; width: 100% !important; flex-direction: row !important;
+    flex-wrap: wrap !important; justify-content: center; overflow: visible !important;
+  }
+  .san .sl .illus-wrap .gfi-box img {
+    width: auto !important; height: auto !important; max-width: 100% !important;
+    max-height: 55vh !important; margin: 0 auto;
+  }
+
+  /* ③ GHÉP TỪ VỚI ẢNH: khung ảnh `.pm-canvas{flex:1;min-height:0}` = "phần dư của khung 540px" ⇒
+     bỏ chiều cao cố định là CO VỀ 0 — học viên chỉ thấy bảng từ, không thấy ảnh, không có ô thả.
+     Ô thả neo theo TOẠ ĐỘ % của khung ⇒ khung PHẢI giữ ĐÚNG tỉ lệ như trên máy tính (đo ở 1280px:
+     có header 940×366 · bảng từ trái/phải 732×446 · ẩn header 940×429 · ẩn header + trái/phải
+     732×509), chỉ thu nhỏ theo bề ngang. Bảng từ Trái/Trên nằm trên ảnh, Phải/Dưới nằm dưới ảnh. */
+  .san .sl .pm-wrap, .san .sl .pm-wrap.pm-bank-side {
+    display: flex !important; flex-direction: column !important; flex: 0 0 auto !important; min-height: 0 !important;
+  }
+  .san .sl .pm-wrap .ww-bank {
+    flex: 0 0 auto !important; max-height: none !important; align-self: stretch !important;
+    flex-direction: row !important; flex-wrap: wrap !important;
+  }
+  .san .sl .pm-canvas { flex: 0 0 auto !important; width: 100% !important; min-height: 0 !important; aspect-ratio: 940 / 366; }
+  .san .sl .pm-bank-side .pm-canvas { aspect-ratio: 732 / 446; }
+  .san .sl:not(.has-head) .pm-canvas { aspect-ratio: 940 / 429; }
+  .san .sl:not(.has-head) .pm-bank-side .pm-canvas { aspect-ratio: 732 / 509; }
+  /* Khoảng hở giữa các ảnh là 6px CỐ ĐỊNH, không co theo khung ⇒ khung thu còn ~40% thì 6px thành
+     "to" tương đối, hàng ảnh vừa khít trên máy tính bị đẩy xuống dòng và ảnh bị cắt. Thu theo tỉ lệ. */
+  .san .sl .pm-grid { gap: 2px; }
+  .san .sl .pm-grid.pm-r2 img { height: calc((100% - 2px) / 2); }
+  .san .sl .pm-grid.pm-r3 img { height: calc((100% - 4px) / 3); }
+}
+
+/* ══ CHIA ĐỘNG TỪ (verb-form) — Ô GÕ do `bocHtml` chèn vào chỗ trống, CHỈ có trên web ═══════════
+   `.sw-in` mặc định rộng 100% (ô viết cả câu của sw8/9) ⇒ ở đây phải thu về ô NỘI DÒNG. */
+.san .sl .vf-in { display: inline-block; width: 8.5em; max-width: 100%; margin: 0 3px; padding: 2px 6px; vertical-align: baseline; }
+.san .sl .vf-goi { display: inline; margin: 0 4px 0 2px; font-size: calc(14px * var(--bgz, 1)); }
+
+@media (max-width: 700px) {
+  /* Vùng cuộn tính theo khung 540px của các layout mới nạp CSS (xem khối "bỏ nốt các vùng cuộn") */
+  .san .sl .vf-wrap, .san .sl .vf-body,
+  .san .sl .sw8-body, .san .sl .sw9-body,
+  .san .sl .mcql.sl1-wrap, .san .sl .sl1-item, .san .sl .sl1-main {
+    flex: 0 0 auto !important; height: auto !important; min-height: 0 !important;
+    max-height: none !important; overflow: visible !important;
+  }
+  .san .sl .vf-slot { white-space: normal; }
+
+  /* ④ NGHE VÀ CHỌN: ảnh đáp án mang bề ngang THẬT của ảnh (min-width:auto của flex item) nên
+     tràn khỏi màn hình. Dạng 3 ảnh giữ LƯỚI 3 CỘT như đề in (rule chung `.options-container{display:
+     block}` phía trên xếp chồng chúng thành 3 ảnh khổng lồ); dạng 1 ảnh + A/B/C thu ảnh vừa bề ngang. */
+  .san .sl .options-container.sl1-imgs { display: grid !important; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+  .san .sl .sl1-imgs .option-item.sl1-opt { min-width: 0 !important; margin-bottom: 0; padding: 4px; }
+  .san .sl .sl1-img { min-width: 0; max-width: 100% !important; width: 100% !important; height: auto !important; }
+  .san .sl .sl1-main .sl1-img { width: auto !important; max-height: 55vh; }
+  .san .sl .explanation-section.sl1-ts { flex: 0 0 auto !important; height: auto !important; }
+  .san .sl .explanation-section.sl1-ts:not(.show) { display: none !important; }
+
+  /* ⑤ NỐI CỘT: thẻ cao CỐ ĐỊNH `--mt-h` (40px) ⇒ chữ dài xuống 2–3 dòng trên màn hẹp là bị cắt.
+     Cho thẻ cao theo chữ (tối thiểu vẫn 40px). `auto` trong max-height là giá trị không hợp lệ
+     ⇒ trình duyệt rơi về `none` — đúng cái cần. */
+  .san .sl .mt-wrap { --mt-h: auto; }
+  .san .sl .mt-row { min-height: 40px; }
+  .san .sl .mt-body { padding-top: 6px; padding-bottom: 6px; }
+
+  /* ⑥ SƠ ĐỒ MẠNG TỪ: 2–3 sơ đồ ngang cho khung 960px ⇒ trên màn hẹp mỗi sơ đồ MỘT HÀNG. Ô thả neo %
+     trong TỪNG sơ đồ nên xếp lại cả sơ đồ không làm lệch ô nào. */
+  .san .sl .ww-webs { display: grid !important; grid-template-columns: minmax(0, 1fr) !important;
+    gap: 30px 0 !important; overflow: visible !important; padding: 20px 4px; }
+  .san .sl .ww-webs .ww-web { grid-column: auto !important; max-width: 300px !important; }
+
+  /* ⑦ KHỐI TỰ DO (§32.40): trên máy tính nổi TUYỆT ĐỐI theo % của slide 960×540 — màn hẹp slide
+     cao tự do nên % mất nghĩa, khối đè lên câu hỏi. Trả về luồng thường, xếp SAU nội dung bài. */
+  .san .sl .tb-over, .san .sl .tb-layer { position: static !important; inset: auto !important; }
+  .san .sl .tb-over .tb-box, .san .sl .tb-layer .tb-box {
+    position: static !important; width: auto !important; height: auto !important;
+    max-width: 100%; margin-top: 8px;
+  }
+  .san .sl .tb-box img { max-width: 100%; height: auto; }
+}

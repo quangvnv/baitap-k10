@@ -1,0 +1,153 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-textbox.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══ KHỐI TỰ DO (chữ + ảnh) trên Slide trắng · Hai cột · Ảnh + chữ — js/baigiang-textbox.js ══════════ */
+.sl .sl-body.tb-host{position:relative}
+.sl .tb-layer{position:absolute;inset:0;pointer-events:none;z-index:2}
+.sl .tb-box{position:absolute;pointer-events:auto;box-sizing:border-box;padding:6px 10px;border:2px solid transparent;
+  border-radius:6px;display:flex;flex-direction:column;min-width:0;min-height:0}
+.sl .tb-box.tb-bd{border-style:solid}
+/* Chữ co giãn theo zoom bài giảng (§32.1): gốc 24px = thân slide 1 cột; cỡ trong khối ghi bằng em. */
+.sl .tb-text{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;outline:none;
+  font-size:calc(24px * var(--bgz,1));line-height:1.4;color:var(--text-primary);word-break:break-word}
+.sl .tb-text::-webkit-scrollbar{width:4px}
+.sl .tb-text::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sl .tb-text p{margin:0 0 .3em}
+.sl .tb-text ul,.sl .tb-text ol{margin:0 0 .3em 1.2em;padding:0;display:block}
+.sl .tb-text li{margin:0 0 .2em}
+/* (2026-09-27) BỎ .tb-appear/@keyframes tbAppear: hiệu ứng "Xuất hiện" phải hiện TỨC THÌ, không
+   chuyển động (§32.38) — trượt 8px làm nó gần như trùng "Bay vào" (trượt 28px, .pptx-anim-float-in).
+   tbStripLineAttrs vẫn gỡ class tb-appear để dọn dữ liệu cũ đã lỡ ghi class này vào html. */
+
+/* Editor */
+.sl .tb-box.tb-edit{cursor:move;outline:1px dashed rgba(26,111,191,.45);outline-offset:0}
+.sl .tb-box.tb-sel{outline:2px solid var(--blue-primary)}
+.sl .tb-box.tb-editing{cursor:text;outline:2px solid var(--orange-primary)}
+.sl .tb-box.tb-editing .tb-text{cursor:text;user-select:text}
+.sl .tb-box.tb-edit:not(.tb-editing) .tb-text{user-select:none}
+.sl .tb-ph{color:var(--text-muted);font-style:italic;font-size:.75em}
+.sl .tb-badge{position:absolute;left:18px;top:-2px;transform:translate(-50%,-50%);min-width:20px;height:20px;padding:0 5px;
+  border-radius:10px;background:var(--orange-primary);color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center;z-index:3}
+/* Tay cầm resize 8 hướng kiểu Office — chấm tròn 10px giống .pptx-rh (baigiang.css); logic: bgResizeRect.
+   Khối có border 2px trong suốt + outline 2px ⇒ tâm nét viền chọn cách mép padding-box 3px → lệch -3px. */
+.sl .tb-rh{position:absolute;display:none;z-index:3;width:10px;height:10px;border-radius:50%;background:var(--blue-primary);
+  border:1px solid #fff;box-sizing:border-box;box-shadow:0 0 0 1px rgba(0,0,0,.15);transform:translate(-50%,-50%);touch-action:none}
+.sl .tb-box.tb-sel .tb-rh{display:block}
+.sl .tb-rh-nw{left:-3px;top:-3px;cursor:nwse-resize}   .sl .tb-rh-n{left:50%;top:-3px;cursor:ns-resize}    .sl .tb-rh-ne{left:calc(100% + 3px);top:-3px;cursor:nesw-resize}
+.sl .tb-rh-w{left:-3px;top:50%;cursor:ew-resize}                                                    .sl .tb-rh-e{left:calc(100% + 3px);top:50%;cursor:ew-resize}
+.sl .tb-rh-sw{left:-3px;top:calc(100% + 3px);cursor:nesw-resize} .sl .tb-rh-s{left:50%;top:calc(100% + 3px);cursor:ns-resize} .sl .tb-rh-se{left:calc(100% + 3px);top:calc(100% + 3px);cursor:nwse-resize}
+#previewStage.bg-capturing .tb-box{outline:none!important}
+#previewStage.bg-capturing .tb-rh,#previewStage.bg-capturing .tb-badge{display:none!important}
+
+/* ══ THANH ĐỊNH DẠNG NỔI kiểu TinyMCE inline (§32.38.1 — js/baigiang-fmtbar.js) ════════════════════
+   2 hàng, nút icon 30px không viền; khung hẹp thì các nhóm tự gói xuống (flex-wrap). */
+.tb-toolbar{position:fixed;z-index:1200;display:none;flex-direction:column;max-width:min(96vw,640px);padding:4px 6px;
+  background:#fff;border:1px solid #D6DEE8;border-radius:8px;box-shadow:0 4px 16px rgba(15,23,42,.18);color:#222F3E}
+.tb-toolbar.on{display:flex}
+.tb-toolbar .tw-row{display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding:3px 0}
+.tb-toolbar .tw-row + .tw-row{border-top:1px solid #E5E9EF}
+.tb-toolbar .tw-sep{width:1px;height:22px;background:#E1E6ED;margin:0 5px}
+.tb-toolbar .tw-tb{display:inline-flex;align-items:center;justify-content:center;gap:1px;min-width:30px;height:30px;padding:0 5px;
+  border:0;border-radius:4px;background:transparent;color:#222F3E;cursor:pointer;font:inherit}
+.tb-toolbar .tw-tb:hover{background:#E8EEF6}
+.tb-toolbar .tw-tb.on{background:#D7E6F8;color:#0B4F95}
+.tb-toolbar .tw-ic{display:block;flex:0 0 auto}
+.tb-toolbar .tw-caret{display:block;opacity:.7}
+.tb-toolbar .tw-done{margin-left:auto}
+/* Ô nhập: phông · cỡ chữ (pt, gõ tay) · giãn dòng — combobox §40 */
+.tb-toolbar input{height:30px;border:1px solid transparent;border-radius:4px;background-color:#F1F4F8;
+  color:#222F3E;font-size:13px;padding:0 6px;outline:none;box-sizing:border-box}
+.tb-toolbar input:hover{background-color:#E8EEF6}
+.tb-toolbar input:focus{border-color:var(--blue-primary,#1A6FBF);background-color:#fff}
+.tb-toolbar .tw-font{width:170px}
+.tb-toolbar .tw-ptwrap,.tb-toolbar .tw-lhwrap{display:inline-flex;align-items:center;gap:3px;margin-left:4px}
+.tb-toolbar .tw-pt{width:62px;text-align:center}
+.tb-toolbar .tw-lh{width:64px;text-align:center}
+.tb-toolbar .tw-unit{font-size:11px;color:var(--text-muted,#6B7280)}
+/* Nút tách đôi (màu chữ / tô nền): bấm thân = áp màu gần nhất, bấm ▾ = bảng màu */
+.tb-toolbar .tw-dd{position:relative;display:inline-flex}
+.tb-toolbar .tw-split .tw-drop{min-width:16px;padding:0 2px}
+.tb-toolbar .tw-pop{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:5;background:#fff;
+  border:1px solid #D6DEE8;border-radius:6px;box-shadow:0 6px 18px rgba(15,23,42,.18);padding:6px}
+.tb-toolbar .tw-dd.open > .tw-pop{display:block}
+.tb-toolbar .tw-pal{padding:0;overflow:hidden}
+/* Bảng màu kiểu TinyMCE: ô vuông 34px sát nhau, hàng cuối Đen · Trắng · Bỏ màu · Chọn màu khác */
+.tb-toolbar .tw-sws{display:grid;grid-template-columns:repeat(5,34px);grid-auto-rows:34px}
+.tb-toolbar .tw-sw{width:34px;height:34px;border:0;border-radius:0;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.tb-toolbar .tw-sw:hover{outline:2px solid #fff;outline-offset:-4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+.tb-toolbar .tw-sw-none,.tb-toolbar .tw-sw-pick{background:#fff}
+.tb-toolbar .tw-sw-none{background:linear-gradient(to top right,#fff calc(50% - 1px),#E03E2D 50%,#fff calc(50% + 1px))}
+.tb-toolbar .tw-sw-pick:hover,.tb-toolbar .tw-sw-none:hover{background-color:#E8EEF6}
+.tb-toolbar .tw-custom{border-top:1px solid #E5E9EF}
+.tb-toolbar .tw-cin{position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+
+/* Bảng: lưới chọn kích thước + các thao tác hàng/cột */
+.tb-toolbar .tw-tblpop{width:178px}
+.tb-toolbar .tw-grid{display:grid;grid-template-columns:repeat(8,18px);gap:2px}
+.tb-toolbar .tw-grid.off{opacity:.35;pointer-events:none}
+.tb-toolbar .tw-gc{width:18px;height:18px;border:1px solid #CBD5E1;border-radius:2px;background:#fff;cursor:pointer}
+.tb-toolbar .tw-gc.on{background:#D7E6F8;border-color:var(--blue-primary,#1A6FBF)}
+.tb-toolbar .tw-glbl{font-size:12px;text-align:center;margin:5px 0;color:#475569}
+.tb-toolbar .tw-tmenu{border-top:1px solid #E5E9EF;padding-top:4px;display:flex;flex-direction:column}
+.tb-toolbar .tw-mi{text-align:left;height:26px;padding:0 6px;border:0;border-radius:4px;background:transparent;font-size:12.5px;cursor:pointer;color:#222F3E}
+.tb-toolbar .tw-mi:hover:not(:disabled){background:#E8EEF6}
+.tb-toolbar .tw-mi:disabled{opacity:.4;cursor:default}
+
+/* Bảng trong KHỐI CHỮ TỰ DO (chèn từ thanh định dạng) — cả bảng tính là MỘT "dòng" khi gán hiệu ứng từng dòng */
+.sl .tb-text table.tb-tbl{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 .3em}
+.sl .tb-text table.tb-tbl td{border:1px solid #94A3B8;padding:.1em .35em;vertical-align:top;word-break:break-word}
+/* Ô bảng slide PowerPoint đang gõ */
+.pptx-tbl-el td.pptx-cell-editing{outline:2px solid var(--blue-primary,#1A6FBF);outline-offset:-2px;cursor:text;user-select:text}
+
+/* Panel Thuộc tính */
+/* (.tb-hint/.tb-list/.tb-row* đã bỏ 2026-09-25 — panel không còn dòng gợi ý + danh sách khối) */
+.tb-prop{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.tb-lbl{flex:0 0 84px;font-size:12px;color:var(--text-secondary,#5A6472)}
+.tb-sws{display:inline-flex;gap:4px;flex-wrap:wrap}
+.tb-sw{width:22px;height:22px;border-radius:4px;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0;background:#fff}
+.tb-sw.on{outline:2px solid var(--blue-primary);outline-offset:1px}
+.tb-sw-none{background:linear-gradient(to top right,#fff calc(50% - 1px),#DC2626 50%,#fff calc(50% + 1px))}
+.tb-note{font-size:11px;color:var(--text-muted)}
+
+/* Khối ẢNH — ảnh luôn giữ tỉ lệ (JS khóa tỉ lệ khi kéo; contain phòng khi vùng đổi cỡ, vd bật/tắt header).
+   KHÔNG overflow:hidden trên khối — sẽ cắt mất tay cầm đổi cỡ nằm lòi ra ngoài mép. */
+.sl .tb-box.tb-img{padding:0;border-radius:0;align-items:center;justify-content:center}
+.sl .tb-box.tb-img > img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+
+/* Khối VIDEO — chỉ phát trên máy GV; HV (mirror) / thumbnail / bản xuất nhận khung báo .tb-vid-ph.on */
+.sl .tb-box.tb-video{padding:0;border-radius:0;align-items:stretch;justify-content:center;background:#000}
+.sl .tb-box.tb-video > video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.sl .tb-box.tb-edit.tb-video > video{pointer-events:none}          /* khi soạn: bấm = chọn/kéo khối, không bấm vào video */
+.sl .tb-vid-ph{display:none;flex:1;align-items:center;justify-content:center;text-align:center;padding:6px;
+  color:#fff;font-size:14px;line-height:1.35;background:#1A2332}
+.sl .tb-vid-ph.on{display:flex}
+
+/* Dòng trong khối chữ CÓ hiệu ứng riêng (§32.38 mở rộng 2026-09-26): khi SOẠN hiện vạch + số nhịp
+   bấm ở lề trái để GV biết dòng nào hiện ở bước mấy. Lúc trình chiếu không có data-lbadge nên sạch. */
+.sl .tb-box.tb-edit .tb-text > [data-lbadge]{position:relative;border-left:2px solid var(--accent);
+  padding-left:6px;margin-left:-8px}
+.sl .tb-box.tb-edit .tb-text > [data-lbadge]::before{content:attr(data-lbadge);position:absolute;
+  left:-16px;top:0;font-size:9px;line-height:1.4;color:#fff;background:var(--accent);
+  border-radius:3px;padding:0 3px;font-weight:700}
+
+/* ══ §32.40 KHỐI TỰ DO ĐÈ LÊN SLIDE BÀI TẬP ═══════════════════════════════════════════════════════
+   Layout bài tập không có sẵn hộp position:relative ôm đúng vùng nội dung (như .sl-body.tb-host của
+   Slide trắng) nên lớp khối được bọc trong .tb-over neo thẳng vào .sl, tự chừa header. */
+.sl .tb-over{position:absolute;left:10px;right:10px;top:10px;bottom:10px;pointer-events:none;z-index:2}
+.sl.has-head .tb-over{top:calc(15% + 5px)}     /* header cao 15% + GAP CHUẨN 5px (xem .sl-head) */
+/* Cỡ chữ TEXT DỮ LIỆU mặc định của bài giảng = 15px (§32.1). Khối trên Slide trắng giữ 24px (chữ của
+   slide chiếu), còn ở đây khối là GHI CHÚ đi kèm câu hỏi 15px — để 24px sẽ lấn át chính bài tập. */
+.sl .tb-over .tb-text{font-size:calc(15px * var(--bgz,1))}
+/* CHUỘT: khối là nội dung CHỈ ĐỌC, KHÔNG được chắn cú bấm chọn đáp án nằm dưới (áp cho cả máy học
+   viên — trang HV lấy nguyên bộ CSS này qua /style.css, và nó KHÔNG có class .player).
+   · khi SOẠN (#previewStage) → bắt chuột để chọn/kéo/đổi cỡ khối
+   · khi BẬT BÚT (.player.anno-draw) → bắt chuột để nét vẽ thành GẠCH CHÂN bám chữ của chính khối
+     (§32.3 "loại trừ CÓ ĐIỀU KIỆN theo penOn"); tắt bút thì cú bấm rơi xuống bài tập như thường
+   · video luôn bắt chuột để bấm ▶ (chỉ có trên máy GV — HV nhận khung báo) */
+.sl .tb-over .tb-box{pointer-events:none}
+.sl .tb-over .tb-box.tb-video{pointer-events:auto}
+#previewStage .tb-over .tb-box{pointer-events:auto}
+.player.anno-draw .sl .tb-over .tb-box{pointer-events:auto}
+/* Combobox (§40) trong thanh định dạng: chừa chỗ mũi tên ▼ (rule .tb-toolbar input ghi đè padding của .cbx-input) */
+.tb-toolbar input.cbx-input{padding-right:20px;background-position:right 6px center}
+.tb-toolbar .tw-sw[title="Trắng"]{box-shadow:inset 0 0 0 1px #E5E9EF}

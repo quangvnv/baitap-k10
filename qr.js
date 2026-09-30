@@ -1,3 +1,6 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/shared/qr.js
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
 /* ══════════════════════════════════════════════════════════════════════════════════════════
    MÃ QR — bộ sinh TỰ VIẾT, KHÔNG thư viện ngoài.
    Trang này chạy trên GitHub Pages và phải mở được ở lớp có mạng yếu ⇒ không kéo thư viện

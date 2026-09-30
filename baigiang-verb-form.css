@@ -1,0 +1,77 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-verb-form.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'verb-form' — CHIA ĐỘNG TỪ TRONG NGOẶC (hiện dần đáp án)              CLAUDE.md §32.12
+   Đi kèm js/baigiang-verb-form.js (module rời). File CSS này nạp TRONG baigiang-soan.html →
+   MÁY HỌC VIÊN vẫn nhận vì mirrorSendCss() gom TOÀN BỘ document.styleSheets sang /style.css.
+   Text bài giảng 15px × var(--bgz) (§32.1); KHÔNG zoom phần UI.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.sl.lay-verb-form{padding:10px}
+.sl.lay-verb-form.has-head{padding-top:0}   /* BẮT BUỘC (§32.9): cùng độ ưu tiên với .sl.has-head → phải viết lại, kẻo header bị đẩy xuống 10px */
+
+/* Nút "Chấm điểm" trên slide: HIỆN như mọi layout khác (2026-07-30, §32.27.1 — thay quyết định
+   "ẩn" trước đây). Layout này không có bài để HV làm nên nút CHỈ mang vai "hiện dần đáp án":
+   mỗi lần bấm hé lộ 1 chỗ trống (hoặc 1 câu nếu bật "Mỗi nhịp bấm hiện cả câu"), hết thì mờ đi. */
+
+/* position:relative → neo 2 tay cầm kéo bề rộng (.bw-rh, §32.41). Bề rộng/lề trái do JS đặt INLINE
+   (slots.vfW/vfL, px) — mặc định KHÔNG có inline ⇒ chiếm trọn bề rộng slide như trước. */
+.sl .vf-wrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+
+/* Tay cầm kéo bề rộng khung chữ: đã chuyển thành .bw-rh DÙNG CHUNG ở css/baigiang.css (§32.41). */
+/* Vùng chữ — CUỘN 4px (§7). Là host bút vẽ (ANNO_TEXT_SEL) → nét mở trong đây thành gạch chân. */
+.sl .vf-body{flex:1;min-height:0;overflow-y:auto;background:#fff;padding:0;
+  font-size:calc(15px * var(--bgz,1));line-height:1.9;color:#2c3e50}
+.sl .vf-body::-webkit-scrollbar{width:4px}
+.sl .vf-body::-webkit-scrollbar-thumb{background:#c8ced8;border-radius:2px}
+
+/* ── THẺ (.vf-card) — 1 khối ngăn bằng DÒNG TRỐNG trong ô nhập = 1 thẻ ─────────────────────
+   Tham số COPY .wc-card của layout 'word-choice' (vốn copy .option-item của 'spk-dialogue', §32.2):
+   padding 6px 8px · viền 1px #e0e0e0 · bo 6px · nền trắng · cách nhau 6px.
+   KHÔNG ép line-height 1.4 như .wc-card — giữ 1.9 của .vf-body cho đúng dáng bài chia động từ.
+   CHỈ xuất hiện khi GV gõ ≥1 dòng trống (1 khối duy nhất ⇒ JS vẽ phẳng, không bọc thẻ). */
+.sl .vf-card{padding:6px 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;
+  margin-bottom:6px;break-inside:avoid;-webkit-column-break-inside:avoid}
+.sl .vf-card:last-child{margin-bottom:0}
+.sl .vf-card .vf-row:last-child{margin-bottom:0}   /* dòng cuối không đội thêm 6px vào padding đáy thẻ */
+
+.sl .vf-row{display:flex;gap:6px;margin-bottom:6px}
+.sl .vf-row:last-child{margin-bottom:0}
+.sl .vf-num{flex:0 0 auto;min-width:16px;font-weight:700;color:#1976D2}
+.sl .vf-txt{flex:1;min-width:0}
+.sl .vf-empty{padding:10px;text-align:center;color:var(--text-muted,#8a94a6);font-size:13px}
+
+/* ── Chỗ trống ─────────────────────────────────────────────────────────────────────────────
+   Trước khi hiện: "(know) ………"  →  sau khi hiện: "HAD KNOWN".
+   ĐÃ CHỐT: KHÔNG giữ chỗ — chữ co lại vừa đáp án (phần câu phía sau dịch theo, giống chữa bài
+   trên bảng). Muốn phần sau đứng yên thì đổi 2 rule dưới sang visibility + position:absolute. */
+.sl .vf-slot{white-space:nowrap}
+/* .vf-cue = phần hiển thị trước khi hé lộ. Chữ NGOÀI ngoặc giữ màu chữ thường (nó là một phần của
+   câu, vd "You" trong "You (join) ……."); chỉ phần trong ( ) mới nghiêng-xám như động từ gợi ý. */
+.sl .vf-cue{font-style:normal;color:inherit}
+.sl .vf-cue-v{font-style:italic;color:#5a6b7d}
+.sl .vf-dots{color:#9aa4ae;letter-spacing:1px;margin-left:2px}
+.sl .vf-ans{display:none;font-weight:700;color:var(--green-primary,#16A34A)}
+.sl .vf-body.vf-upper .vf-ans{text-transform:uppercase}
+.sl .vf-slot.on > .vf-cue,.sl .vf-slot.on > .vf-dots{display:none}
+.sl .vf-slot.on > .vf-ans{display:inline;animation:vfIn .18s ease-out}
+@keyframes vfIn{from{opacity:0}to{opacity:1}}
+/* Editor: chưa gõ đáp án → viền cam nhắc GV (không hiện khi trình chiếu) */
+.sl .vf-slot.vf-pending{outline:1px dashed var(--orange-primary,#D4740A);outline-offset:1px}
+
+/* ── Ảnh minh họa (illus dùng chung) — §32.17: ảnh CỐ ĐỊNH ở mép, vùng chữ tự cuộn ───────── */
+.sl .illus-scroll .vf-body{flex:1 1 auto;min-width:0;min-height:0;overflow-y:auto}
+.sl .vf-imgwrap.pos-left,.sl .vf-imgwrap.pos-right{gap:10px;align-items:stretch;padding:0}
+
+/* Bút vẽ (§32.3): bật bút → vùng chữ KHÔNG cuộn 1 ngón (1 ngón vẽ, 2 ngón cuộn) */
+.player.anno-draw .vf-body{touch-action:none}
+
+/* ── Panel Thuộc tính ─────────────────────────────────────────────────────────────────────── */
+.slot-group .slot-title.vf-title-row{display:flex;align-items:center;gap:6px;min-height:20px}
+.vf-ins-btn{margin-left:auto;padding:2px 8px;font-size:11px;line-height:1.5;
+  font-family:Consolas,"Courier New",monospace;letter-spacing:.5px;text-transform:none}
+/* Dòng đếm PHẢI hiện → KHÔNG dùng .hint-tiny (class đó bị display:none toàn trang, §32.13) */
+.vf-hint{font-size:11px;line-height:1.45;color:var(--text-muted)}
+.vf-body-in{font-family:Consolas,"Courier New",monospace;font-size:12px;line-height:1.55;
+  white-space:pre-wrap;overflow-x:hidden;word-break:break-word}
