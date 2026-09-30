@@ -421,6 +421,18 @@ select.o {
   }
   .san .sl .gf-cols { display: block !important; }
 
+  /* ⚠ KHUNG BÀI TẬP KÉO BỀ RỘNG (§32.41, `.bw-wrap`) mang `width:<px>` + `margin-left:<px>` INLINE
+     tính cho khung 960px ⇒ trên điện thoại vẫn đòi đúng bề rộng đó, chữ không xuống dòng và cả
+     trang phải cuộn ngang (người dùng báo 2026-09-30, ket-reading-part7). Màn hẹp trả về bề rộng
+     màn hình để chữ tự chảy. */
+  .san .sl .bw-wrap {
+    width: auto !important; margin-left: 0 !important; margin-right: 0 !important;
+    max-width: 100% !important; min-width: 0 !important;
+  }
+  .san .sl .kp7-content, .san .sl .cloze-content, .san .sl .gf-wrap, .san .sl .wc-body {
+    overflow-wrap: anywhere;
+  }
+
   /* ⚠ pic-match + word-web neo ô thả theo TOẠ ĐỘ % của khung ảnh — không xếp lại được cho màn
      hẹp. Giữ nguyên tỉ lệ và cho cuộn ngang trong chính khung đó (mấu chốt là min-width:0). */
   .san .sl .pm-canvas, .san .sl .ww-webs { min-width: 0; max-width: 100%; overflow-x: auto; }

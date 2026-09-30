@@ -1143,8 +1143,10 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
    Trái/Phải: CỘT DỌC bề rộng CỐ ĐỊNH 200px (cùng lý do bank cao cố định ở trên — canvas phải bằng nhau
    giữa lúc soạn và lúc chiếu), MỖI TỪ/CỤM TỪ 1 HÀNG, cụm dài tự xuống dòng trong chip. */
 .pm-wrap.pm-bank-side{flex-direction:row}
-.pm-wrap.pm-bank-side .ww-bank{flex:0 0 200px;flex-direction:column;flex-wrap:nowrap;
-  align-items:stretch;justify-content:safe center;align-content:normal}
+/* Cao theo nội dung (không kéo hết chiều cao) + căn GIỮA theo chiều dọc; chip nhiều quá thì kẹp ở
+   100% chiều cao rồi tự cuộn. Chiều cao box KHÔNG ảnh hưởng canvas (canvas nằm cạnh, không nằm dưới). */
+.pm-wrap.pm-bank-side .ww-bank{flex:0 0 200px;align-self:center;max-height:100%;flex-direction:column;flex-wrap:nowrap;
+  align-items:stretch;justify-content:flex-start;align-content:normal}
 .pm-wrap.pm-bank-side .ww-bank > .ww-chip{justify-content:center;text-align:center;white-space:normal;flex:0 0 auto}
 .pm-canvas{position:relative;flex:1;min-height:0;min-width:0;border:1px solid transparent;border-radius:6px}
 .pm-canvas.pm-hot{border-color:var(--blue-primary);background:var(--blue-light)}   /* soạn: đang rê chip lên ảnh */
