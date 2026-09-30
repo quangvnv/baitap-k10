@@ -79,6 +79,17 @@ function wdSyncWord(inp){
   cs.forEach((c,i)=>{ c.textContent = i<v.length ? v.charAt(i) : '_'; });
 }
 
+/* ── pmFitGrids — trích từ baigiang-soan.js ── */
+function pmFitGrids(root){
+  if(!root || !root.querySelectorAll) return;
+  root.querySelectorAll('.pm-grid.pm-r2,.pm-grid.pm-r3').forEach(g=>{
+    const chk=()=>{ g.classList.remove('pm-fit'); if(g.scrollHeight>g.clientHeight+1) g.classList.add('pm-fit'); };
+    const cho=[...g.querySelectorAll('img')].filter(i=>!i.complete);
+    if(!cho.length) chk();
+    else cho.forEach(i=>{ i.addEventListener('load',chk,{once:true}); i.addEventListener('error',chk,{once:true}); });
+  });
+}
+
 /* ── wireWordWeb — trích từ baigiang-soan.js ── */
 function wireWordWeb(root){
   root.querySelectorAll('.ww-wrap.ww-live').forEach(wrap=>{

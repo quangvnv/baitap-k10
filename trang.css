@@ -526,9 +526,7 @@ select.o {
   .san .sl:not(.has-head) .pm-bank-side .pm-canvas { aspect-ratio: 732 / 509; }
   /* Khoảng hở giữa các ảnh là 6px CỐ ĐỊNH, không co theo khung ⇒ khung thu còn ~40% thì 6px thành
      "to" tương đối, hàng ảnh vừa khít trên máy tính bị đẩy xuống dòng và ảnh bị cắt. Thu theo tỉ lệ. */
-  .san .sl .pm-grid { gap: 2px; }
-  .san .sl .pm-grid.pm-r2 img { height: calc((100% - 2px) / 2); }
-  .san .sl .pm-grid.pm-r3 img { height: calc((100% - 4px) / 3); }
+  .san .sl .pm-grid { --pm-gap: 2px; }   /* baigiang.css tính chiều cao + bề ngang ảnh theo biến này */
 }
 
 /* ══ CHIA ĐỘNG TỪ (verb-form) — Ô GÕ do `bocHtml` chèn vào chỗ trống, CHỈ có trên web ═══════════
@@ -577,4 +575,9 @@ select.o {
     max-width: 100%; margin-top: 8px;
   }
   .san .sl .tb-box img { max-width: 100%; height: auto; }
+
+  /* ⑧ Ô CHỮ: khung lưới bị giới hạn cao theo khung 540px (lưới cao 436, khung 430) ⇒ đáy lưới
+     bị cắt vài px. Trả chiều cao về theo nội dung; cuộn ngang (lưới rộng) vẫn giữ như cũ. */
+  .san .sl .cw-left { height: auto !important; max-height: none !important; overflow-y: hidden !important; padding-bottom: 2px; }
+  .san .sl .cw-left .cw-grid { margin: 0 auto; }
 }

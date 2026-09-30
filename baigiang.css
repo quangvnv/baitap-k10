@@ -1169,13 +1169,35 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .pm-canvas.pm-hot{border-color:var(--blue-primary);background:var(--blue-light)}   /* soạn: đang rê chip lên ảnh */
 /* Lưới ảnh: mọi ảnh CÙNG CHIỀU CAO (theo số hàng), bề ngang TỰ theo tỉ lệ ảnh → app tự resize cả 2 chiều,
    KHÔNG cắt xén, KHÔNG méo. Ảnh xếp từ trái sang, tự xuống hàng. */
-.pm-grid{position:absolute;inset:0;display:flex;flex-wrap:wrap;gap:6px;
+.pm-grid{--pm-gap:6px;position:absolute;inset:0;display:flex;flex-wrap:wrap;gap:var(--pm-gap);
   justify-content:center;align-content:center;overflow:hidden}
 .pm-grid img{flex:0 1 auto;width:auto;max-width:100%;object-fit:contain;border-radius:0px;display:block;
   pointer-events:none;user-select:none}
 .pm-grid.pm-r1 img{height:100%}
-.pm-grid.pm-r2 img{height:calc((100% - 6px) / 2)}
-.pm-grid.pm-r3 img{height:calc((100% - 12px) / 3)}
+.pm-grid.pm-r2 img{height:calc((100% - var(--pm-gap)) / 2)}
+.pm-grid.pm-r3 img{height:calc((100% - 2 * var(--pm-gap)) / 3)}
+/* ẢNH KHÔNG ĐƯỢC TRÀN KHỎI LƯỚI (2026-10-01). Trước đây ảnh ngang rộng làm hàng TRÀN ⇒ flex-wrap đẩy
+   ảnh xuống hàng thừa và `overflow:hidden` CẮT MẤT (vd 2 ảnh 4:3 trên 1 hàng).
+   ⚠ BẤT BIẾN: slide VỐN VỪA lưới KHÔNG được đổi hình — ô thả neo theo % của khung, ảnh xê dịch là ô
+     lệch khỏi ảnh. (Bản thử đầu giới hạn bề ngang MỌI ảnh = phần chia của hàng ⇒ làm lệch ~19px một
+     slide thật có 1 ảnh rộng xen ảnh vuông — đã bỏ.)
+   • 1 hàng (≤2 ảnh): CẤM xuống hàng; hàng tràn thì ảnh tự CO (flex-shrink), giữ tỉ lệ nhờ object-fit.
+     Hàng vừa sẵn thì không co ⇒ y hệt cũ.
+   • 2–3 hàng: không làm được bằng CSS thuần (không có "nowrap từng hàng") ⇒ `pmFitGrids()`
+     (baigiang-soan.js, trang web gọi lại qua engine.js) ĐO sau khi ảnh nạp: CHỈ khi lưới tràn mới gắn
+     `.pm-fit` ⇒ mỗi ảnh rộng tối đa = phần chia của hàng (k = ⌈số ảnh / số hàng⌉). */
+.pm-grid.pm-r1{flex-wrap:nowrap}
+.pm-grid.pm-r1 img{min-width:0}
+.pm-grid.pm-r2.pm-fit:has(> img:nth-child(3):last-child) img,
+.pm-grid.pm-r2.pm-fit:has(> img:nth-child(4):last-child) img{max-width:calc((100% - 1 * var(--pm-gap)) / 2)}
+.pm-grid.pm-r2.pm-fit:has(> img:nth-child(5):last-child) img,
+.pm-grid.pm-r2.pm-fit:has(> img:nth-child(6):last-child) img,
+.pm-grid.pm-r3.pm-fit:has(> img:nth-child(9):last-child) img{max-width:calc((100% - 2 * var(--pm-gap)) / 3)}
+.pm-grid.pm-r2.pm-fit:has(> img:nth-child(7):last-child) img,
+.pm-grid.pm-r2.pm-fit:has(> img:nth-child(8):last-child) img,
+.pm-grid.pm-r3.pm-fit:has(> img:nth-child(10):last-child) img,
+.pm-grid.pm-r3.pm-fit:has(> img:nth-child(11):last-child) img,
+.pm-grid.pm-r3.pm-fit:has(> img:nth-child(12):last-child) img{max-width:calc((100% - 3 * var(--pm-gap)) / 4)}
 .pm-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
   border:1.5px dashed var(--border);border-radius:6px;color:var(--text-muted);font-size:14px;padding:10px}
 /* Ô drop tự do: neo tâm vào (x%,y%) → toạ độ không đổi khi slide bị scale */
