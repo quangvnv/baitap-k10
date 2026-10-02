@@ -162,15 +162,31 @@ select.o {
 .bt-phu { min-width: 44px; }     /* nút ‹ › ở màn làm bài */
 
 /* ── Màn làm bài ──────────────────────────────────────────────────────────────────────────── */
-/* ══ MÀN LÀM BÀI — MENU TRÁI + VÙNG SLIDE CAO HẾT VIEWPORT (2026-09-08) ═══════════════════
-   Thay thanh công cụ trên cùng bằng menu dọc bên trái. Vùng slide nay chiếm trọn chiều cao. */
-#manBai { display: flex; flex-direction: row; align-items: stretch; padding: 0; height: 100vh; height: 100dvh; }
+/* ══ MÀN LÀM BÀI — THANH TRÊN + VÙNG SLIDE (2026-10-02) ═══════════════════════════════════
+   Thanh trên: ☰ · ‹ · Nộp bài · › (+ hạn giờ bên phải). Menu mục lục = NGĂN KÉO ở mọi cỡ màn,
+   ☰ bị JS ẩn khi bài chỉ có 1 slide. */
+#manBai { display: flex; flex-direction: column; align-items: stretch; padding: 0; height: 100vh; height: 100dvh; }
 
-/* ── Menu trái ─────────────────────────────────────────────────────────────────────────── */
-.menu {
-  flex: 0 0 220px; min-width: 0; display: flex; flex-direction: column;
-  background: var(--white); border-right: 1px solid var(--vien);
+.thanh-tren {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; background: var(--white); border-bottom: 1px solid var(--vien);
 }
+.thanh-tren .gio { margin: 0 0 0 auto; }
+/* ☰ và Nộp bài cao bằng nút ‹ › (giữ đúng kích thước cũ của ‹ ›) */
+.bt-menu { width: 40px; height: 56px; padding: 0; font-size: 18px; }
+.thanh-tren .bt-nop { height: 56px; min-width: 110px; padding: 0 16px; font-size: 14px; }
+
+/* ── Menu mục lục (ngăn kéo) ───────────────────────────────────────────────────────────── */
+.menu {
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 40; width: 260px; max-width: 82vw;
+  display: flex; flex-direction: column; min-width: 0;
+  background: var(--white); border-right: 1px solid var(--vien);
+  transform: translateX(-100%); transition: transform .18s ease;
+  box-shadow: 2px 0 12px rgba(26, 51, 80, .18);
+}
+.menu.mo { transform: none; }
+.menu-nen { position: fixed; inset: 0; z-index: 35; background: rgba(26,51,80,.42); }
+.menu-nen:not(.mo) { display: none; }
 .menu-dau { flex: 0 0 auto; padding: 10px; border-bottom: 1px solid var(--vien); }
 .menu-ten { font-size: 14px; font-weight: 700; color: var(--blue-dark); line-height: 1.3; }
 .menu-phu { font-size: 12px; color: var(--t3); margin-top: 2px; }
@@ -193,17 +209,13 @@ select.o {
 .sl-muc.nay .sl-muc-tt.xong { color: #bdf0bf; }
 .sl-muc-tt.dang { color: var(--t3); }
 
-.menu-chan { flex: 0 0 auto; padding: 10px; border-top: 1px solid var(--vien); }
-.gio { display: block; font-size: 15px; font-weight: 700; color: var(--blue-dark); font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+.gio { display: block; font-size: 15px; font-weight: 700; color: var(--blue-dark); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .gio:empty { display: none; }          /* phiên không đặt hạn giờ ⇒ không chừa chỗ trống */
 .gio.gap { color: var(--do); }
 
-/* ☰ + nền mờ: CHỈ dùng ở màn hẹp (bật lại trong @media bên dưới) */
-.bt-menu, .menu-nen { display: none; }
-
 /* ── Vùng slide ────────────────────────────────────────────────────────────────────────── */
 .san {
-  flex: 1 1 auto; min-width: 0; position: relative;
+  flex: 1 1 auto; min-width: 0; min-height: 0; position: relative;
   display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px;
 }
 /* ⚠ HAI LỚP: `.khung-ty-le` mang kích thước SAU khi scale (do JS đặt), `.lop-slide` giữ nguyên
@@ -212,15 +224,9 @@ select.o {
 .khung-ty-le { flex: 0 0 auto; }
 .lop-slide { width: 960px; height: 540px; transform-origin: 0 0; }
 
-/* Nút chuyển slide bám 2 mép vùng slide (thay cụm ‹ › ở thanh dưới cũ) */
-.bt-canh {
-  position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
-  width: 34px; height: 56px; padding: 0; font-size: 20px; opacity: .82;
-}
-.bt-canh:hover:not(:disabled) { opacity: 1; transform: translateY(-50%); }
+/* Nút chuyển slide ‹ › trên thanh trên — giữ kích thước cũ (34×56 máy tính · 44×44 điện thoại) */
+.bt-canh { flex: 0 0 auto; width: 34px; min-width: 34px; height: 56px; padding: 0; font-size: 20px; }
 .bt-canh:disabled { opacity: .2; }
-.bt-canh-trai { left: 6px; }
-.bt-canh-phai { right: 6px; }
 
 /* Kết quả */
 .diem { font-size: 40px; font-weight: 700; color: var(--blue-dark); margin: 6px 0; }
@@ -257,34 +263,11 @@ select.o {
     width: auto !important; height: auto !important; transform: none !important;
   }
 
-  /* MENU thành NGĂN KÉO: panel 220px cố định sẽ nuốt hết bề ngang điện thoại */
-  .bt-menu {
-    display: inline-flex; position: fixed; left: 8px; top: 8px; z-index: 30;
-    width: 40px; height: 40px; padding: 0; font-size: 18px;
-  }
-  .menu {
-    position: fixed; left: 0; top: 0; bottom: 0; z-index: 40; width: 260px; max-width: 82vw;
-    transform: translateX(-100%); transition: transform .18s ease;
-    box-shadow: 2px 0 12px rgba(26, 51, 80, .18);
-  }
-  .menu.mo { transform: none; }
-  .menu-nen { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(26,51,80,.42); }
-  .menu-nen:not(.mo) { display: none; }
-  /* Nút ‹ › bám mép màn hình, KHÔNG bám giữa slide (slide nay cao tự do, giữa nó ở tận đâu).
-     ⚠ PHẢI cộng `env(safe-area-inset-bottom)`: trên iPhone, dải sát mép dưới màn hình là vùng
-     dành cho cử chỉ vuốt-lên-về-Home của hệ điều hành, và thanh địa chỉ của Safari cũng nằm ở
-     ĐÁY. Nút đặt ở `bottom:10px` rơi đúng vào dải đó ⇒ chạm vào rất dễ trượt sang cử chỉ hệ
-     thống thay vì tới trang. Android (thanh địa chỉ ở TRÊN) và máy tính không dính. */
-  .bt-canh {
-    position: fixed; top: auto; transform: none; width: 44px; height: 44px;
-    bottom: 10px;                                     /* trình duyệt không hiểu env() thì giữ nguyên như cũ */
-    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  }
-  .bt-canh:hover:not(:disabled) { transform: none; }
-  .bt-canh-trai { left: 8px; }
-  .bt-canh-phai { right: 8px; }
-  /* Nút Nộp bài phải luôn với tới được: chừa chỗ cho cụm nút nổi ở đáy */
-  .san { padding-bottom: 64px; padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+  /* Thanh trên DÍNH mép trên khi cả trang cuộn dọc ⇒ ‹ › và Nộp bài luôn với tới được.
+     Dùng `sticky` (không `fixed`) — iOS phóng trang (§41.20) thì phần tử fixed trôi khỏi màn hình. */
+  .thanh-tren { position: sticky; top: 0; z-index: 30; padding: 6px 8px; }
+  .bt-canh { width: 44px; min-width: 44px; height: 44px; }
+  .bt-menu, .thanh-tren .bt-nop { height: 44px; }
 
   .san .sl {
     width: 100% !important; height: auto !important; min-height: 0 !important;
@@ -439,8 +422,7 @@ select.o {
 }
 
 /* ══ THANH PHÁT AUDIO CỦA BÀI NGHE (§41.29) ═══════════════════════════════════════════════
-   Nằm TRONG `.san`, DƯỚI slide. `.san` vì thế phải xếp dọc — 2 nút ‹ › là `position:absolute`
-   nên không bị ảnh hưởng. Ẩn bằng class `.an` khi slide không có audio.
+   Nằm TRONG `.san`, DƯỚI slide. `.san` vì thế phải xếp dọc (2 nút ‹ › nay ở thanh trên). Ẩn bằng class `.an` khi slide không có audio.
    ⚠ Ở NGOÀI `#khungTyLe` (không bị transform:scale) nên chữ/nút giữ đúng cỡ ở mọi tỉ lệ. */
 .san { flex-direction: column; gap: 8px; }
 .au-bar {
@@ -482,8 +464,6 @@ select.o {
 
 /* ══ SỬA HIỂN THỊ ĐIỆN THOẠI DỌC (2026-09-30 — rà bằng tools/kiem-tra-web-dien-thoai.js) ══════ */
 @media (max-width: 700px) {
-  /* ① Nút ☰ (fixed, góc trái-trên 40px) đè lên CHỮ ĐẦU của mọi slide ⇒ chừa một dải trên cùng. */
-  .san { padding-top: 56px; }
 
   /* ② ẢNH MINH HỌA TRÁI/PHẢI (§32.17): khung ảnh mang width px INLINE tính cho slide 960px, lại thêm
      padding-left/right INLINE (§32.17.1) ⇒ trên màn hẹp ảnh nuốt hết bề ngang và ĐẨY CÂU HỎI RA

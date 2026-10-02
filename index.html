@@ -5,17 +5,17 @@
 <!-- maximum-scale=5: cho phép chụm ngón phóng to trên điện thoại (§41.7) -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bài tập</title>
-<link rel="stylesheet" href="baigiang.css?v=38">
-<link rel="stylesheet" href="baigiang-word-choice.css?v=38">
-<link rel="stylesheet" href="baigiang-crossword.css?v=38">
-<link rel="stylesheet" href="baigiang-spk-reading-part5.css?v=38">
-<link rel="stylesheet" href="baigiang-spk-reading-part6.css?v=38">
-<link rel="stylesheet" href="baigiang-spk-listening-part1.css?v=38">
-<link rel="stylesheet" href="baigiang-spk-writing-part8.css?v=38">
-<link rel="stylesheet" href="baigiang-spk-writing-part9.css?v=38">
-<link rel="stylesheet" href="baigiang-verb-form.css?v=38">
-<link rel="stylesheet" href="baigiang-textbox.css?v=38">
-<link rel="stylesheet" href="trang.css?v=38">
+<link rel="stylesheet" href="baigiang.css?v=39">
+<link rel="stylesheet" href="baigiang-word-choice.css?v=39">
+<link rel="stylesheet" href="baigiang-crossword.css?v=39">
+<link rel="stylesheet" href="baigiang-spk-reading-part5.css?v=39">
+<link rel="stylesheet" href="baigiang-spk-reading-part6.css?v=39">
+<link rel="stylesheet" href="baigiang-spk-listening-part1.css?v=39">
+<link rel="stylesheet" href="baigiang-spk-writing-part8.css?v=39">
+<link rel="stylesheet" href="baigiang-spk-writing-part9.css?v=39">
+<link rel="stylesheet" href="baigiang-verb-form.css?v=39">
+<link rel="stylesheet" href="baigiang-textbox.css?v=39">
+<link rel="stylesheet" href="trang.css?v=39">
 </head>
 <body>
 
@@ -47,24 +47,26 @@
 </div>
 
 <!-- ══ MÀN 2: LÀM BÀI ══════════════════════════════════════════════════════════════════════
-     Bố cục 2 cột: MENU trái (mục lục slide + hạn giờ + Nộp bài) · vùng slide chiếm HẾT chiều cao
-     viewport. Bỏ hẳn thanh công cụ trên cùng (2026-09-08) — slide 960×540 nay được SCALE cho vừa
-     chỗ trống thay vì luôn hiện đúng cỡ gốc. -->
+     Bố cục dọc: THANH TRÊN (☰ ‹ Nộp bài ›) · vùng slide chiếm phần còn lại; slide 960×540 được
+     SCALE cho vừa chỗ trống. Menu mục lục slide là ngăn kéo mở bằng ☰. -->
 <div id="manBai" class="man an">
-  <!-- Nút ☰ chỉ hiện ở màn hẹp (menu thu thành ngăn kéo) -->
-  <button id="btMenu" class="bt bt-menu" title="Danh sách slide">☰</button>
+  <!-- THANH TRÊN CÙNG (2026-10-02): ☰ · ‹ · Nộp bài · › (+ hạn giờ bên phải).
+       ☰ chỉ hiện khi bài có NHIỀU slide (JS ẩn khi chỉ 1 slide); menu mục lục là NGĂN KÉO ở mọi cỡ màn. -->
+  <header id="thanhTren" class="thanh-tren">
+    <button id="btMenu" class="bt bt-menu" title="Danh sách slide">☰</button>
+    <button id="btTruoc" class="bt bt-phu bt-canh" title="Slide trước">‹</button>
+    <button id="btNop" class="bt bt-nop">Nộp bài</button>
+    <button id="btSau" class="bt bt-phu bt-canh" title="Slide sau">›</button>
+    <span id="dauGio" class="gio"></span>
+  </header>
 
   <nav id="menuTrai" class="menu">
     <div class="menu-dau">
       <div class="menu-ten" id="menuTen">Bài tập</div>
       <div class="menu-phu" id="dauCau">Slide 1/1</div>
     </div>
-    <!-- Mục lục slide — THAY dải chấm tiến độ cũ; bấm để nhảy thẳng tới slide -->
+    <!-- Mục lục slide — bấm để nhảy thẳng tới slide -->
     <div id="dsSlide" class="ds-slide"></div>
-    <div class="menu-chan">
-      <span id="dauGio" class="gio"></span>
-      <button id="btNop" class="bt bt-nop bt-rong">Nộp bài</button>
-    </div>
   </nav>
   <div id="menuNen" class="menu-nen"></div>
 
@@ -73,7 +75,6 @@
        khung 960×540 vẫn đòi chỗ và đẻ thanh cuộn dù nhìn đã vừa.
        Trên điện thoại, trang.css bỏ khung + bỏ scale (§41.7). -->
   <main id="sanKhau" class="san">
-    <button id="btTruoc" class="bt bt-phu bt-canh bt-canh-trai" title="Slide trước">‹</button>
     <div id="khungTyLe" class="khung-ty-le">
       <div id="lopSlide" class="lop-slide"></div>
     </div>
@@ -84,7 +85,6 @@
       <audio id="auEl" controls preload="none"></audio>
       <div id="auBmks" class="au-nhom au-moc"></div>
     </div>
-    <button id="btSau" class="bt bt-phu bt-canh bt-canh-phai" title="Slide sau">›</button>
   </main>
 </div>
 
@@ -102,9 +102,9 @@
 
 <div id="banner" class="banner an"></div>
 
-<script src="cauhinh.js?v=38"></script>
-<script src="cham-diem.js?v=38"></script>
-<script src="engine.js?v=38"></script>
-<script src="trang.js?v=38"></script>
+<script src="cauhinh.js?v=39"></script>
+<script src="cham-diem.js?v=39"></script>
+<script src="engine.js?v=39"></script>
+<script src="trang.js?v=39"></script>
 </body>
 </html>

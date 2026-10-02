@@ -152,6 +152,7 @@ function veSlide() {
   $('dauCau').textContent = 'Slide ' + (CHI_SO + 1) + '/' + ds.length;
   $('btTruoc').disabled = CHI_SO === 0;
   $('btSau').disabled = CHI_SO >= ds.length - 1;
+  $('btMenu').classList.toggle('an', ds.length <= 1);   // 1 slide ⇒ không cần mục lục
   veMucLuc();
   AU_I = 0;
   auNapSlide();     // ⚠ PHẢI gọi mỗi lần đổi slide: dừng tiếng slide trước + nạp audio slide này
@@ -174,11 +175,11 @@ function vuaKhung() {
     return;
   }
   const cs = getComputedStyle(san);
-  /* ⚠ Thanh audio nằm TRONG `.san` và CHIẾM CHỖ THẬT (khác 2 nút ‹ › vốn absolute) ⇒ phải trừ
+  /* ⚠ Thanh audio nằm TRONG `.san` và CHIẾM CHỖ THẬT ⇒ phải trừ
      chiều cao của nó, nếu không slide bị đẩy tràn khỏi vùng nhìn ở bài nghe. */
   const au = $('thanhAudio');
   const hAu = (au && !au.classList.contains('an')) ? (au.offsetHeight + 8) : 0;
-  const w = san.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0) - 80; // 80 = chỗ cho 2 nút ‹ ›
+  const w = san.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);   // ‹ › nay ở thanh trên
   const h = san.clientHeight - parseFloat(cs.paddingTop || 0) - parseFloat(cs.paddingBottom || 0) - hAu;
   const sc = Math.max(0.3, Math.min(Math.max(120, w) / 960, Math.max(120, h) / 540, 2));
   khung.style.width = Math.round(960 * sc) + 'px';
