@@ -329,6 +329,75 @@ function wireMatching(root){
 function mtJoinRow(cell, on){ const row=cell&&cell.closest('.mt-row'); if(!row) return;
   row.classList.toggle('mt-joined', !!on && !!row.querySelector('.mt-lcard:not(.mt-lempty)')); }
 
+/* ── wireSw9 — trích từ baigiang-spk-writing-part9.js ── */
+function wireSw9(root){
+  root.querySelectorAll('.sw9-drag.sw9-live').forEach(wrap=>{
+    if(wrap._sw9Wired) return; wrap._sw9Wired=true;
+    let drag=null, ghost=null, card=null, sx=0, sy=0, moved=false;
+    const reset=ch=>{ ch.classList.remove('ok','bad'); const l=card&&card.querySelector('.sw9-line'); if(l) l.classList.remove('ok','bad'); };
+    const toLine=(ch,line,before)=>{
+      if(card.querySelector('.sw9-src').contains(ch)){       // từ vùng chip → để lại bản mờ
+        const ph=ch.cloneNode(true); ph.classList.add('sw9-used','locked'); ph.classList.remove('sw9-dragging');
+        ch.replaceWith(ph);
+      }
+      reset(ch); line.insertBefore(ch, before||null);
+    };
+    const toSrc=ch=>{
+      const ph=card.querySelector('.sw9-src .sw9-chip.sw9-used[data-i="'+ch.dataset.i+'"]');
+      reset(ch); if(ph) ph.replaceWith(ch);
+    };
+    const locked=ch=>!ch || ch.classList.contains('locked') || !!ch.closest('.sw9-graded');
+    function moveGhost(e){ if(ghost){ ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px'; } }
+    function targetUnder(e){
+      if(ghost) ghost.style.display='none';
+      const el=document.elementFromPoint(e.clientX,e.clientY);
+      if(ghost) ghost.style.display='';
+      if(!el || !el.closest || el.closest('.sw9-card')!==card) return null;
+      return el.closest('.sw9-line') || (el.closest('.sw9-src') ? 'src' : null);
+    }
+    function beforeAt(line,e){       // chip đứng ngay SAU điểm thả (dòng có thể xuống hàng)
+      for(const x of [...line.querySelectorAll('.sw9-chip')].filter(x=>x!==drag)){
+        const r=x.getBoundingClientRect();
+        if(e.clientY<r.top || (e.clientY<=r.bottom && e.clientX<r.left+r.width/2)) return x;
+      }
+      return null;
+    }
+    function clearHot(){ wrap.querySelectorAll('.sw9-hot').forEach(x=>x.classList.remove('sw9-hot')); }
+    function cleanup(){ if(ghost){ ghost.remove(); ghost=null; } if(drag) drag.classList.remove('sw9-dragging'); drag=null; card=null; clearHot(); }
+    wrap.addEventListener('pointerdown',e=>{
+      const ch=e.target.closest && e.target.closest('.sw9-chip');
+      if(locked(ch)) return;
+      e.preventDefault(); e.stopPropagation();
+      drag=ch; card=ch.closest('.sw9-card'); sx=e.clientX; sy=e.clientY; moved=false;
+      try{ wrap.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    wrap.addEventListener('pointermove',e=>{
+      if(!drag) return; e.preventDefault();
+      if(!moved){
+        if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)<5) return;
+        moved=true;
+        ghost=drag.cloneNode(true); ghost.classList.add('sw9-ghost'); document.body.appendChild(ghost);
+        drag.classList.add('sw9-dragging');
+      }
+      moveGhost(e); clearHot();
+      const t=targetUnder(e); if(t && t!=='src') t.classList.add('sw9-hot');
+    });
+    wrap.addEventListener('pointerup',e=>{
+      if(!drag) return; e.preventDefault();
+      const line=card.querySelector('.sw9-line');
+      if(!moved){ if(line.contains(drag)) toSrc(drag); else toLine(drag,line,null); }
+      else{
+        const t=targetUnder(e);
+        if(t==='src'){ if(line.contains(drag)) toSrc(drag); }
+        else if(t) toLine(drag,t,beforeAt(t,e));
+      }
+      cleanup();
+      try{ mirrorPush(); }catch(_){}
+    });
+    wrap.addEventListener('pointercancel',()=>cleanup());
+  });
+}
+
 /* ── cwFocus — trích từ baigiang-crossword.js ── */
 function cwFocus(el){
   const g=cwGridOf(el); if(!g) return;

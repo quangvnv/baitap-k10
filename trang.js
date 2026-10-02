@@ -141,7 +141,7 @@ function khungCua(i) {
 /* Engine kéo-thả / ô chữ của app (engine.js). Mỗi hàm tự dò lớp `.*-live` của layout tương ứng
    và tự đánh dấu đã gắn, nên gọi thừa cũng vô hại — không cần rẽ nhánh theo layout ở đây. */
 function ganEngine(root) {
-  [window.pmFitGrids, window.wireWordWeb, window.wireKp7, window.wireReorder, window.wireMatching]
+  [window.pmFitGrids, window.wireWordWeb, window.wireKp7, window.wireReorder, window.wireMatching, window.wireSw9]
     .forEach(f => { if (typeof f === 'function') { try { f(root); } catch (e) { console.warn(e); } } });
 }
 

@@ -348,10 +348,13 @@
          ⚠ `answers[i]` ở đây là MẢNG (không phải chuỗi ngăn bằng "/") ⇒ KHÔNG dùng `phuongAn`. */
       case 'spk-writing-part8': case 'spk-writing-part9': {
         const pfx = layout === 'spk-writing-part8' ? 'sw8' : 'sw9';
-        ds('.' + pfx + '-in').forEach((inp, i) => {
+        /* sw9 kéo thả: không có ô gõ — mỗi câu chấm có MỐC .sw9-dmark (cham-diem.js bocHtml). */
+        const moc = (pfx === 'sw9' && ds('.sw9-dmark').length) ? ds('.sw9-dmark') : ds('.' + pfx + '-in');
+        moc.forEach((inp, i) => {
           if (!coCau(i)) return;
           const card = inp.closest ? inp.closest('.' + pfx + '-card') : null;
-          const de = card ? chu(card.querySelector('.' + pfx + (pfx === 'sw8' ? '-orig' : '-words'))) : '';
+          const deEl = card && (card.querySelector('.' + pfx + (pfx === 'sw8' ? '-orig' : '-words')) || card.querySelector('.sw9-src'));
+          const de = deEl ? chu(deEl) : '';
           const mo = (pfx === 'sw8' && card) ? chu(card.querySelector('.sw8-starter')) : '';
           const ds2 = Array.isArray(answers[i]) ? answers[i] : [answers[i]];
           rows.push({

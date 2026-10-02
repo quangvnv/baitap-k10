@@ -254,6 +254,7 @@
         const answers = [];
         /* Cắt từ CUỐI lên ĐẦU để các vị trí phía trước không bị xê dịch; đáp án gom rồi đảo lại. */
         const khoi = catKhoi(h, pfx + '-ans');
+        const keo = pfx === 'sw9' && h.indexOf('sw9-dcard') >= 0;
         khoi.slice().reverse().forEach(k => {
           const ds = [];
           catKhoi(k.trong, pfx + '-a').forEach(x => {
@@ -261,6 +262,10 @@
             if (t) ds.push(t);
           });
           answers.unshift(ds.length ? ds : null);
+          /* spk-writing-part9 chế độ KÉO THẢ (sw9Mode='drag', thẻ .sw9-dcard): học viên xếp chip xuống
+             .sw9-line ⇒ KHÔNG chèn ô gõ, chỉ để lại MỐC rỗng `.sw9-dmark` đánh dấu câu có chấm (thứ tự
+             mốc = thứ tự `answers`). thuHoach đọc chip trên dòng của thẻ chứa mốc. */
+          if (keo) { h = h.slice(0, k.vt) + '<div class="sw9-dmark"></div>' + h.slice(k.het); return; }
           h = h.slice(0, k.vt)
             + '<div class="' + pfx + '-in-wrap"><input class="' + pfx + '-in sw-in" type="text"'
             + ' data-ans="" autocomplete="off" spellcheck="false" placeholder="Viết câu của bạn…"></div>'
@@ -591,7 +596,15 @@
 
       /* Ô gõ do `bocHtml` chèn vào chỗ khối đáp án — CHỈ có trên web (app không có ô nhập). */
       case 'spk-writing-part8': return ds('.sw8-in').map(i => (i.value || '').trim() || null);
-      case 'spk-writing-part9': return ds('.sw9-in').map(i => (i.value || '').trim() || null);
+      case 'spk-writing-part9':
+        /* Kéo thả: câu = chữ các chip trên dòng xếp; CÒN chip chưa dùng ⇒ chưa làm xong (null). */
+        if (ds('.sw9-dmark').length) return ds('.sw9-dmark').map(m => {
+          const card = m.closest ? m.closest('.sw9-dcard') : null; if (!card) return null;
+          if (card.querySelector('.sw9-src .sw9-chip:not(.sw9-used)')) return null;
+          const t = [].slice.call(card.querySelectorAll('.sw9-line .sw9-chip')).map(x => x.textContent.trim()).join(' ');
+          return t || null;
+        });
+        return ds('.sw9-in').map(i => (i.value || '').trim() || null);
       case 'verb-form': return ds('.vf-in').map(i => (i.value || '').trim() || null);
     }
     return null;
@@ -688,6 +701,24 @@
 
       case 'spk-writing-part8': case 'spk-writing-part9': case 'verb-form': {
         const pfx = layout === 'spk-writing-part8' ? 'sw8' : (layout === 'verb-form' ? 'vf' : 'sw9');
+        if (pfx === 'sw9' && ds('.sw9-dmark').length) {          // chế độ kéo thả
+          ds('.sw9-dmark').forEach((m, i) => {
+            const card = m.closest('.sw9-dcard'); if (!card) return;
+            const line = card.querySelector('.sw9-line');
+            card.classList.add('sw9-graded');
+            card.querySelectorAll('.sw9-chip').forEach(x => x.classList.add('locked'));
+            if (line) { line.dataset.graded = '1'; line.classList.remove('ok', 'bad');
+              if (dung[i] !== null && dung[i] !== undefined) line.classList.add(dung[i] ? 'ok' : 'bad'); }
+            const g = lo && lo.answers && lo.answers[i];
+            if (g && g.length && !card.querySelector('.sw-goi')) {
+              const d = card.ownerDocument.createElement('div');
+              d.className = 'sw-goi';
+              d.textContent = '✔ ' + (Array.isArray(g) ? g.join('  /  ') : g);
+              m.parentNode.insertBefore(d, m);
+            }
+          });
+          break;
+        }
         ds('.' + pfx + '-in').forEach((inp, i) => {
           toO(inp, dung[i], 'sw-ok', 'sw-bad');
           /* Hé lộ đáp án gợi ý — CHỈ khi server gửi khóa về (answerVisibility ≠ NONE). */

@@ -48,4 +48,35 @@
 /* Bút vẽ (§32.3): bật bút → vùng chữ KHÔNG cuộn 1 ngón (1 ngón vẽ, 2 ngón cuộn) */
 .player.anno-draw .sw9-body{touch-action:none}
 
+/* ── CHẾ ĐỘ KÉO THẢ SẮP XẾP (sw9Mode='drag', 2026-10-02) ─────────────────────────────────────
+   Chip từ/cụm từ (ngăn bằng "/") ở dòng trên → kéo xuống DÒNG XẾP ngay dưới. Chip dùng khuôn .ww-chip. */
+.sl .sw9-src{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.sl .sw9-sep{color:#9aa4ae;font-weight:400}
+.sl .sw9-chip{display:inline-flex;align-items:center;padding:3px 10px;background:#fff;
+  border:1px solid var(--blue-primary,#1A6FBF);border-radius:16px;font-size:calc(15px * var(--bgz,1));
+  font-weight:600;line-height:1.2;color:#2c3e50;box-shadow:0 1px 3px rgba(20,40,80,.14);
+  user-select:none;
+  /* Câu/cụm từ dài: chip tự XUỐNG DÒNG trong chính nó thay vì tràn ngang (điện thoại hẹp) —
+     vùng chip lẫn dòng xếp đều flex-wrap nên cả câu cũng xuống hàng. */
+  white-space:normal;overflow-wrap:anywhere;max-width:100%;min-width:0}
+.sl .sw9-live .sw9-chip{cursor:grab;touch-action:none}
+.sl .sw9-chip.locked{cursor:default}
+.sl .sw9-chip.sw9-used{opacity:.3;box-shadow:none}            /* bản mờ: chip đã đưa xuống dòng xếp */
+.sl .sw9-chip.sw9-dragging{opacity:.25}
+.sw9-ghost{position:fixed;z-index:9990;transform:translate(-50%,-50%);pointer-events:none;
+  display:inline-flex;padding:3px 10px;background:#fff;border:1px solid var(--blue-primary,#1A6FBF);
+  border-radius:16px;font-size:15px;font-weight:600;max-width:80vw;cursor:grabbing;
+  box-shadow:0 8px 22px rgba(20,40,80,.32)}
+
+/* Dòng xếp câu — ngay dưới nhóm chip, thẳng hàng với chữ (bỏ cột số thứ tự) */
+.sl .sw9-line{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 0 22px;min-width:0;
+  min-height:calc(32px * var(--bgz,1));padding:3px 6px;border:1px dashed #b8c4d4;border-radius:6px;
+  background:#F7FAFD}
+.sl .sw9-line.sw9-hot{border-color:var(--blue-primary,#1A6FBF);background:#EAF2FB}
+.sl .sw9-line.ok{border:1px solid var(--green-primary,#16A34A);background:#EDFAF4}
+.sl .sw9-line.bad{border:1px solid #DC2626;background:#FEECEC}
+.player.anno-draw .sw9-src,.player.anno-draw .sw9-line{touch-action:none}
+/* Web §41: đáp án gợi ý hé lộ sau khi nộp (ChamDiem.toMau chèn .sw-goi) — thẳng hàng dòng xếp */
+.sl .sw9-dcard .sw-goi{margin:4px 0 0 22px}
+
 /* ── Panel Thuộc tính: xem §34.4 — style dùng chung .sw-* nằm ở css/baigiang.css ─────────── */
