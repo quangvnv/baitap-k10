@@ -156,6 +156,7 @@ function wireKp7(root){
     if(wrap._kp7Wired) return; wrap._kp7Wired=true;
     let drag=null, ghost=null, srcChip=null;              // srcChip = chip GỐC trong bảng (chỉ khi kéo TỪ bảng)
     const bank=wrap.querySelector('.kp7-bank');
+    const multi=!!(bank && bank.classList.contains('kp7-multi'));   // bảng "dùng nhiều lần" — chip không bao giờ mờ
     const ungray=si=>{ if(si==null||!bank) return; const s=bank.querySelector('.ww-chip[data-si="'+si+'"]'); if(s) s.classList.remove('used'); };
     function moveGhost(e){ if(ghost){ ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px'; } }
     function targetUnder(e){
@@ -198,7 +199,7 @@ function wireKp7(root){
         const occ=t.querySelector('.ww-chip');
         if(occ && occ!==drag){ ungray(occ.dataset.si); occ.remove(); }   // ô đã có chip → trả nguồn của nó về bảng (gỡ mờ)
         t.classList.remove('ok','bad'); t.appendChild(drag); drag.classList.remove('ok','bad','ww-dragging');
-        if(srcChip) srcChip.classList.add('used');            // tô mờ chip vừa kéo TỪ bảng
+        if(srcChip && !multi) srcChip.classList.add('used');  // tô mờ chip vừa kéo TỪ bảng (bảng "dùng nhiều lần" thì không)
       }else{
         // thả về bảng hoặc ra ngoài: nếu đang kéo chip ĐÃ đặt → trả về bảng (gỡ mờ nguồn, bỏ chip)
         if(!srcChip){ ungray(dragSi); drag.remove(); }        // srcChip có = kéo mới từ bảng rồi hủy → clone tự biến mất

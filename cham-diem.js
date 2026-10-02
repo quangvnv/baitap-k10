@@ -493,7 +493,11 @@
   function khopChuoi(bai, ans) {
     const ds = phuongAn(ans);
     if (!ds.length) return false;                     // GV để trống đáp án ⇒ luôn sai
-    return ds.indexOf(chuanChuoi(bai)) >= 0;
+    const b = chuanChuoi(bai);
+    // Khớp NGUYÊN CHUỖI trước: chip kéo-thả có thể chứa "/" thật (vd chip "a/an" đặt đúng ô có đáp án
+    // "a/an") — tách theo "/" thì "a/an" ∉ ['a','an'] ⇒ bị chấm SAI trong khi app chấm ĐÚNG.
+    if (b && b === chuanChuoi(ans)) return true;
+    return ds.indexOf(b) >= 0;
   }
   /* Câu viết: `ans` là MẢNG phương án gợi ý. KHÔNG tách theo "/" — câu tiếng Anh có dấu gạch
      chéo thật ("and/or"), mà đáp án nhiều phương án ở đây đã là mảng sẵn. */

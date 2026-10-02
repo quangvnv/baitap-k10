@@ -303,7 +303,8 @@
             nhan: layout === 'pic-match' ? 'Ô ' + (i + 1) : 'Chỗ trống ' + (i + 1),
             ctx: ctx[i] || '',
             pa: pa,
-            dungKeys: new Set(phuongAn(answers[i])),
+            // + NGUYÊN CHUỖI đáp án: chip "a/an" là một thẻ, khớp `khopChuoi` của cham-diem.js
+            dungKeys: new Set(phuongAn(answers[i]).concat(chuan(answers[i]) ? [chuan(answers[i])] : [])),
             chuoi: true,
           });
         });
