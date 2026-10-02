@@ -168,11 +168,13 @@ select.o {
 #manBai { display: flex; flex-direction: column; align-items: stretch; padding: 0; height: 100vh; height: 100dvh; }
 
 .thanh-tren {
-  flex: 0 0 auto; display: flex; align-items: center; justify-content: center; gap: 6px;
-  position: relative; padding: 6px 10px; background: var(--white); border-bottom: 1px solid var(--vien);
+  flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px;
+  padding: 6px 10px; background: var(--white); border-bottom: 1px solid var(--vien);
 }
-/* Cụm nút căn GIỮA thanh; hạn giờ tách ra mép phải (absolute) để không đẩy lệch cụm nút */
-.thanh-tren .gio { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); margin: 0; }
+/* Lưới 3 cột [trống | cụm nút | hạn giờ] — 2 cột bên chia đều ⇒ cụm nút nằm ĐÚNG GIỮA thanh,
+   kể cả khi có hạn giờ. (Bản trước để hạn giờ trong luồng flex ⇒ cụm nút lệch trái trên điện thoại.) */
+.tt-cum { display: flex; align-items: center; gap: 6px; }
+.thanh-tren .gio { justify-self: end; margin: 0; }
 /* ☰ và Nộp bài cao bằng nút ‹ › (giữ đúng kích thước cũ của ‹ ›) */
 .bt-menu { width: 40px; height: 56px; padding: 0; font-size: 18px; }
 .thanh-tren .bt-nop { height: 56px; min-width: 110px; padding: 0 16px; font-size: 14px; }
@@ -267,8 +269,7 @@ select.o {
   /* Thanh trên DÍNH mép trên khi cả trang cuộn dọc ⇒ ‹ › và Nộp bài luôn với tới được.
      Dùng `sticky` (không `fixed`) — iOS phóng trang (§41.20) thì phần tử fixed trôi khỏi màn hình. */
   .thanh-tren { position: sticky; top: 0; z-index: 30; padding: 6px 8px; }
-  /* Màn hẹp không đủ chỗ cho hạn giờ đứng riêng mép phải (sẽ đè nút ›) ⇒ đưa về NGAY SAU cụm nút */
-  .thanh-tren .gio { position: static; transform: none; font-size: 14px; }
+  .thanh-tren .gio { font-size: 13px; }
   .bt-canh { width: 44px; min-width: 44px; height: 44px; }
   .bt-menu, .thanh-tren .bt-nop { height: 44px; }
 
