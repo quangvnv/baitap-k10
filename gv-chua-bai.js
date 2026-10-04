@@ -22,8 +22,8 @@
 
   const TEN_LAYOUT = {
     'reading-mcq': 'Đọc hiểu · trắc nghiệm', 'mcq-list': 'Trắc nghiệm', 'quiz': 'Trắc nghiệm',
-    'spk-dialogue': 'Hoàn thành hội thoại', 'spk-reading-part3': 'Đọc hiểu Đúng/Sai',
-    'reading-cloze': 'Điền chỗ trống (chọn)', 'ket-reading-part7': 'Điền từ vào đoạn',
+    'spk-dialogue': 'Hoàn thành hội thoại', 'spk-reading-part3': 'Đọc hiểu Đúng/Sai', 'ket-reading-part1': 'Biển báo A–H',
+    'reading-cloze': 'Điền chỗ trống (chọn)', 'ket-reading-part7': 'Điền từ vào đoạn', 'ket-reading-part3-16-20': 'Hoàn thành hội thoại',
     'gap-fill': 'Điền từ (kéo thả)', 'pic-match': 'Nối từ với hình', 'word-web': 'Sơ đồ từ',
     'word-select': 'Chọn mục từ', 'reorder': 'Sắp xếp thứ tự', 'matching': 'Nối cột',
     'word-choice': 'Chọn phương án đúng', 'spk-reading-part5': 'Tìm lỗi sai', 'spk-reading-part6': 'Mô tả từ', 'crossword': 'Ô chữ',
@@ -160,7 +160,7 @@
       }
 
       /* ── Đúng/Sai: dropdown .p3-select ──────────────────────────────────────────────────── */
-      case 'spk-reading-part3': {
+      case 'spk-reading-part3': case 'ket-reading-part1': {
         const sel = ds('.p3-select');
         sel.forEach((s, i) => {
           if (!coCau(i)) return;
@@ -278,13 +278,14 @@
       }
 
       /* ── Kéo từ trong bảng vào chỗ trống: phương án = chính bảng từ ──────────────────────── */
-      case 'gap-fill': case 'pic-match': case 'ket-reading-part7': {
+      case 'gap-fill': case 'pic-match': case 'ket-reading-part7': case 'ket-reading-part3-16-20': {
+        const kp3 = layout === 'ket-reading-part3-16-20';   // hội thoại — CÙNG markup .kp7-* (§32.45)
         const drop = layout === 'gap-fill' ? ds('.gf-drop')
           : layout === 'pic-match' ? ds('.pm-box')
             : (ds('.kp7-drop').length ? ds('.kp7-drop') : ds('.kp7-blank'));
         const tuGo = layout === 'ket-reading-part7' && !ds('.kp7-drop').length;
         const pa = tuGo ? null
-          : paChip(layout === 'ket-reading-part7' ? '.kp7-bank .ww-chip' : '.ww-bank .ww-chip');
+          : paChip((layout === 'ket-reading-part7' || kp3) ? '.kp7-bank .ww-chip' : '.ww-bank .ww-chip');
         let ctx = [];
         if (layout === 'gap-fill') {
           ctx = drop.map(d => {
@@ -295,12 +296,24 @@
           });
         } else if (layout === 'ket-reading-part7') {
           ctx = docNguCanh(hop.querySelector('.kp7-content'), drop);
+        } else if (kp3) {
+          /* Ngữ cảnh = lượt nói NGAY TRƯỚC chỗ trống (người kia vừa nói gì) + người đang nói. */
+          ctx = drop.map(d => {
+            const row = d.closest ? d.closest('.kp3d-row') : null;
+            let prev = row ? row.previousElementSibling : null;
+            while (prev && !(prev.classList && prev.classList.contains('kp3d-row'))) prev = prev.previousElementSibling;
+            const sp = row ? chu(row.querySelector('.kp3d-sp')) : '';
+            const pt = prev ? (chu(prev.querySelector('.kp3d-sp')) + ' ' + chu(prev.querySelector('.kp3d-txt'))).trim() : '';
+            return (pt ? pt + ' → ' : '') + sp + ' ______';
+          });
         }
         drop.forEach((_, i) => {
           if (!coCau(i)) return;
           rows.push({
             raw: i,
-            nhan: layout === 'pic-match' ? 'Ô ' + (i + 1) : 'Chỗ trống ' + (i + 1),
+            nhan: layout === 'pic-match' ? 'Ô ' + (i + 1)
+              : kp3 ? 'Câu ' + ((chu(drop[i].closest && drop[i].closest('.kp3d-row') ? drop[i].closest('.kp3d-row').querySelector('.kp3d-num') : null)) || (i + 1))
+              : 'Chỗ trống ' + (i + 1),
             ctx: ctx[i] || '',
             pa: pa,
             // + NGUYÊN CHUỖI đáp án: chip "a/an" là một thẻ, khớp `khopChuoi` của cham-diem.js

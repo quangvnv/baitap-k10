@@ -1,0 +1,17 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-ket-reading-part1.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* LAYOUT 'ket-reading-part1' — BIỂN BÁO A–H (CLAUDE.md §32.44). Dùng CHUNG khung .qp-rs3 + .p3-select
+   của spk-reading-part3 (baigiang.css); file này chỉ đổi HÌNH: ảnh biển báo LẤP cột trái (contain,
+   không cuộn) và ô chọn A–H hẹp hơn ô Đúng/Sai. */
+.sl.lay-ket-reading-part1{padding:10px}
+.sl.lay-ket-reading-part1.has-head{padding-top:0}   /* BẮT BUỘC (§32.9): không thì header bị đẩy xuống 10px */
+
+/* Cột ảnh: rộng theo ảnh (ảnh biển báo thường DỌC), tối đa nửa slide; ảnh cao trọn cột. */
+.sl .qp-rs3.kp1-wrap .kp1-signs{flex:0 1 auto;max-width:50%;min-width:180px;overflow:hidden;
+  padding:6px;display:flex;align-items:center;justify-content:center}
+.sl .qp-rs3.kp1-wrap .kp1-img{display:block;height:100%;width:auto;max-width:100%;object-fit:contain;
+  -webkit-user-drag:none;user-select:none}
+.sl .qp-rs3.kp1-wrap .kp1-noimg{font-size:13px;color:#94a3b8;text-align:center;padding:10px}
+.sl .qp-rs3.kp1-wrap .questions-panel{justify-content:flex-start}
+.sl .qp-rs3.kp1-wrap .p3-select.kp1-select{width:72px;text-align:center}

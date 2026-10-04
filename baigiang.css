@@ -1237,6 +1237,14 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .pm-grid.pm-r3.pm-fit:has(> .pm-cell:nth-child(10):last-child) > .pm-cell,
 .pm-grid.pm-r3.pm-fit:has(> .pm-cell:nth-child(11):last-child) > .pm-cell,
 .pm-grid.pm-r3.pm-fit:has(> .pm-cell:nth-child(12):last-child) > .pm-cell{max-width:calc((100% - 3 * var(--pm-gap)) / 4)}
+/* PHÓNG TO KHỐI ẢNH (S.pmZoom — thanh trượt ở panel): lưới scale quanh tâm khung, biến --pmz = hệ số.
+   Ô thả gắn ảnh nằm trong lưới nên bị phóng theo ⇒ co ngược chữ ô (scale 1/--pmz) để giữ cỡ chip.
+   Box từ nằm TRÊN ảnh đã phóng (nền xanh che phần ảnh tràn sang). */
+.pm-wrap .ww-bank{position:relative;z-index:2}
+.pm-grid[style*="--pmz"] .pm-slots{transform:translateX(-50%) scale(calc(1 / var(--pmz,1)));transform-origin:50% 100%}
+.pm-zoom-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px}
+.pm-zoom-row input[type=range]{flex:1;min-width:0}
+.pm-zoom-row b{min-width:40px;text-align:right}
 .pm-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
   border:1.5px dashed var(--border);border-radius:6px;color:var(--text-muted);font-size:14px;padding:10px}
 /* Ô GẮN ẢNH: cụm .pm-slots căn GIỮA CẠNH DƯỚI ảnh; nhiều ô cùng ảnh thì xếp chồng lên trên. */

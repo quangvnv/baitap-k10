@@ -12,22 +12,24 @@
 .sl.lay-spk-reading-part6.has-head{padding-top:0}   /* §32.9 */
 
 .sl .wd-desc{line-height:1.45}
-.sl .wd-field{display:flex;align-items:baseline;gap:4px;margin-top:4px;flex-wrap:wrap}
-/* DÃY Ô CHỮ kiểu English App — chữ đầu (xanh) + mỗi chữ còn lại 1 ô, CÙNG HÀNG với ô gõ.
+/* KIỂU HIỂN THỊ = English App "Speakout Reading – Exercise 6" (spk-reading-part6-custom.css, 2026-10-04):
+   dãy ô chữ (chữ đầu + mỗi chữ còn lại 1 "_", đậm, liền nhau) ở TRÊN, ô gõ KHUNG viền xanh bo 8px ở DƯỚI.
+   Chỉ đổi hình — hành vi (gõ phần còn lại HOẶC cả từ, wdSyncWord, chấm/hé lộ) giữ nguyên.
    Màu kết quả theo ô gõ bằng :has() ⇒ không phải port logic tô màu sang máy HV/web. */
-.sl .wd-field{align-items:center;gap:10px}
-.sl .wd-word{display:inline-flex;gap:3px;font-family:Consolas,"Courier New",monospace;font-weight:700;
-  font-size:calc(20px * var(--bgz,1));color:#1a2332;letter-spacing:0;user-select:none}
-.sl .wd-c{display:inline-block;min-width:1ch;text-align:center}
-.sl .wd-first{color:#1976D2}
+.sl .wd-field{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:8px}
+.sl .wd-word{display:flex;align-items:center;gap:0;font-family:var(--font-base);font-weight:700;
+  font-size:calc(15px * var(--bgz,1));color:#333;letter-spacing:0;user-select:none}
+.sl .wd-c{display:inline-block;min-width:15px;text-align:center}
+.sl .wd-first{color:#333}
 .sl .wd-field:has(.wd-in.wd-show) .wd-word,.sl .wd-field:has(.wd-in.wd-reveal) .wd-word,
-.sl .wd-field:has(.wd-in.wd-ok) .wd-word{color:#28a745}
-.sl .wd-field:has(.wd-in.wd-bad) .wd-word{color:#dc3545}
-.sl .wd-in{font-size:calc(16px * var(--bgz,1));font-family:Consolas,"Courier New",monospace;letter-spacing:1px;
-  max-width:100%;padding:1px 6px;border:none;border-bottom:2px solid #9aa4ae;border-radius:0;
-  background:transparent;color:#1a2332;outline:none}
-.sl .wd-in:focus{background:var(--blue-light,#e8f1fb);border-bottom-color:var(--blue-primary,#1A6FBF)}
-.sl .wd-in:disabled{opacity:1;cursor:default}
-.sl .wd-in.wd-show,.sl .wd-in.wd-reveal,.sl .wd-in.wd-ok{border-bottom-color:#28a745;color:#155724;font-weight:700}
-.sl .wd-in.wd-bad{border-bottom-color:#dc3545;color:#721c24}
+.sl .wd-field:has(.wd-in.wd-ok) .wd-word{color:#2e7d32}
+.sl .wd-field:has(.wd-in.wd-bad) .wd-word{color:#c62828}
+.sl .wd-in{box-sizing:border-box;width:100%;max-width:400px;padding:8px;font-family:var(--font-base);
+  font-size:calc(15px * var(--bgz,1));font-weight:400;letter-spacing:0;border:2px solid #2196F3;
+  border-radius:8px;background:#fff;color:#333;outline:none;transition:border-color .3s,box-shadow .3s,background .3s}
+.sl .wd-in::placeholder{color:#bbb;font-weight:400}
+.sl .wd-in:focus{border-color:#7B1FA2;box-shadow:0 0 0 4px rgba(156,39,176,.1);background:#fafafa}
+.sl .wd-in:disabled{opacity:1;cursor:default;background:#f5f5f5}
+.sl .wd-in.wd-show,.sl .wd-in.wd-reveal,.sl .wd-in.wd-ok{border-color:#4caf50;background:#f1f8f4;color:#2e7d32}
+.sl .wd-in.wd-bad{border-color:#f44336;background:#fff;color:#c62828}
 .sl .wd-pending{font-size:12px;color:var(--orange-primary,#D4740A);font-style:italic}

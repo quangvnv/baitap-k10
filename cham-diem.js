@@ -60,8 +60,10 @@
     'reading-mcq', 'mcq-list', 'quiz', 'spk-dialogue',       // chọn 1 trong nhiều (radio / bấm chip)
     'spk-listening-part1',                                   // nghe và chọn — cùng markup .question-item (§32.37)
     'spk-reading-part3', 'reading-cloze',                    // dropdown
+    'ket-reading-part1',                                     // biển báo A–H — CÙNG markup .p3-select (§32.44)
     'word-choice', 'spk-reading-part5',                      // gạch chân phương án · tìm lỗi sai (cùng markup .wc-slot)
     'ket-reading-part7', 'gap-fill', 'pic-match',            // điền chuỗi / thả chip
+    'ket-reading-part3-16-20',                               // hội thoại KET P3 16–20 — CÙNG markup .kp7-drop (§32.45)
     'spk-reading-part6',                                     // mô tả từ — ô gõ, đa đáp án "phần còn lại/cả từ"
     'word-web',                                              // thả chip theo TẬP đáp án
     'word-select',                                           // chọn nhiều từ đúng
@@ -201,7 +203,7 @@
       }
 
       /* ── Dropdown: .p3-select / .cloze-blank mang data-answer ─────────────────────────── */
-      case 'spk-reading-part3': case 'reading-cloze': {
+      case 'spk-reading-part3': case 'ket-reading-part1': case 'reading-cloze': {
         const cls = layout === 'reading-cloze' ? 'cloze-blank' : 'p3-select';
         const answers = [];
         h = quetThe(h, cls, (the) => {
@@ -228,7 +230,7 @@
       }
 
       /* ── Điền chuỗi / thả chip: đáp án là CHỮ ở data-ans ──────────────────────────────── */
-      case 'ket-reading-part7': case 'gap-fill': case 'pic-match': case 'spk-reading-part6': {
+      case 'ket-reading-part7': case 'ket-reading-part3-16-20': case 'gap-fill': case 'pic-match': case 'spk-reading-part6': {
         const answers = [];
         const nhat = (cls) => {
           h = quetThe(h, cls, (the) => {
@@ -549,7 +551,7 @@
       case 'reading-mcq': case 'mcq-list': case 'quiz': case 'spk-dialogue': case 'spk-listening-part1':
         return ds('.question-item').map(it => it.dataset.picked === undefined ? null : Number(it.dataset.picked));
 
-      case 'spk-reading-part3':
+      case 'spk-reading-part3': case 'ket-reading-part1':
         return ds('.p3-select').map(s => s.value === '' ? null : Number(s.value));
 
       case 'reading-cloze':
@@ -561,7 +563,7 @@
         return ds('.wc-slot').map(s => s.dataset.ans === '-1' ? -1
           : (s.dataset.picked === undefined ? null : Number(s.dataset.picked)));
 
-      case 'ket-reading-part7': {
+      case 'ket-reading-part7': case 'ket-reading-part3-16-20': {
         const drops = ds('.kp7-drop');
         if (drops.length) return drops.map(chip);
         return ds('.kp7-blank').map(i => (i.value || '').trim() || null);
@@ -671,7 +673,7 @@
         });
         break;
 
-      case 'spk-reading-part3':
+      case 'spk-reading-part3': case 'ket-reading-part1':
         ds('.p3-select').forEach((s, i) => toO(s, dung[i], 'p3-correct', 'p3-incorrect'));
         break;
       case 'reading-cloze':
@@ -689,7 +691,7 @@
         });
         break;
 
-      case 'ket-reading-part7': {
+      case 'ket-reading-part7': case 'ket-reading-part3-16-20': {
         const drops = ds('.kp7-drop');
         if (drops.length) {
           drops.forEach((d, i) => toChip(d, dung[i]));
