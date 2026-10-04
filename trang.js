@@ -141,7 +141,7 @@ function khungCua(i) {
 /* Engine kéo-thả / ô chữ của app (engine.js). Mỗi hàm tự dò lớp `.*-live` của layout tương ứng
    và tự đánh dấu đã gắn, nên gọi thừa cũng vô hại — không cần rẽ nhánh theo layout ở đây. */
 function ganEngine(root) {
-  [window.pmFitGrids, window.wireWordWeb, window.wireKp7, window.wireReorder, window.wireMatching, window.wireSw9]
+  [window.pmFitGrids, window.pmFlipWire, window.wireWordWeb, window.wireKp7, window.wireReorder, window.wireMatching, window.wireSw9]
     .forEach(f => { if (typeof f === 'function') { try { f(root); } catch (e) { console.warn(e); } } });
 }
 
@@ -385,6 +385,7 @@ $('btXemLai').addEventListener('click', () => {
     const k = khungCua(i);                       // slide chưa mở tới cũng dựng để xem được
     const el = k.querySelector('.sl') || k;
     khoaKhung(el);
+    el.querySelectorAll('.pm-flip').forEach(w => { w.classList.add('pm-flip-all'); if (w._pmSync) w._pmSync(); });   // lật thẻ: xem lại thì ngửa hết
     const da = theoSlide && theoSlide[i];
     if (!da) return;
     ChamDiem.toMau(el, sl.layout, ChamDiem.soDapAn(sl.layout, baiLamCua(i), da), { dapAn: da });

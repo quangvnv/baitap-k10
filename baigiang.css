@@ -1,6 +1,7 @@
 /* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
    Nguồn: src/renderer/css/baigiang.css
    Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+@import url('font-app.css');
 /* baigiang.css — style cho trang Soạn bài giảng (tách từ baigiang-soan.html).
    Nạp TRƯỚC buttons.css/table.css/alert.css để 3 file đó vẫn override như cũ.
    Mirror (mirror-host) gom qua document.styleSheets.cssRules như buttons.css. */
@@ -10,7 +11,7 @@
   --green-primary:#1E8A5E; --orange-primary:#D4740A; --accent:#D97706;
   --bg-page:#F4F7FB; --bg-white:#FFFFFF; --border:#DDE4EE;
   --text-primary:#1A2332; --text-muted:#5A6472;
-  --radius:6px; --font-base:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --radius:6px; --font-base:'Be Vietnam Pro','Segoe UI','Helvetica Neue',Arial,sans-serif;
   --bar-h:40px;
   /* Hệ số ZOOM cỡ chữ TEXT BÀI GIẢNG (§12/§32) — JS (bgZoomInit ở baigiang-soan.js) ghi đè trên :root
      theo localStorage['app_baigiang_zoom']; Ctrl+cuộn trên slide để đổi, Ctrl+0 về 1.
@@ -21,9 +22,13 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
   background:var(--bg-page);color:var(--text-primary);font-size:15px}
+/* NỘI DUNG SLIDE giữ Segoe UI (03/10/2026): giao diện app đổi sang Be Vietnam Pro nhưng slide là
+   khung cố định 960×540 — Be Vietnam Pro rộng hơn ~15% sẽ làm tràn chữ ở các bài đã soạn.
+   Slide có phông riêng (slots.fontFamily, §32.33) khai đè --font-base inline trên .sl ⇒ vẫn thắng rule này. */
+.sl{--font-base:'Segoe UI','Helvetica Neue',Arial,sans-serif}
 
 /* ── Nút + Toolbar TB1/TB2/TB3: DÙNG CHUẨN APP qua css/buttons.css (nạp SAU style này ở <head>, §8) ── */
-.kq-navbtn{width:92px}                 /* Trang chủ + Quay lại bằng nhau, bo 6px (§8) */
+.kq-navbtn{width:100px}                 /* Trang chủ + Quay lại bằng nhau, bo 6px (§8) */
 
 /* ── Khung trang ───────────────────────────────────────────────────────── */
 .app{display:flex;flex-direction:column;height:100vh}
@@ -32,6 +37,10 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .hide{display:none !important}
 /* Liên kết Question Bank — đẩy sát mép phải TB1, tách khỏi nhóm tab (§8). */
 #bgGotoQbank{margin-left:auto}
+/* Tên bài giảng đang mở trên TB1 — chiếm chỗ trống giữa tab và nút Question Bank, dài thì "…". */
+.tb1 .bg-ten{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:14px;font-weight:600;color:var(--text-primary,#1f2937);padding:0 10px 0 4px}
+.tb1 .bg-ten.bg-ten--none{font-weight:400;font-style:italic;color:var(--text-muted)}
 
 /* ── LANDING: danh sách bài giảng đã lưu ───────────────────────────────── */
 .bg-landing{flex:1;min-height:0;display:flex;flex-direction:column;padding:10px;background:var(--bg-page)}
@@ -100,17 +109,17 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .props-col.collapsed{width:30px}
 .props-hd{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text-muted);
   text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);letter-spacing:.4px}
-.props-body{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:10px}
+.props-body{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:10px;font-size:12px}
 .field{display:flex;flex-direction:column;gap:4px}
 .field label{font-size:11px;font-weight:700;color:var(--text-muted)}
 .field select,.field input,.field textarea{border:1.5px solid var(--border);border-radius:0px;
-  padding:5px 8px;font-family:var(--font-base);font-size:13px;color:var(--text-primary);background:#fff;width:100%}
+  padding:5px 8px;font-family:var(--font-base);font-size:12px;color:var(--text-primary);background:#fff;width:100%}
 .field textarea{resize:vertical;min-height:60px;line-height:1.4}
 .field select:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue-primary);
   box-shadow:0 0 0 3px rgba(26,111,191,.12)}
 .slot-group{border:1px solid var(--border);border-radius:0px;padding:8px;display:flex;
   flex-direction:column;gap:6px;background:#FAFBFD}
-.slot-group .slot-title{font-size:11px;font-weight:700;color:var(--blue-primary);text-transform:uppercase}
+.slot-group .slot-title,.props-body .slot-title{font-size:11px;font-weight:700;color:var(--blue-primary);text-transform:uppercase}
 /* Card GẬP/MỞ ở panel phải (mẫu: "Layout mẫu") — bấm header để gập. Khi gập chỉ còn 1 dòng header,
    phần .pcard-body ẩn; header vẫn ghi giá trị đang chọn (.pcard-val) để GV liếc là biết. */
 .pcard{border:1px solid var(--border);border-radius:0px;background:#FAFBFD;display:flex;flex-direction:column}
@@ -141,18 +150,32 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .bgp-note{font-size:11px;line-height:1.4;color:var(--text-muted)}
 /* Card "Phông chữ" trong panel Thuộc tính (§32.33). Chữ nhỏ như mọi dòng chú thích của panel;
    KHÔNG dùng .hint-tiny (class đó bị display:none toàn trang — xem §32.13). */
+/* Menu chọn phông kiểu Word (§32.33): mỗi dòng vẽ bằng chính phông đó, cỡ to hơn chữ giao diện cho dễ so */
+.cbx-item[data-pf]{font-size:15px;padding:4px 10px}
 .bgf-sel{width:100%;height:26px;padding:0 6px;border:1px solid var(--border);border-radius:6px;
   font-family:var(--font-base);font-size:12px;color:var(--text-primary);background:#fff}
 .bgf-info{font-size:11px;line-height:1.4;color:var(--text-muted)}
 .bgf-info.bgf-warn{color:var(--orange-primary,#d4740a);background:rgba(212,116,10,.08);
   border:1px solid rgba(212,116,10,.3);border-radius:6px;padding:4px 6px}
-.bgf-note{font-size:10.5px;line-height:1.4;color:var(--text-muted)}
+.bgf-note{font-size:11px;line-height:1.4;color:var(--text-muted)}
+/* Ô cỡ chữ nội dung bài tập (slots.fontPt) trong card Phông & cỡ chữ */
+.bgf-fs{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.bgf-fs-lb{font-size:12px;color:var(--text-muted)}
+.bgf-fs-in{width:72px;height:26px;padding:0 6px;border:1px solid var(--border);border-radius:6px;font-size:12px}
 /* Checkbox trong panel Thuộc tính (vd "Ẩn header" ở card Tiêu đề slide — §32.16) */
-.bg-chk{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-main,#1F2937);cursor:pointer;user-select:none}
+.bg-chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-main,#1F2937);cursor:pointer;user-select:none}
 .bg-chk input{width:13px;height:13px;margin:0;flex-shrink:0;cursor:pointer}
 .block-add{display:flex;gap:4px;flex-wrap:wrap}
 .block-add .btn{height:24px;padding:2px 8px;font-size:11px}
 .hint-tiny{font-size:11px;color:var(--text-muted);line-height:1.4; display:none;}
+/* THANG CỠ CHỮ PANEL THUỘC TÍNH (chốt 2026-10-03) — 3 bậc, mọi mục trong #propsBody theo đúng thang này:
+     10px  nhãn tầng (.bgp-tier)
+     11px  tiêu đề card/nhóm (.pcard-title · .slot-title · .field label) · dòng chú thích/gợi ý · NÚT
+     12px  nội dung: ô nhập / dropdown / textarea / nhãn checkbox / nhãn thuộc tính (.tb-lbl, .ww-cbx)
+   :where() = độ ưu tiên 0 cho ô nhập ⇒ chỉ thay cỡ MẶC ĐỊNH của trình duyệt (13.33px + phông hệ thống),
+   class riêng của layout vẫn thắng. Nút: ép 11px kể cả .btn-sm (12px) / .btn trần (13.33px). */
+.props-body :where(input,select,textarea){font-family:var(--font-base);font-size:12px}
+.props-body .btn{font-size:11px}
 /* (Popup Nhập PowerPoint đã bỏ 2026-07-21 — chọn file là nhập luôn, báo bằng toast/uiAlert.) */
 
 /* ── Nội dung SLIDE (dùng chung preview + player) ──────────────────────── */
@@ -660,7 +683,7 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 /* ── Popup DANH SÁCH ĐĂNG NHẬP (mở bằng nút 👥 trên dock) — NỔI TRÊN dock (z9700), dưới dialog (z9950) ── */
 .ll-overlay{position:fixed;inset:0;z-index:9750;background:rgba(10,20,40,.5);
   display:none;align-items:center;justify-content:center;
-  font-family:'Segoe UI',system-ui,Arial,sans-serif}
+  font-family:var(--font-base)}
 .ll-overlay.on{display:flex}
 .ll-box{width:75vw;height:75vh;display:flex;flex-direction:column;background:#0f172a;color:#e2e8f0;
   border:1px solid #334155;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
@@ -704,7 +727,7 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
    85%×85% theo §18. Bảng con dùng lại tông màu .ll-* để 2 popup của màn trình chiếu đồng bộ. ── */
 .kr-overlay{position:fixed;inset:0;z-index:9750;background:rgba(10,20,40,.5);
   display:none;align-items:center;justify-content:center;
-  font-family:'Segoe UI',system-ui,Arial,sans-serif}
+  font-family:var(--font-base)}
 .kr-overlay.on{display:flex}
 .kr-box{width:85vw;height:85vh;display:flex;flex-direction:column;background:#0f172a;color:#e2e8f0;
   border:1px solid #334155;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
@@ -1101,7 +1124,7 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .sl .kp7-bank.kp7-side{position:relative;display:block;flex:0 0 auto;max-height:none;height:100%;
   box-sizing:border-box;overflow-y:auto;overflow-x:hidden}
 .sl .kp7-bank.kp7-side .ww-chip{display:block;width:100%;box-sizing:border-box;margin:0 0 6px;
-  border-radius:6px;text-align:left;white-space:normal;line-height:1.35;padding:5px 10px}
+  text-align:left;white-space:normal;line-height:1.35;padding:5px 10px}
 .sl .kp7-bank.kp7-side .ww-chip:last-child{margin-bottom:0}
 /* Chip ĐÃ THẢ vào ô trong đoạn văn: bố cục 2 cột dùng cho CÂU dài → cho xuống dòng, kẻo tràn ngang.
    CHỈ trong .kp7-2col để slide cũ (bố cục 'top', chip là từ ngắn) giữ nguyên nowrap. */
@@ -1132,6 +1155,14 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .sl .kp7-drop .ww-chip{font-size:calc(13.5px * var(--bgz,1));padding:2px 9px}
 .kp7-live .kp7-drop:empty{border-color:#9db4d0;background:rgba(244,247,251,.7)}
 .kp7-live .kp7-drop.kp7-drop-hot:empty{border-color:var(--blue-primary);background:var(--blue-light)}
+/* CỤM DÀI (.kp7-long = bảng từ có cụm > 3 từ): chip thành Ô CHỮ NHẬT bo góc (≤ 3 từ giữ pill).
+   Chip ĐÃ THẢ chạy INLINE theo dòng chữ: xuống dòng tự nhiên giữa câu, viền tự cắt/nối ở mỗi dòng
+   (box-decoration-break) → không còn khối inline-block to bị đẩy xuống dòng làm giãn dòng justify phía trên. */
+.sl .kp7-long .kp7-bank .ww-chip{border-radius:6px;white-space:normal}
+.sl .kp7-long .kp7-drop:not(:empty){display:inline;min-width:0;min-height:0;margin:0 2px;border:none;background:none;vertical-align:baseline}
+.sl .kp7-long .kp7-drop .ww-chip{display:inline;white-space:normal;border-radius:6px;padding:2px 7px;line-height:inherit;
+  text-align:inherit;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.ww-ghost.kp7-gl{display:block;box-sizing:border-box;white-space:normal;border-radius:6px;line-height:1.35}
 /* Ô TỰ GÕ inline tại (n) — KHÔNG distractor (kiểu Speakout Listening Ex2) */
 .sl .kp7-blank{font-size:calc(15px * var(--bgz,1));width:120px;max-width:220px;padding:1px 6px;margin:0 3px;
   border:none;border:1.5px solid var(--blue-primary);border-radius:6px; background:transparent;vertical-align:baseline;
@@ -1213,6 +1244,21 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
    (Chip đã thả vào ô vẫn có nền trắng của .ww-chip — đó là cái cần đọc được.) */
 .ww-live .pm-box:empty{border:1.5px dashed #1A6FBF;background:transparent}
 .ww-live .pm-box.ww-drop-hot:empty{border-color:var(--blue-primary);background:rgba(235,244,255,.55)}
+/* CHẾ ĐỘ LẬT THẺ (S.pmFlip, chỉ khi chiếu) — thẻ do pmFlipWire() dựng, đặt đúng khung từng ảnh (% của
+   .pm-canvas). Thẻ nằm SAU lưới ảnh, TRƯỚC các ô thả trong DOM ⇒ ô thả (đã lật) nổi trên thẻ. */
+.pm-cards{position:absolute;inset:0;pointer-events:none}
+.pm-card{position:absolute;pointer-events:auto;cursor:pointer;container-type:size;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0 10px,transparent 10px 20px),
+             linear-gradient(160deg,#2b86d9,#1A6FBF 55%,#0f4f8f);
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.55),0 2px 6px rgba(0,0,0,.25);
+  transition:transform .3s ease,opacity .3s ease,box-shadow .15s;backface-visibility:hidden}
+.pm-card span{font-size:55cqmin;font-weight:700;line-height:1;text-shadow:0 2px 4px rgba(0,0,0,.3);user-select:none}
+.pm-card:hover{box-shadow:inset 0 0 0 3px #fff,0 4px 10px rgba(0,0,0,.3)}
+.pm-card.open{transform:perspective(800px) rotateY(180deg);opacity:0;pointer-events:none}
+.pm-box.pm-hid{visibility:hidden}
+.pm-grid img.pm-flip-in{animation:pmFlipIn .45s ease}
+@keyframes pmFlipIn{0%{transform:scaleX(0)}45%{transform:scaleX(0)}100%{transform:scaleX(1)}}
 /* Chế độ SOẠN: ô hiện viền đứt để thấy vị trí đã đặt; từ nhiễu mờ, không kéo được */
 .pm-author .pm-box{background:transparent;border:1.5px dashed #9db4d0}
 .pm-author .ww-chip{cursor:grab}

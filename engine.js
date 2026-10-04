@@ -90,6 +90,68 @@ function pmFitGrids(root){
   });
 }
 
+/* ── pmFlipWire — trích từ baigiang-soan.js ── */
+function pmFlipWire(root){
+  if(!root || !root.querySelectorAll) return;
+  root.querySelectorAll('.pm-wrap.pm-flip').forEach(wrap=>{
+    if(wrap._pmFlipWired) return; wrap._pmFlipWired=true;
+    const canvas=wrap.querySelector('.pm-canvas'), grid=canvas && canvas.querySelector('.pm-grid');
+    if(!grid) return;
+    const imgs=[...grid.querySelectorAll('img')]; if(!imgs.length) return;
+    const layer=document.createElement('div'); layer.className='pm-cards';
+    const cards=imgs.map((_,j)=>{ const c=document.createElement('div'); c.className='pm-card'; c.dataset.j=j;
+      c.innerHTML='<span>?</span>'; layer.appendChild(c); return c; });
+    grid.after(layer);                                        // sau lưới ảnh, trước các ô thả (ô nổi trên thẻ)
+    const seen=new Set(); let rects=[], own=new Map();
+    wrap._pmOpen=-1;
+    const measure=()=>{
+      const cr=canvas.getBoundingClientRect(); if(!cr.width || !cr.height) return false;
+      rects=imgs.map(im=>{ const r=im.getBoundingClientRect();
+        return { l:(r.left-cr.left)/cr.width*100, t:(r.top-cr.top)/cr.height*100,
+                 w:r.width/cr.width*100, h:r.height/cr.height*100 }; });
+      rects.forEach((r,j)=>{ const st=cards[j].style;
+        st.left=`calc(${r.l}% - 1px)`; st.top=`calc(${r.t}% - 1px)`;   // nới 1px mỗi phía: không lộ viền ảnh dưới thẻ
+        st.width=`calc(${r.w}% + 2px)`; st.height=`calc(${r.h}% + 2px)`; });
+      own=new Map();
+      wrap.querySelectorAll('.pm-box').forEach(b=>{
+        const x=parseFloat(b.style.left)||0, y=parseFloat(b.style.top)||0;
+        let j=rects.findIndex(r=>x>=r.l && x<=r.l+r.w && y>=r.t && y<=r.t+r.h);
+        if(j<0){ let best=1e9; rects.forEach((r,k)=>{ const dx=x-(r.l+r.w/2), dy=y-(r.t+r.h/2), d=dx*dx+dy*dy;
+          if(d<best){ best=d; j=k; } }); }
+        own.set(b,j);
+      });
+      return true;
+    };
+    const sync=()=>{
+      if(!rects.length && !measure()) return;
+      const all=wrap.classList.contains('pm-flip-all') || !!wrap.querySelector('.pm-box[data-graded]');
+      const boxesOf=cards.map(()=>[]); own.forEach((j,b)=>{ if(boxesOf[j]) boxesOf[j].push(b); });
+      cards.forEach((c,j)=>{
+        const bx=boxesOf[j];
+        const done=bx.length ? bx.every(b=>b.querySelector('.ww-chip')) : seen.has(j);
+        const pin=bx.some(b=>b.dataset.shown);
+        const open=all || pin || done || j===wrap._pmOpen;
+        c.classList.toggle('open',open);
+        bx.forEach(b=>b.classList.toggle('pm-hid',!open));
+      });
+    };
+    wrap._pmSync=()=>{ measure(); sync(); };
+    layer.addEventListener('click',e=>{
+      const c=e.target.closest && e.target.closest('.pm-card'); if(!c || c.classList.contains('open')) return;
+      e.stopPropagation();
+      const j=+c.dataset.j; wrap._pmOpen=j; seen.add(j);
+      const im=imgs[j]; im.classList.remove('pm-flip-in'); void im.offsetWidth; im.classList.add('pm-flip-in');
+      sync();
+    });
+    wrap.addEventListener('pointerup',()=>setTimeout(sync,0));   // thả/kéo chip ⇒ thẻ đủ từ thì giữ ngửa
+    const relayout=()=>{ if(measure()) sync(); };
+    imgs.forEach(im=>{ if(!im.complete){ im.addEventListener('load',relayout); im.addEventListener('error',relayout); } });
+    if(typeof ResizeObserver==='function') new ResizeObserver(relayout).observe(canvas);
+    wrap.querySelectorAll('.pm-box').forEach(b=>b.classList.add('pm-hid'));   // úp sẵn tới khi đo xong
+    relayout();
+  });
+}
+
 /* ── wireWordWeb — trích từ baigiang-soan.js ── */
 function wireWordWeb(root){
   root.querySelectorAll('.ww-wrap.ww-live').forEach(wrap=>{
@@ -179,7 +241,10 @@ function wireKp7(root){
       else { srcChip=null; drag=chip; }                                                        // kéo chip ĐÃ đặt (di chuyển / trả về)
       const r=chip.getBoundingClientRect();
       ghost=chip.cloneNode(true); ghost.classList.add('ww-ghost'); ghost.classList.remove('ww-dragging','used');
-      ghost.style.width=r.width+'px'; document.body.appendChild(ghost);
+      // Cụm DÀI: chip đã thả chạy inline nhiều dòng → rect rộng cả dòng; ghost cho xuống dòng, chặn bề rộng.
+      if(wrap.classList.contains('kp7-long')){ ghost.classList.add('kp7-gl'); ghost.style.width=Math.min(r.width,320)+'px'; }
+      else ghost.style.width=r.width+'px';
+      document.body.appendChild(ghost);
       if(!inBank) chip.classList.add('ww-dragging');
       moveGhost(e);
       try{ wrap.setPointerCapture(e.pointerId); }catch(_){}
