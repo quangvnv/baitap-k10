@@ -224,28 +224,31 @@ function veDaiQR(ds) {
   if (!CHIEU || DAI_PHIEN.length < 2) { hien('ctDS', false); el.innerHTML = ''; return; }
   const ngay = (t) => { const d = new Date(t); return isNaN(d) ? '' : ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2); };
   el.innerHTML = DAI_PHIEN.map((p, i) => {
-    let hinh = '';
-    try { hinh = QR.svg(diaChiVaoBai(p.ma_phien), { oCo: 2 }); } catch { hinh = ''; }
     const dang = PHIEN_HIEN && PHIEN_HIEN.ma_phien === p.ma_phien;
+    const mo = p.trang_thai === 'mo';
     const tenBai = p.bai_tap ? p.bai_tap.ten : '';
     const phan = (tenBai.match(/\((slide [^)]*)\)$/) || [])[1] || '';
-    return '<button type="button" class="ct-qr' + (dang ? ' dang' : '') + (p.trang_thai !== 'mo' ? ' dong' : '')
-      + '" data-i="' + i + '" title="' + esc(tenBai + ' · ' + p.ma_lop + (dang ? ' — bấm lại để phóng to mã QR' : ' — bấm để theo dõi phiên này')) + '">'
-      + '<span class="ct-qr-hinh">' + hinh + '</span>'
+    // Thẻ = chọn phiên để theo dõi; nút QR = phóng to mã QR của CHÍNH phiên đó (không vẽ QR nhỏ —
+    // nhiều mã cùng hiện thì học viên quét nhầm).
+    return '<div role="button" tabindex="0" class="ct-qr' + (dang ? ' dang' : '') + (mo ? '' : ' dong')
+      + '" data-i="' + i + '" title="' + esc(tenBai + ' · ' + p.ma_lop + ' — bấm để theo dõi phiên này') + '">'
       + '<span class="ct-qr-chu"><b>' + esc(p.ma_phien) + '</b>'
       + '<small>' + esc(p.ma_lop) + (phan ? ' · ' + esc(phan) : '') + '</small>'
-      + '<small>' + esc(ngay(p.mo_luc)) + (p.trang_thai !== 'mo' ? ' · đã đóng' : '') + '</small></span>'
-      + '</button>';
+      + '<small>' + esc(ngay(p.mo_luc)) + (mo ? '' : ' · đã đóng') + '</small></span>'
+      + '<button type="button" class="ct-qr-nut" data-qr="' + i + '"' + (mo ? '' : ' disabled')
+      + ' title="' + (mo ? 'Hiện mã QR của phiên này' : 'Phiên đã đóng') + '">QR</button>'
+      + '</div>';
   }).join('');
   hien('ctDS', true);
 }
 
 $('ctDS').addEventListener('click', async (e) => {
+  const q = e.target.closest('.ct-qr-nut');
+  if (q) { const p = DAI_PHIEN[+q.dataset.qr]; if (p) moQR(p); return; }
   const b = e.target.closest('.ct-qr');
   if (!b) return;
   const p = DAI_PHIEN[+b.dataset.i];
-  if (!p) return;
-  if (PHIEN_HIEN && PHIEN_HIEN.ma_phien === p.ma_phien) { moQR(); return; }
+  if (!p || (PHIEN_HIEN && PHIEN_HIEN.ma_phien === p.ma_phien)) return;
   await moChiTiet(p);
   veDaiQR(DAI_PHIEN);
 });
@@ -561,8 +564,8 @@ function dongBoNutQR() {
     : 'Phiên đã đóng — học viên không vào làm được nữa';
 }
 
-function moQR() {
-  const p = PHIEN_HIEN;
+function moQR(pp) {
+  const p = (pp && pp.ma_phien) ? pp : PHIEN_HIEN;   // gọi từ nút chi tiết thì pp là sự kiện
   if (!p || p.trang_thai !== 'mo') return;
   const diaChi = diaChiVaoBai(p.ma_phien);
   $('qrTen').textContent = p.bai_tap ? p.bai_tap.ten : 'Quét để vào làm bài';

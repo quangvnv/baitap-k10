@@ -331,8 +331,11 @@ body.chieu #thanhTren, body.chieu #thanhTab, body.chieu #manCT > header.tb { dis
 .ct-qr:hover { border-color: #93c5fd; }
 .ct-qr.dang { border-color: #1A6FBF; background: #eff6ff; }
 .ct-qr.dong { opacity: .55; }
-.ct-qr-hinh { width: 72px; height: 72px; display: block; }
-.ct-qr-hinh svg { width: 100%; height: 100%; display: block; }
+.ct-qr { padding: 6px 6px 6px 10px; }
+.ct-qr-nut { align-self: stretch; min-width: 44px; padding: 0 10px; border: 1px solid #1A6FBF; border-radius: 6px;
+  background: #fff; color: #1A6FBF; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.ct-qr-nut:hover { background: #1A6FBF; color: #fff; }
+.ct-qr-nut:disabled { border-color: #cbd5e1; color: #94a3b8; background: #fff; cursor: not-allowed; }
 .ct-qr-chu { display: flex; flex-direction: column; gap: 2px; }
 .ct-qr-chu b { font-size: 18px; letter-spacing: 2px; color: #1A6FBF; }
 .ct-qr-chu small { font-size: 12px; color: #64748b; white-space: nowrap; }
