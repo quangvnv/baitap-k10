@@ -21,6 +21,8 @@
 
 const KHOA_MA_HV = 'bt_ma_hv';          // nhớ mã học viên, buổi sau chỉ gõ mã phiên
 const KHOA_HANG_DOI = 'bt_hang_doi';    // bài đã làm nhưng chưa gửi được
+const KHOA_DA_NOP = 'bt_da_nop';        // bài vừa nộp (ảnh chụp các slide) — tải lại trang vẫn xem lại được
+const DA_NOP_GIU_GIO = 12;              // quá 12 giờ thì bỏ, khỏi mở nhầm bài cũ ở buổi sau
 
 let PHIEN = null;      // { luotId, de, soCau, conLaiGiay, ... } — trả về từ batDau
 let CHI_SO = 0;        // slide đang xem
@@ -92,6 +94,8 @@ $('btVao').addEventListener('click', async () => {
   try {
     PHIEN = await goiFn('batDau', { maPhien, maHV });
     PHIEN.maHV = maHV;
+    PHIEN.maPhien = maPhien;
+    boDaNop();                                   // vào bài mới ⇒ bỏ ảnh chụp bài trước
     localStorage.setItem(KHOA_MA_HV, maHV);
     vaoLamBai();
   } catch (e) {
@@ -329,7 +333,7 @@ async function nop(tuDong) {
   }
 }
 
-function xong(kq, loi) {
+function xong(kq, loi, moLai) {
   KET_QUA = kq;
   hien('manBai', false); hien('manXong', true);
   if (kq) {
@@ -349,7 +353,61 @@ function xong(kq, loi) {
      mình để đối chiếu khi GV chữa bài trên lớp. Có khóa đáp án (answer_visibility ≠ NONE) thì tô
      thêm xanh/đỏ; không có thì CHỈ hiện bài làm — máy học viên không tự quyết chuyện hé lộ. */
   hien('btXemLai', true);
+  if (!moLai) luuDaNop();
 }
+
+/* ── LƯU BÀI ĐÃ NỘP vào máy học viên ─────────────────────────────────────────────────────────
+   Điện thoại vuốt quá đà là trình duyệt tải lại trang ⇒ trước đây mất màn kết quả lẫn bài làm.
+   Nay chụp HTML từng slide ngay lúc nộp (trước khi Xem lại tô màu) rồi cất localStorage; tải lại
+   trang thì dựng lại màn kết quả từ ảnh chụp. Trạng thái bài làm (radio đã tick, chữ trong ô gõ,
+   lựa chọn dropdown) là THUỘC TÍNH JS, không nằm trong HTML ⇒ phải chép sang attribute trước khi
+   chụp. Chip kéo-thả là di chuyển DOM thật nên tự có trong HTML.
+   ⚠ Thẻ lật `.pm-card` do pmFlipWire chèn — gỡ khỏi ảnh chụp, nếu không gắn engine lần nữa sẽ
+     chèn chồng thêm một bộ thẻ. */
+function chupKhung(k) {
+  k.querySelectorAll('input').forEach(el => {
+    if (el.type === 'radio' || el.type === 'checkbox') { if (el.checked) el.setAttribute('checked', ''); else el.removeAttribute('checked'); }
+    else el.setAttribute('value', el.value);
+  });
+  k.querySelectorAll('textarea').forEach(el => { el.textContent = el.value; });
+  k.querySelectorAll('select').forEach(el => [...el.options].forEach(o => {
+    if (o.selected) o.setAttribute('selected', ''); else o.removeAttribute('selected');
+  }));
+  const c = k.cloneNode(true);
+  c.querySelectorAll('.pm-card').forEach(x => x.remove());
+  return c.innerHTML;
+}
+function luuDaNop() {
+  try {
+    const ds = slides().map((sl, i) => {
+      const o = Object.assign({}, sl);
+      if (coBaiTap(i)) o.html = chupKhung(khungCua(i));
+      return o;
+    });
+    veSlide();                                   // khungCua() có thể vừa dựng thêm khung → ẩn lại
+    localStorage.setItem(KHOA_DA_NOP, JSON.stringify({
+      luc: Date.now(), maPhien: PHIEN.maPhien || '', ten: PHIEN.ten || '', luotId: PHIEN.luotId,
+      ketQua: KET_QUA, loi: KET_QUA ? '' : 'chưa gửi được', slides: ds,
+    }));
+  } catch (e) { /* hết chỗ / trình duyệt chặn — chỉ mất tính năng xem lại sau khi tải lại trang */ }
+}
+function moLaiDaNop() {
+  let r = null;
+  try { r = JSON.parse(localStorage.getItem(KHOA_DA_NOP) || 'null'); } catch (e) { r = null; }
+  if (!r || !r.slides || !r.slides.length) return false;
+  if (Date.now() - (r.luc || 0) > DA_NOP_GIU_GIO * 3600e3) { boDaNop(); return false; }
+  const p = new URLSearchParams(location.search).get('p');
+  if (p && /^\d{6}$/.test(p) && r.maPhien && p !== r.maPhien) return false;   // quét QR phiên khác ⇒ vào bài mới
+  PHIEN = { luotId: r.luotId, maPhien: r.maPhien, ten: r.ten, de: { slides: r.slides } };
+  CHI_SO = 0; XEM_LAI = false;
+  $('lopSlide').innerHTML = '';
+  Object.keys(KHUNG).forEach(k => delete KHUNG[k]);
+  $('menuTen').textContent = r.ten || 'Bài tập';
+  hien('manVao', false);
+  xong(r.ketQua || null, r.loi || 'chưa gửi được', true);
+  return true;
+}
+function boDaNop() { try { localStorage.removeItem(KHOA_DA_NOP); } catch (e) { } }
 
 /* ── XEM LẠI BÀI ─────────────────────────────────────────────────────────────────────────────
    Dùng lại NGUYÊN các khung DOM học viên vừa làm (KHUNG giữ nguyên sau khi nộp) ⇒ không phải dựng
@@ -403,6 +461,7 @@ $('btXemLai').addEventListener('click', () => {
 });
 
 $('btVeDau').addEventListener('click', () => {
+  boDaNop();
   PHIEN = null; KET_QUA = null; XEM_LAI = false;
   $('manBai').classList.remove('xem-lai');
   $('lopSlide').innerHTML = '';
@@ -826,3 +885,6 @@ window.addEventListener('beforeunload', e => {
   ['click', 'resize', 'orientationchange'].forEach(ev =>
     window.addEventListener(ev, () => setTimeout(() => { if (dangMo) chu.textContent = ve(); }, 60)));
 })();
+
+/* Tải lại trang sau khi đã nộp (vuốt quá đà trên điện thoại…) ⇒ mở lại màn kết quả + Xem lại bài. */
+moLaiDaNop();

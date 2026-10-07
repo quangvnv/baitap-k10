@@ -70,6 +70,9 @@ html, body {
 }
 /* Chặn tràn ngang bằng `clip` (KHÔNG tạo vùng cuộn riêng như `hidden`, nên không khoá cuộn dọc) */
 body { overflow-x: clip; }
+/* Chặn "vuốt xuống để tải lại" của trình duyệt điện thoại (Chrome Android, Safari iOS 16+):
+   vuốt quá đà ở đầu trang là tải lại cả trang, mất màn làm bài/kết quả. Cuộn thường không đổi. */
+html, body { overscroll-behavior-y: none; }
 
 a { color: var(--blue); text-decoration: none; }
 a:hover { color: var(--blue-hover); text-decoration: underline; }
