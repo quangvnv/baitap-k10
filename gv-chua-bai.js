@@ -26,7 +26,7 @@
     'reading-cloze': 'Điền chỗ trống (chọn)', 'ket-reading-part7': 'Điền từ vào đoạn', 'ket-reading-part3-16-20': 'Hoàn thành hội thoại',
     'gap-fill': 'Điền từ (kéo thả)', 'pic-match': 'Nối từ với hình', 'word-web': 'Sơ đồ từ',
     'word-select': 'Chọn mục từ', 'reorder': 'Sắp xếp thứ tự', 'matching': 'Nối cột',
-    'word-choice': 'Chọn phương án đúng', 'spk-reading-part5': 'Tìm lỗi sai', 'spk-reading-part6': 'Mô tả từ', 'crossword': 'Ô chữ',
+    'word-choice': 'Chọn phương án đúng', 'spk-reading-part5': 'Tìm lỗi sai', 'spk-reading-part6': 'Mô tả từ', 'ket-reading-part8': 'Điền phiếu', 'crossword': 'Ô chữ',
   };
 
   /* Chuẩn hoá chuỗi PHẢI khớp `chuanChuoi` của src/shared/cham-diem.js — lệch là tô xanh/đỏ
@@ -333,6 +333,21 @@
           rows.push({
             raw: i, nhan: 'Câu ' + (i + 1) + (first ? ' · chữ đầu "' + first + '"' : ''),
             ctx: card ? chu(card.querySelector('.wd-desc')) : '',
+            pa: null, dungKeys: new Set(phuongAn(answers[i])), chuoi: true,
+          });
+        });
+        break;
+      }
+
+      /* ── Điền phiếu (ket-reading-part8): ô gõ .wd-in, nhãn ô = nhãn trên phiếu ─────────────── */
+      case 'ket-reading-part8': {
+        const ft = chu(hop.querySelector('.kp8-ft'));
+        ds('.wd-in').forEach((inp, i) => {
+          if (!coCau(i)) return;
+          const f = inp.closest ? inp.closest('.kp8-field') : null;
+          rows.push({
+            raw: i, nhan: 'Ô ' + (i + 1) + (f ? ' · ' + chu(f.querySelector('.kp8-lbl')) : ''),
+            ctx: ft ? 'Phiếu: ' + ft : '',
             pa: null, dungKeys: new Set(phuongAn(answers[i])), chuoi: true,
           });
         });

@@ -321,3 +321,18 @@ body.gv > .man { flex: 1 1 auto; }
 /* ══ CHẾ ĐỘ CHIẾU (§41.32) — gv.html?chieu=<mã phiên>, mở trong cửa sổ "Tiến độ lớp" của app ══
    Cả lớp cùng xem ⇒ chỉ giữ 4 thẻ + bảng học viên; bỏ thanh trên, hàng tab, thanh nút của phiên. */
 body.chieu #thanhTren, body.chieu #thanhTab, body.chieu #manCT > header.tb { display: none !important; }
+
+/* ── Chế độ chiếu: dải mã QR các phiên của bài giảng (§41.32) ───────────────────────────── */
+.ct-ds { display: flex; gap: 8px; overflow-x: auto; padding: 10px 12px 0; flex-shrink: 0; }
+.ct-ds::-webkit-scrollbar { height: 4px; }
+.ct-ds::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+.ct-qr { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 6px 10px 6px 6px;
+  background: #fff; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; font: inherit; text-align: left; }
+.ct-qr:hover { border-color: #93c5fd; }
+.ct-qr.dang { border-color: #1A6FBF; background: #eff6ff; }
+.ct-qr.dong { opacity: .55; }
+.ct-qr-hinh { width: 72px; height: 72px; display: block; }
+.ct-qr-hinh svg { width: 100%; height: 100%; display: block; }
+.ct-qr-chu { display: flex; flex-direction: column; gap: 2px; }
+.ct-qr-chu b { font-size: 18px; letter-spacing: 2px; color: #1A6FBF; }
+.ct-qr-chu small { font-size: 12px; color: #64748b; white-space: nowrap; }

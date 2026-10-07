@@ -37,7 +37,10 @@ const $ = (id) => document.getElementById(id);
 const CHIEU = (new URLSearchParams(location.search).get('chieu') || '').replace(/\D/g, '');
 if (CHIEU) {
   document.body.classList.add('chieu');
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.close(); });
+  // Popup QR đang mở thì Esc chỉ đóng popup (listener cuối file lo), không đóng cửa sổ.
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('hopQR').classList.contains('an')) window.close();
+  });
 }
 const hien = (id, on) => $(id).classList.toggle('an', !on);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -172,16 +175,80 @@ async function moChieu() {
   let ds = [];
   try { ds = await api('/rest/v1/phien?select=*,bai_tap(ten,so_cau,chu_gv)&ma_phien=eq.' + CHIEU + '&limit=1'); }
   catch (e) { ds = []; bao(e.message, 'nhac'); }
+  const cacPhien = await phienCuaBai(ds[0]);
   if (!ds || !ds.length) {
     hien('manCT', true);
     $('ctMa').textContent = CHIEU;
+    veDaiQR(cacPhien);
     $('ctBody').innerHTML = '<tr><td colspan="6" class="giua mo-nhat" style="padding:24px">'
       + 'Không thấy phiên ' + esc(CHIEU) + ' — phiên đã bị xoá, hoặc do tài khoản khác mở. '
       + 'Đăng nhập đúng tài khoản đã đẩy bài lên web.</td></tr>';
     return;
   }
   await moChiTiet(ds[0]);
+  veDaiQR(cacPhien);
 }
+
+/* ── Dải mã QR các phiên của bài giảng (chế độ chiếu) ───────────────────────────────────────
+   Supabase không lưu id bài giảng ⇒ gom 2 nguồn: (1) các mã app đã nhớ cho bài này (`?ds=`),
+   (2) phiên có bài tập mang TÊN bài giảng (`?bai=`, hoặc tên bài tập của phiên đang mở) — đúng
+   tên, hoặc tên + " (slide …)" khi đẩy một phần. Nguồn 2 bắt cả phiên mở trước khi app nhớ danh
+   sách. RLS lo phân quyền: GV chỉ thấy phiên của mình. Bấm thẻ = chuyển sang theo dõi phiên đó;
+   bấm lại thẻ đang chọn = phóng to mã QR để chiếu. */
+let DAI_PHIEN = [];
+async function phienCuaBai(pHien) {
+  const q = new URLSearchParams(location.search);
+  const ma = (q.get('ds') || '').split(',').map(x => x.replace(/\D/g, '')).filter(x => /^\d{6}$/.test(x));
+  const ten = (q.get('bai') || (pHien && pHien.bai_tap ? pHien.bai_tap.ten.replace(/ \(slide [^)]*\)$/, '') : '')).trim();
+  const SEL = '/rest/v1/phien?select=*,bai_tap!inner(ten,so_cau,chu_gv)';
+  const goi = [];
+  if (ma.length) goi.push(api(SEL + '&ma_phien=in.(' + ma.join(',') + ')').catch(() => []));
+  if (ten) {
+    const mau = ten.replace(/[*%]/g, '_');         // ký tự đại diện của LIKE → "_" (1 ký tự bất kỳ); lọc chính xác ở dưới
+    goi.push(api(SEL + '&bai_tap.ten=like.' + encodeURIComponent(mau + '*')).then(r => (r || []).filter(p => {
+      const t = p.bai_tap.ten;
+      return t === ten || t.startsWith(ten + ' (slide ');
+    })).catch(() => []));
+  }
+  const gop = {};
+  (await Promise.all(goi)).flat().forEach(p => { if (p && p.ma_phien) gop[p.ma_phien] = p; });
+  if (pHien) gop[pHien.ma_phien] = pHien;
+  // Phiên đang mở lên đầu, rồi mới nhất trước
+  return Object.values(gop).sort((a, b) =>
+    (a.trang_thai === 'mo' ? 0 : 1) - (b.trang_thai === 'mo' ? 0 : 1) || String(b.mo_luc).localeCompare(String(a.mo_luc)));
+}
+
+function veDaiQR(ds) {
+  DAI_PHIEN = ds || [];
+  const el = $('ctDS');
+  if (!CHIEU || DAI_PHIEN.length < 2) { hien('ctDS', false); el.innerHTML = ''; return; }
+  const ngay = (t) => { const d = new Date(t); return isNaN(d) ? '' : ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2); };
+  el.innerHTML = DAI_PHIEN.map((p, i) => {
+    let hinh = '';
+    try { hinh = QR.svg(diaChiVaoBai(p.ma_phien), { oCo: 2 }); } catch { hinh = ''; }
+    const dang = PHIEN_HIEN && PHIEN_HIEN.ma_phien === p.ma_phien;
+    const tenBai = p.bai_tap ? p.bai_tap.ten : '';
+    const phan = (tenBai.match(/\((slide [^)]*)\)$/) || [])[1] || '';
+    return '<button type="button" class="ct-qr' + (dang ? ' dang' : '') + (p.trang_thai !== 'mo' ? ' dong' : '')
+      + '" data-i="' + i + '" title="' + esc(tenBai + ' · ' + p.ma_lop + (dang ? ' — bấm lại để phóng to mã QR' : ' — bấm để theo dõi phiên này')) + '">'
+      + '<span class="ct-qr-hinh">' + hinh + '</span>'
+      + '<span class="ct-qr-chu"><b>' + esc(p.ma_phien) + '</b>'
+      + '<small>' + esc(p.ma_lop) + (phan ? ' · ' + esc(phan) : '') + '</small>'
+      + '<small>' + esc(ngay(p.mo_luc)) + (p.trang_thai !== 'mo' ? ' · đã đóng' : '') + '</small></span>'
+      + '</button>';
+  }).join('');
+  hien('ctDS', true);
+}
+
+$('ctDS').addEventListener('click', async (e) => {
+  const b = e.target.closest('.ct-qr');
+  if (!b) return;
+  const p = DAI_PHIEN[+b.dataset.i];
+  if (!p) return;
+  if (PHIEN_HIEN && PHIEN_HIEN.ma_phien === p.ma_phien) { moQR(); return; }
+  await moChiTiet(p);
+  veDaiQR(DAI_PHIEN);
+});
 
 $('btRa').addEventListener('click', () => {
   TOKEN = null; TOI = null; PHIEN_HIEN = null;

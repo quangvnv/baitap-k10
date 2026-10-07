@@ -65,6 +65,7 @@
     'ket-reading-part7', 'gap-fill', 'pic-match',            // điền chuỗi / thả chip
     'ket-reading-part3-16-20',                               // hội thoại KET P3 16–20 — CÙNG markup .kp7-drop (§32.45)
     'spk-reading-part6',                                     // mô tả từ — ô gõ, đa đáp án "phần còn lại/cả từ"
+    'ket-reading-part8',                                     // điền phiếu KET P8 — CÙNG ô gõ .wd-in (§32.46)
     'word-web',                                              // thả chip theo TẬP đáp án
     'word-select',                                           // chọn nhiều từ đúng
     'reorder', 'matching',                                   // sắp thứ tự / nối cột
@@ -230,7 +231,7 @@
       }
 
       /* ── Điền chuỗi / thả chip: đáp án là CHỮ ở data-ans ──────────────────────────────── */
-      case 'ket-reading-part7': case 'ket-reading-part3-16-20': case 'gap-fill': case 'pic-match': case 'spk-reading-part6': {
+      case 'ket-reading-part7': case 'ket-reading-part3-16-20': case 'gap-fill': case 'pic-match': case 'spk-reading-part6': case 'ket-reading-part8': {
         const answers = [];
         const nhat = (cls) => {
           h = quetThe(h, cls, (the) => {
@@ -240,7 +241,7 @@
         };
         if (layout === 'gap-fill') nhat('gf-drop');
         else if (layout === 'pic-match') nhat('pm-box');
-        else if (layout === 'spk-reading-part6') nhat('wd-in');
+        else if (layout === 'spk-reading-part6' || layout === 'ket-reading-part8') nhat('wd-in');
         else { nhat('kp7-drop'); if (!answers.length) nhat('kp7-blank'); }   // 2 chế độ, chỉ 1 có mặt
         return { html: h, dapAn: answers.length ? { kieu: 'chuoi', answers } : null };
       }
@@ -569,7 +570,7 @@
         return ds('.kp7-blank').map(i => (i.value || '').trim() || null);
       }
       case 'gap-fill': return ds('.gf-drop').map(chip);
-      case 'spk-reading-part6': return ds('.wd-in').map(i => (i.value || '').trim() || null);
+      case 'spk-reading-part6': case 'ket-reading-part8': return ds('.wd-in').map(i => (i.value || '').trim() || null);
       case 'pic-match': return ds('.pm-box').map(chip);
 
       case 'word-web':
@@ -701,7 +702,7 @@
         }
         break;
       }
-      case 'spk-reading-part6':
+      case 'spk-reading-part6': case 'ket-reading-part8':
         ds('.wd-in').forEach((inp, i) => toO(inp, dung[i], 'wd-ok', 'wd-bad'));
         break;
 

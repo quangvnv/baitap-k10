@@ -1,0 +1,30 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-ket-reading-part8.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* LAYOUT 'ket-reading-part8' — ĐIỀN PHIẾU (CLAUDE.md §32.46). Khung .qp-rs3 dùng CHUNG baigiang.css;
+   ô gõ .wd-in dùng CHUNG baigiang-spk-reading-part6.css. File này chỉ lo HÌNH ghi chú (trái) + phiếu (phải),
+   theo kiểu English App (ket-part8-custom.css): đầu thư căn giữa xanh đậm · dòng gửi tới căn phải · nội dung căn đều. */
+.sl.lay-ket-reading-part8{padding:10px}
+.sl.lay-ket-reading-part8.has-head{padding-top:0}   /* BẮT BUỘC (§32.9): không thì header bị đẩy xuống 10px */
+
+.sl .qp-rs3.kp8-wrap .kp8-left{display:flex;flex-direction:column;gap:8px;padding:8px}
+.sl .qp-rs3.kp8-wrap .kp8-left.kp8-one{justify-content:center}
+.sl .kp8-imgcard{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center}
+.sl .kp8-img{display:block;max-width:100%;max-height:100%;object-fit:contain;-webkit-user-drag:none;user-select:none}
+.sl .kp8-note{flex:0 0 auto;border:1px solid #e0e0e0;border-radius:6px;padding:8px;background:#fff}
+.sl .kp8-nhdr{text-align:center;font-weight:700;color:#1976D2;white-space:pre-line;line-height:1.4;margin-bottom:6px;
+  font-size:calc(15px * var(--bgz,1))}
+.sl .kp8-naddr{text-align:right;color:#333;margin-bottom:6px;white-space:pre-line;font-size:calc(15px * var(--bgz,1))}
+.sl .kp8-npas{white-space:pre-wrap;text-align:justify;line-height:1.6;font-size:calc(15px * var(--bgz,1))}
+
+.sl .qp-rs3.kp8-wrap .kp8-right{justify-content:flex-start}
+.sl .kp8-form{max-width:600px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.sl .kp8-ft,.sl .kp8-fst{text-align:center;font-weight:700;color:#1976D2;font-size:calc(16px * var(--bgz,1))}
+.sl .kp8-fdesc{font-weight:700;color:#333;font-size:calc(15px * var(--bgz,1))}
+.sl .kp8-fields{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.sl .kp8-field{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+.sl .kp8-lbl{font-weight:700;color:#333;font-size:calc(15px * var(--bgz,1))}
+.sl .kp8-inrow{display:flex;align-items:center;gap:6px}
+.sl .kp8-num{flex:0 0 26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:#1976D2;color:#fff;
+  font-weight:700;font-size:13px}
+.sl .wd-in.kp8-in{width:220px;max-width:220px;padding:6px 8px;font-size:calc(15px * var(--bgz,1))}
