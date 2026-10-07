@@ -514,6 +514,41 @@ select.o {
   /* Khoảng hở giữa các ảnh là 6px CỐ ĐỊNH, không co theo khung ⇒ khung thu còn ~40% thì 6px thành
      "to" tương đối, hàng ảnh vừa khít trên máy tính bị đẩy xuống dòng và ảnh bị cắt. Thu theo tỉ lệ. */
   .san .sl .pm-grid { --pm-gap: 2px; }   /* baigiang.css tính chiều cao + bề ngang ảnh theo biến này */
+
+  /* ④ GHÉP TỪ VỚI ẢNH — Ô THẢ GẮN ẢNH (slide mới, §32.15): ô nằm TRONG khung từng ảnh nên KHÔNG cần
+     giữ tỉ lệ khung máy tính ⇒ XẾP LẠI cho điện thoại: 2 ảnh/hàng (3 nếu màn ≥ 520px), ảnh to theo bề
+     ngang, ô thả nằm NGAY DƯỚI ảnh (không đè lên ảnh, chữ dài tự xuống dòng) ⇒ hết cảnh 6 ảnh bé tí
+     trên một hàng, chip chồng lên nhau. Trang cuộn dọc như thường, KHÔNG cuộn ngang.
+     Bảng từ DÍNH trên đầu (dưới thanh nút) để kéo được tới ảnh ở hàng dưới.
+     ⚠ Slide CŨ có ô tự do (`.pm-box` không `.pm-anch`) và chế độ "1 ảnh" (`.pm-one`) VẪN neo toạ độ %
+       ⇒ giữ nguyên quy tắc ③ ở trên, không đụng. */
+  .san .sl .pm-wrap:not(.pm-one):not(:has(.pm-box:not(.pm-anch))) .pm-canvas {
+    aspect-ratio: auto !important; height: auto !important; overflow: visible !important; border: 0;
+  }
+  .san .sl .pm-wrap:not(.pm-one):not(:has(.pm-box:not(.pm-anch))) .pm-grid {
+    position: static !important; inset: auto; transform: none !important; overflow: visible;
+    flex-wrap: wrap !important; align-content: flex-start; align-items: flex-start; gap: 10px 8px; --pm-gap: 8px;
+  }
+  .san .sl .pm-wrap:not(.pm-one):not(:has(.pm-box:not(.pm-anch))) .pm-grid > .pm-cell {
+    flex: 0 0 calc((100% - 8px) / 2) !important; max-width: calc((100% - 8px) / 2) !important; height: auto !important;
+    flex-direction: column; align-items: center;
+  }
+  .san .sl .pm-wrap:not(.pm-one):not(:has(.pm-box:not(.pm-anch))) .pm-grid > .pm-cell > img {
+    width: 100% !important; height: auto !important; max-height: 40vh; object-fit: contain;
+  }
+  .san .sl .pm-wrap:not(.pm-one):not(:has(.pm-box:not(.pm-anch))) .pm-slots {
+    position: static !important; transform: none !important; max-width: 100%; width: 100%; margin-top: 4px;
+  }
+  .san .sl .pm-wrap:not(.pm-one):not(:has(.pm-box:not(.pm-anch))) .pm-box { width: 100%; min-width: 0; min-height: 34px; }
+  .san .sl .pm-wrap .ww-chip { white-space: normal; max-width: 100%; text-align: center; }
+  .san .sl .pm-wrap:not(.pm-one):not(:has(.pm-box:not(.pm-anch))) .ww-bank {
+    position: sticky !important; top: var(--tt-h, 58px); z-index: 5;
+  }
+}
+@media (min-width: 520px) and (max-width: 700px) {
+  .san .sl .pm-wrap:not(.pm-one):not(:has(.pm-box:not(.pm-anch))) .pm-grid > .pm-cell {
+    flex-basis: calc((100% - 16px) / 3) !important; max-width: calc((100% - 16px) / 3) !important;
+  }
 }
 
 /* ══ CHIA ĐỘNG TỪ (verb-form) — Ô GÕ do `bocHtml` chèn vào chỗ trống, CHỈ có trên web ═══════════

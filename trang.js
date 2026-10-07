@@ -174,6 +174,8 @@ function vuaKhung() {
   const san = $('sanKhau'), khung = $('khungTyLe'), lop = $('lopSlide');
   if (!san || !khung || !lop) return;
   if (window.matchMedia('(max-width: 700px)').matches) {   // màn hẹp: bỏ khung cứng (§41.7)
+    // Chiều cao thanh nút trên (sticky) ⇒ bảng từ "Ghép từ với ảnh" dính ngay bên dưới nó (trang.css ④)
+    const tt = $('thanhTren'); if (tt) document.documentElement.style.setProperty('--tt-h', tt.offsetHeight + 'px');
     khung.style.width = khung.style.height = '';
     lop.style.transform = '';
     return;
