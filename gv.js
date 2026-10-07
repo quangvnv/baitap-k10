@@ -213,9 +213,8 @@ async function phienCuaBai(pHien) {
   const gop = {};
   (await Promise.all(goi)).flat().forEach(p => { if (p && p.ma_phien) gop[p.ma_phien] = p; });
   if (pHien) gop[pHien.ma_phien] = pHien;
-  // Phiên đang mở lên đầu, rồi mới nhất trước
-  return Object.values(gop).sort((a, b) =>
-    (a.trang_thai === 'mo' ? 0 : 1) - (b.trang_thai === 'mo' ? 0 : 1) || String(b.mo_luc).localeCompare(String(a.mo_luc)));
+  // Theo thời gian mở: phiên cũ nhất bên trái, mới dần sang phải
+  return Object.values(gop).sort((a, b) => String(a.mo_luc).localeCompare(String(b.mo_luc)));
 }
 
 function veDaiQR(ds) {
