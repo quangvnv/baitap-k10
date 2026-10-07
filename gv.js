@@ -176,6 +176,8 @@ async function moChieu() {
   try { ds = await api('/rest/v1/phien?select=*,bai_tap(ten,so_cau,chu_gv)&ma_phien=eq.' + CHIEU + '&limit=1'); }
   catch (e) { ds = []; bao(e.message, 'nhac'); }
   const cacPhien = await phienCuaBai(ds[0]);
+  const theoSlide = chonTheoSlide(cacPhien);
+  if (theoSlide && (!ds[0] || theoSlide.ma_phien !== ds[0].ma_phien)) ds = [theoSlide];
   if (!ds || !ds.length) {
     hien('manCT', true);
     $('ctMa').textContent = CHIEU;
@@ -196,6 +198,39 @@ async function moChieu() {
    sách. RLS lo phân quyền: GV chỉ thấy phiên của mình. Bấm thẻ = chuyển sang theo dõi phiên đó;
    bấm lại thẻ đang chọn = phóng to mã QR để chiếu. */
 let DAI_PHIEN = [];
+/* `?sl=<n>` = slide đang chiếu trong app (1-based) ⇒ chọn phiên đã đẩy slide đó, đọc từ đuôi tên bài
+   tập "(slide 1-3, 5)" mà app gắn khi đẩy một phần (phiên đẩy CẢ bài không có đuôi = chứa mọi slide).
+   Nhiều phiên cùng chứa ⇒ phiên đẩy ÍT slide nhất, hoà thì mở muộn hơn. Không phiên nào chứa ⇒
+   phiên của slide gần nhất PHÍA TRƯỚC. Không có gì ⇒ null (giữ phiên app gửi). Dữ liệu nằm trên
+   máy chủ nên chạy được cả với phiên đẩy trước khi app biết nhớ phiên theo slide. */
+function slideCuaPhien(p) {
+  const t = (p && p.bai_tap && p.bai_tap.ten) || '';
+  const m = t.match(/\(slide ([^)]*)\)$/);
+  if (!m) return null;                               // đẩy cả bài
+  const out = [];
+  m[1].split(',').forEach(x => {
+    const r = x.trim().match(/^(\d+)(?:-(\d+))?$/);
+    if (!r) return;
+    const a = +r[1], b = r[2] ? +r[2] : a;
+    for (let i = a; i <= b && i - a < 500; i++) out.push(i);
+  });
+  return out.length ? out : null;
+}
+function chonTheoSlide(ds) {
+  const sl = parseInt(new URLSearchParams(location.search).get('sl'), 10);
+  if (!(sl > 0) || !ds || !ds.length) return null;
+  const moi = (a, b) => String(b.mo_luc).localeCompare(String(a.mo_luc));
+  const chua = ds.map(p => ({ p, s: slideCuaPhien(p) }));
+  const trung = chua.filter(x => !x.s || x.s.includes(sl))
+    .sort((a, b) => (a.s ? a.s.length : 1e9) - (b.s ? b.s.length : 1e9) || moi(a.p, b.p));
+  if (trung.length) return trung[0].p;
+  let tot = null, d0 = 1e9;
+  chua.forEach(x => (x.s || []).forEach(j => {
+    const d = sl - j;
+    if (d > 0 && (d < d0 || (d === d0 && x.s.length < tot.s.length))) { tot = x; d0 = d; }
+  }));
+  return tot ? tot.p : null;
+}
 async function phienCuaBai(pHien) {
   const q = new URLSearchParams(location.search);
   const ma = (q.get('ds') || '').split(',').map(x => x.replace(/\D/g, '')).filter(x => /^\d{6}$/.test(x));
