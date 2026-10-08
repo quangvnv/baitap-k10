@@ -255,7 +255,7 @@ async function phienCuaBai(pHien) {
 function veDaiQR(ds) {
   DAI_PHIEN = ds || [];
   const el = $('ctDS');
-  if (!CHIEU || DAI_PHIEN.length < 2) { hien('ctDS', false); el.innerHTML = ''; return; }
+  if (!CHIEU || DAI_PHIEN.length < 1) { hien('ctDS', false); el.innerHTML = ''; return; }
   const ngay = (t) => { const d = new Date(t); return isNaN(d) ? '' : ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2); };
   el.innerHTML = DAI_PHIEN.map((p, i) => {
     const dang = PHIEN_HIEN && PHIEN_HIEN.ma_phien === p.ma_phien;
