@@ -136,6 +136,13 @@ function khungCua(i) {
      (baigiang-soan.js), trang web KHÔNG có ⇒ nó đứng chết ở giờ lúc GV bấm đẩy bài lên, học
      viên nhìn tưởng đồng hồ hỏng. */
   d.querySelectorAll('.sl-check, .rmcq-submit, .sl-clock').forEach(b => b.remove());
+  /* ⚠ Đề GHÉP TỪ VỚI ẢNH đẩy TRƯỚC 04/10/2026 có ảnh nằm TRẦN trong `.pm-grid` (chưa có `.pm-cell`),
+     mà CSS hiện nay (cỡ ảnh, .pm-fit) chỉ nhắm `.pm-grid > .pm-cell > img` ⇒ ảnh hiện nguyên cỡ gốc,
+     tràn và bị cắt. Bọc lại cho khớp markup mới; ô thả cũ vẫn neo % theo .pm-canvas nên không lệch. */
+  d.querySelectorAll('.pm-grid > img').forEach((im, j) => {
+    const c = document.createElement('div'); c.className = 'pm-cell'; c.dataset.j = j;
+    im.replaceWith(c); c.appendChild(im);
+  });
   $('lopSlide').appendChild(d);
   ganEngine(d);
   KHUNG[i] = d;
@@ -153,6 +160,9 @@ function veSlide() {
   const ds = slides();
   Object.keys(KHUNG).forEach(k => KHUNG[k].classList.add('an'));
   khungCua(CHI_SO).classList.remove('an');
+  /* pmFitGrids đo lưới ảnh lúc dựng khung — khi đó khung còn ẨN (cao 0) và ảnh base64 đã `complete`
+     ⇒ không bao giờ gắn .pm-fit, ảnh tràn/bị cắt (đề đẩy trước 29/09). Đo lại khi khung đã hiện. */
+  if (typeof window.pmFitGrids === 'function') { const k = KHUNG[CHI_SO]; requestAnimationFrame(() => window.pmFitGrids(k)); }
   $('dauCau').textContent = 'Slide ' + (CHI_SO + 1) + '/' + ds.length;
   $('btTruoc').disabled = CHI_SO === 0;
   $('btSau').disabled = CHI_SO >= ds.length - 1;

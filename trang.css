@@ -587,7 +587,8 @@ select.o {
      trong TỪNG sơ đồ nên xếp lại cả sơ đồ không làm lệch ô nào. */
   .san .sl .ww-webs { display: grid !important; grid-template-columns: minmax(0, 1fr) !important;
     gap: 30px 0 !important; overflow: visible !important; padding: 20px 4px; }
-  .san .sl .ww-webs .ww-web { grid-column: auto !important; max-width: 300px !important; }
+  .san .sl .ww-webs .ww-web { grid-column: auto !important; max-width: min(300px, calc(100% - 56px)) !important; }
+  /* ↑ ô thả 4 góc nhô ra ngoài khung sơ đồ 26px mỗi bên (.c-tl/.c-tr…) ⇒ chừa 56px kẻo màn 360px lòi mép phải */
 
   /* ⑦ KHỐI TỰ DO (§32.40): trên máy tính nổi TUYỆT ĐỐI theo % của slide 960×540 — màn hẹp slide
      cao tự do nên % mất nghĩa, khối đè lên câu hỏi. Trả về luồng thường, xếp SAU nội dung bài. */
@@ -602,4 +603,47 @@ select.o {
      bị cắt vài px. Trả chiều cao về theo nội dung; cuộn ngang (lưới rộng) vẫn giữ như cũ. */
   .san .sl .cw-left { height: auto !important; max-height: none !important; overflow-y: hidden !important; padding-bottom: 2px; }
   .san .sl .cw-left .cw-grid { margin: 0 auto; }
+}
+
+/* ══ CHIP TỪ / Ô THẢ KHÔNG ĐƯỢC TRÀN MÉP MÀN HÌNH (2026-10-08 — người dùng báo ở dạng điền từ kéo thả) ══
+   `.ww-chip` của app là `white-space:nowrap` (thiết kế cho khung 960px) ⇒ cụm từ dài, màn 360px hay cỡ chữ
+   phóng (`--bgz` > 1) là chip — trong bảng từ lẫn sau khi thả vào chỗ trống — lòi ra ngoài mép phải.
+   Bảng từ dạng LƯỚI 5 CỘT (`.ws-box`: ket-reading-part7, word-select) trên màn hẹp còn ép chip thành
+   cột chữ dọc 3–4 ký tự ⇒ chuyển sang hàng tự xuống dòng như `.ww-bank`. */
+@media (max-width: 700px) {
+  .san .sl .ww-chip, .san .sl .ws-word, .san .sl .ro-card, .san .sl .mt-card, .san .sl .sw9-chip {
+    white-space: normal !important; max-width: 100%; min-width: 0; overflow-wrap: anywhere;
+  }
+  .san .sl .ww-chip { text-align: center; }
+  .san .sl .ww-drop, .san .sl .kp7-drop, .san .sl .gf-drop { max-width: 100%; }
+  .san .sl .kp7-drop:not(:empty), .san .sl .gf-drop:not(:empty) { min-width: 0; }
+  .san .sl .ws-box {
+    display: flex !important; flex-wrap: wrap; justify-content: center; align-items: center;
+    gap: 6px; grid-template-columns: none;
+  }
+  .san .sl .ws-box > * { margin: 0 !important; }
+}
+
+/* ══ BẢNG TỪ GHIM TRÊN ĐẦU khi cuộn — dạng điền từ KÉO THẢ (2026-10-08, người dùng yêu cầu) ═════════
+   Điện thoại cuộn CẢ TRANG ⇒ đọc xuống chỗ trống phía dưới là bảng từ trôi mất, không còn gì để kéo.
+   Ghim bảng từ ngay dưới thanh nút (`--tt-h` do `vuaKhung` đo) — phần chữ bên dưới vẫn cuộn bình thường.
+   Bảng từ dài thì tự cuộn trong 35vh để không che hết màn hình.
+   ⚠ sticky chỉ chạy khi KHÔNG tổ tiên nào có overflow ≠ visible và CHA của bảng từ bao trọn phần chữ
+     (đúng với .gf-wrap / .ww-wrap / .kp7-wrap). Bảng từ cột phải của kp7 (`.kp7-2col`) nằm SAU đoạn văn
+     trong DOM ⇒ đảo thứ tự hiển thị cho bảng lên trên. */
+@media (max-width: 700px) {
+  .san .sl .gf-wrap > .ww-bank,
+  .san .sl .ww-wrap:not(.pm-wrap) > .ww-bank,
+  .san .sl .kp7-wrap > .kp7-bank {
+    position: sticky !important; top: var(--tt-h, 58px); z-index: 6;
+    max-height: 35vh !important; overflow-y: auto !important;
+    box-shadow: 0 3px 6px rgba(20, 40, 80, .12);
+  }
+  .san .sl .kp7-wrap.kp7-2col { display: flex !important; flex-direction: column-reverse !important; gap: 8px; }
+  .san .sl .kp7-wrap.kp7-2col > .kp7-bank { width: auto !important; max-width: 100%; }
+  /* Bảng từ cột phải (mỗi từ/câu một hàng rộng hết cột) khi đã lên đầu thì chảy thành hàng như bảng thường,
+     kẻo 6–8 hàng full-width chiếm gần hết màn hình. Câu dài vẫn tự xuống dòng trong chip. */
+  .san .sl .kp7-bank.kp7-side { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .san .sl .kp7-bank.kp7-side .ww-chip { display: inline-flex !important; width: auto !important; margin: 0 !important; }
+  .san .sl .kp7-bank .kp7-bankw { display: none; }
 }
