@@ -318,6 +318,52 @@ async function doiTab(ten) {
 /* ── Danh sách phiên ─────────────────────────────────────────────────────────────────────── */
 $('locTT').addEventListener('change', veDS);
 
+/* Bộ lọc Giảng viên (chỉ CB) + Lớp — lọc phía máy trên danh sách đã tải.
+   Bộ lọc nào CHỌN TRƯỚC thì chiếm ưu thế: danh sách lựa chọn của nó luôn đầy đủ,
+   bộ lọc chọn sau chỉ còn giá trị liên quan tới lựa chọn trước. */
+let DS_CACHE = { ds: [], theoPhien: {}, tenGv: {}, laAdmin: false };
+let LOC_THU_TU = [];                       // khoá bộ lọc đã chọn, theo thứ tự chọn
+const LOC = {
+  gv:  { el: 'locGv',  lay: p => p.gv || '',     tatCa: 'Tất cả giảng viên' },
+  lop: { el: 'locLop', lay: p => p.ma_lop || '', tatCa: 'Tất cả lớp' },
+};
+['gv', 'lop'].forEach(k => $(LOC[k].el).addEventListener('change', () => {
+  // Đổi giá trị vẫn GIỮ chỗ ưu tiên; về "Tất cả" mới mất chỗ
+  if (!$(LOC[k].el).value) LOC_THU_TU = LOC_THU_TU.filter(x => x !== k);
+  else if (!LOC_THU_TU.includes(k)) LOC_THU_TU.push(k);
+  veBangDS();
+}));
+
+function locKhop(p, khoa) {
+  return khoa.every(k => LOC[k].lay(p) === $(LOC[k].el).value);
+}
+
+/* Dựng lại lựa chọn của từng bộ lọc. Đã chọn: chỉ chịu ảnh hưởng của bộ lọc chọn TRƯỚC nó.
+   Chưa chọn: chịu ảnh hưởng của mọi bộ lọc đang chọn. Giá trị đang chọn ra ngoài phạm vi → bỏ. */
+function dungLoc() {
+  const { ds, tenGv, laAdmin } = DS_CACHE;
+  const dsKhoa = laAdmin ? ['gv', 'lop'] : ['lop'];
+  // Chốt lại thứ tự: duyệt lần lượt, cái nào hết hợp lệ thì bỏ khỏi thứ tự
+  LOC_THU_TU = LOC_THU_TU.filter(k => dsKhoa.includes(k) && $(LOC[k].el).value);
+  let doi = true;
+  while (doi) {
+    doi = false;
+    for (const k of dsKhoa) {
+      const vt = LOC_THU_TU.indexOf(k);
+      const truoc = vt >= 0 ? LOC_THU_TU.slice(0, vt) : LOC_THU_TU.slice();
+      const giaTri = [...new Set(ds.filter(p => locKhop(p, truoc)).map(LOC[k].lay).filter(Boolean))];
+      const nhan = v => k === 'gv' ? ((tenGv[v] && (tenGv[v].ten || tenGv[v].viet_tat)) || '(không rõ)') : v;
+      giaTri.sort((x, y) => nhan(x).localeCompare(nhan(y), 'vi', { numeric: true }));
+      const sel = $(LOC[k].el), cu = sel.value;
+      sel.innerHTML = '<option value="">' + LOC[k].tatCa + '</option>'
+        + giaTri.map(v => '<option value="' + esc(v) + '">' + esc(nhan(v)) + '</option>').join('');
+      if (cu && giaTri.includes(cu)) sel.value = cu;
+      else if (cu) { sel.value = ''; LOC_THU_TU = LOC_THU_TU.filter(x => x !== k); doi = true; }
+    }
+  }
+  hien('locGv', laAdmin);
+}
+
 async function veDS() {
   dungNhip();
   PHIEN_HIEN = null;
@@ -346,13 +392,21 @@ async function veDS() {
   /* Cột "Giảng viên" CHỈ cho quản trị (§41.22 — GV chỉ thấy phiên của mình nên cột thừa).
      Tên lấy từ nguoi_dung; RLS chỉ cho admin đọc hết bảng này. */
   const laAdmin = !!(TOI && TOI.vai_tro === 'admin');
-  $('thGv').classList.toggle('an', !laAdmin);
   let tenGv = {};
   if (laAdmin && ds.length) {
     try {
       (await api('/rest/v1/nguoi_dung?select=id,ten,viet_tat')).forEach(n => { tenGv[n.id] = n; });
     } catch { tenGv = {}; }
   }
+  DS_CACHE = { ds, theoPhien, tenGv, laAdmin };
+  veBangDS();
+}
+
+function veBangDS() {
+  const { theoPhien, tenGv, laAdmin } = DS_CACHE;
+  dungLoc();
+  const ds = DS_CACHE.ds.filter(p => locKhop(p, LOC_THU_TU));
+  $('thGv').classList.toggle('an', !laAdmin);
   const oGv = (p) => {
     if (!laAdmin) return '';
     const n = tenGv[p.gv];
@@ -360,6 +414,9 @@ async function veDS() {
   };
 
   hien('dsTrong', !ds.length);
+  $('dsTrong').textContent = DS_CACHE.ds.length
+    ? 'Không có phiên nào khớp bộ lọc.'
+    : 'Chưa có phiên nào. Mở phiên từ app: Soạn bài giảng → ☁ Đẩy lên web.';
   $('dsBody').innerHTML = ds.map((p, i) => {
     const t = theoPhien[p.id];
     const dsD = t ? Object.values(t.hv) : [];
