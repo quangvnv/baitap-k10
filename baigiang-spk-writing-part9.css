@@ -72,6 +72,10 @@
 .sl .sw9-line{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 0 22px;min-width:0;
   min-height:calc(32px * var(--bgz,1));padding:3px 6px;border:1px dashed #b8c4d4;border-radius:6px;
   background:#F7FAFD}
+/* Dấu câu kết thúc (đã bóc khỏi chip) — CỐ ĐỊNH ở cuối dòng xếp, không kéo được; chip thả vào luôn
+   nằm TRƯỚC nó (::after là flex item cuối). Dòng trống thì chỉ còn dấu, đủ biết câu hỏi hay câu kể. */
+.sl .sw9-line[data-end]::after{content:attr(data-end);font-size:calc(17px * var(--bgz,1));
+  font-weight:700;color:#2c3e50;line-height:1.2;pointer-events:none}
 .sl .sw9-line.sw9-hot{border-color:var(--blue-primary,#1A6FBF);background:#EAF2FB}
 .sl .sw9-line.ok{border:1px solid var(--green-primary,#16A34A);background:#EDFAF4}
 .sl .sw9-line.bad{border:1px solid #DC2626;background:#FEECEC}
