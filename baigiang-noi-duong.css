@@ -53,10 +53,10 @@
 /* Kiểu MŨI TÊN CONG HAI ĐẦU (slots.nlStyle='curve'): chấm của cụm đã nối thành đầu mũi tên
    chĩa VÀO thẻ (nằm trọn trong vùng đường, mũi chạm mép thẻ). Đường cong có tiếp tuyến ngang ở hai
    đầu nên mũi tên ngang luôn khớp hướng đường. */
-.sl .nl-curve .nl-l.nl-on .nl-dot,.sl .nl-curve .nl-r.nl-on .nl-dot{width:13px;height:12px;margin-top:-6px;
+.sl .nl-curve .nl-l.nl-on .nl-dot,.sl .nl-curve .nl-r.nl-on .nl-dot{width:12px;height:9px;margin-top:-4.5px;   /* tỉ lệ ~10×8 — tam giác thon */
   border:none;border-radius:0}
-.sl .nl-curve .nl-l.nl-on .nl-dot{right:-13px;clip-path:polygon(0 50%,100% 0,100% 100%)}
-.sl .nl-curve .nl-r.nl-on .nl-dot{left:-13px;clip-path:polygon(100% 50%,0 0,0 100%)}
+.sl .nl-curve .nl-l.nl-on .nl-dot{right:-12px;clip-path:polygon(0 50%,100% 0,100% 100%)}
+.sl .nl-curve .nl-r.nl-on .nl-dot{left:-12px;clip-path:polygon(100% 50%,0 0,0 100%)}
 
 /* Đang chọn chờ nối */
 .sl .nl-l.nl-sel,.sl .nl-r.nl-sel{border-color:#1976D2;background:#e3f0fd;box-shadow:0 0 0 2px #90c2f5}
