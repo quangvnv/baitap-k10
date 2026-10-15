@@ -19,7 +19,7 @@
 .sl .nl-empty{padding:10px;text-align:center;color:var(--text-muted,#8a94a6);font-size:13px}
 
 /* Lưới: trái · khoảng vẽ đường · phải. Hàng chia ĐỀU (1fr) ⇒ mọi hàng cao bằng nhau. */
-.sl .nl-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(70px,22%,200px) minmax(0,1.25fr);
+.sl .nl-grid{display:grid;grid-template-columns:minmax(0,1fr) 22% minmax(0,1.25fr);   /* tỉ lệ thuần ⇒ kéo bề rộng khung là 3 cột co giãn THEO TỈ LỆ */
   min-height:100%;column-gap:0;row-gap:0}
 .sl .nl-cell{padding:3px 0;display:flex;align-items:center;min-width:0}
 .sl .nl-cl{grid-column:1;justify-content:flex-end}
