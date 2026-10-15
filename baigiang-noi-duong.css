@@ -28,7 +28,7 @@
 .sl .nl-svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 .sl .nl-ln{stroke-width:3;stroke-linecap:round;fill:none}
 .sl .nl-ln.nl-dash{stroke-dasharray:7 5;opacity:.9}
-.sl .nl-hit{stroke:transparent;stroke-width:14;pointer-events:stroke;cursor:pointer}
+.sl .nl-hit{fill:none;stroke:transparent;stroke-width:14;pointer-events:stroke;cursor:pointer}
 
 /* Thẻ cụm: kiểu .option-item (§32.2) — viền mảnh, bo 6px, nền trắng */
 .sl .nl-l,.sl .nl-r{position:relative;display:flex;align-items:baseline;gap:6px;width:100%;
@@ -42,13 +42,21 @@
 .sl .nl-t{flex:1;min-width:0;overflow-wrap:anywhere}
 
 /* Chấm nối ở mép giáp vùng đường: trái = mép PHẢI thẻ, phải = mép TRÁI thẻ */
-.sl .nl-dot{position:absolute;top:50%;width:11px;height:11px;margin-top:-5.5px;border-radius:50%;
+.sl .nl-dot{position:absolute;z-index:2;top:50%;width:11px;height:11px;margin-top:-5.5px;border-radius:50%;
   background:#fff;border:2px solid #b0bac8;box-sizing:border-box}
 .sl .nl-l .nl-dot{right:-6px}
 .sl .nl-r .nl-dot{left:-6px}
 .sl .nl-l.nl-on .nl-dot{background:var(--nl-c);border-color:var(--nl-c)}
 .sl .nl-r.nl-on .nl-dot{background:var(--nl-rc);border-color:var(--nl-rc)}
 .sl .nl-l.nl-on{border-color:var(--nl-c)}
+
+/* Kiểu MŨI TÊN CONG HAI ĐẦU (slots.nlStyle='curve'): chấm của cụm đã nối thành đầu mũi tên
+   chĩa VÀO thẻ (nằm trọn trong vùng đường, mũi chạm mép thẻ). Đường cong có tiếp tuyến ngang ở hai
+   đầu nên mũi tên ngang luôn khớp hướng đường. */
+.sl .nl-curve .nl-l.nl-on .nl-dot,.sl .nl-curve .nl-r.nl-on .nl-dot{width:13px;height:12px;margin-top:-6px;
+  border:none;border-radius:0}
+.sl .nl-curve .nl-l.nl-on .nl-dot{right:-13px;clip-path:polygon(0 50%,100% 0,100% 100%)}
+.sl .nl-curve .nl-r.nl-on .nl-dot{left:-13px;clip-path:polygon(100% 50%,0 0,0 100%)}
 
 /* Đang chọn chờ nối */
 .sl .nl-l.nl-sel,.sl .nl-r.nl-sel{border-color:#1976D2;background:#e3f0fd;box-shadow:0 0 0 2px #90c2f5}

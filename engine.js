@@ -125,15 +125,16 @@ function nlRedraw(wrap){
     const r=rs.find(x=>+x.dataset.j===j);
     if(r && !r.classList.contains('nl-on')){ r.classList.add('nl-on'); r.style.setProperty('--nl-rc', c); }
   });
-  svg.innerHTML=nlLinesHtml(ds, hit);
+  svg.innerHTML=nlLinesHtml(ds, hit, wrap.classList.contains('nl-curve'));
 }
 
 /* ── nlLinesHtml — trích từ baigiang-noi-duong.js ── */
-function nlLinesHtml(ds, hit){
+function nlLinesHtml(ds, hit, curve){
   return ds.map(d=>{
     const y1=(d.i+0.5).toFixed(3), y2=(d.j+0.5).toFixed(3);
-    const ln=`<line class="nl-ln${d.cls?' '+d.cls:''}" data-i="${d.i}" x1="0" y1="${y1}" x2="100" y2="${y2}" stroke="${d.c}" vector-effect="non-scaling-stroke"/>`;
-    return ln + (hit ? `<line class="nl-hit" data-i="${d.i}" x1="0" y1="${y1}" x2="100" y2="${y2}" vector-effect="non-scaling-stroke" onclick="nlUnlink(this)"/>` : '');
+    const g = curve ? `d="M0 ${y1} C45 ${y1} 55 ${y2} 100 ${y2}"` : `d="M0 ${y1} L100 ${y2}"`;
+    const ln=`<path class="nl-ln${d.cls?' '+d.cls:''}" data-i="${d.i}" ${g} stroke="${d.c}" vector-effect="non-scaling-stroke"/>`;
+    return ln + (hit ? `<path class="nl-hit" data-i="${d.i}" ${g} vector-effect="non-scaling-stroke" onclick="nlUnlink(this)"/>` : '');
   }).join('');
 }
 
