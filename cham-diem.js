@@ -62,6 +62,7 @@
     'spk-reading-part3', 'reading-cloze',                    // dropdown
     'ket-reading-part1',                                     // biển báo A–H — CÙNG markup .p3-select (§32.44)
     'word-choice', 'spk-reading-part5',                      // gạch chân phương án · tìm lỗi sai (cùng markup .wc-slot)
+    'match-line',                                            // nối cặp bằng đường (§32.51)
     'ket-reading-part7', 'gap-fill', 'pic-match',            // điền chuỗi / thả chip
     'ket-reading-part3-16-20',                               // hội thoại KET P3 16–20 — CÙNG markup .kp7-drop (§32.45)
     'spk-reading-part6',                                     // mô tả từ — ô gõ, đa đáp án "phần còn lại/cả từ"
@@ -230,6 +231,20 @@
         return { html: h, dapAn: answers.length ? { kieu: 'chiSo', answers } : null };
       }
 
+      /* ── Nối cặp bằng đường: .nl-l[data-ans] = chỉ số cụm phải đúng (§32.51) ─────────────
+         "-1" = GV chưa chốt đáp án cho cụm đó ⇒ GIỮ NGUYÊN (như word-choice) để trang web không
+         bắt học viên nối cụm đó mới được nộp. */
+      case 'match-line': {
+        const answers = [];
+        h = quetThe(h, 'nl-l', (the) => {
+          const v = soHoacAm(docAttr(the, 'data-ans'));
+          if (v < 0) { answers.push(null); return undefined; }
+          answers.push(v);
+          return datAttr(the, 'data-ans', '');
+        });
+        return { html: h, dapAn: answers.length ? { kieu: 'chiSo', answers } : null };
+      }
+
       /* ── Điền chuỗi / thả chip: đáp án là CHỮ ở data-ans ──────────────────────────────── */
       case 'ket-reading-part7': case 'ket-reading-part3-16-20': case 'gap-fill': case 'pic-match': case 'spk-reading-part6': case 'ket-reading-part8': {
         const answers = [];
@@ -305,6 +320,15 @@
          án (leg thứ 4 thành ô tự viết nên không còn ô thả cho đáp án cuối) — lúc đó app tính là
          một câu KHÔNG THỂ đúng. Trên web tính theo ô để mỗi câu luôn tô màu được. */
       case 'word-web': {
+        /* §32.39.1 chế độ GẠCH TỪ: mỗi chân .ww-xword[data-x] ("1" = từ không phù hợp, phải gạch). */
+        if (h.indexOf('ww-xword') >= 0) {
+          const x = [];
+          h = quetThe(h, 'ww-xword', (the) => {
+            x.push(docAttr(the, 'data-x') === '1' ? 1 : 0);
+            return datAttr(the, 'data-x', '0');          // đồng loạt "0" ⇒ không lộ gì
+          });
+          return { html: h, dapAn: x.length ? { kieu: 'gach', x } : null };
+        }
         const webs = [];
         h = quetThe(h, 'ww-web', (the) => {
           const raw = docAttr(the, 'data-ans') || '';
@@ -415,6 +439,7 @@
       case 'cau': return da.answers.filter(a => a && a.length).length;
       case 'tapHop': return da.webs.reduce((s, w) => s + w.length, 0);   // ước lượng: số ô ≈ số đáp án
       case 'chonTu': return da.dung.filter(Boolean).length;
+      case 'gach': return da.x.length;
       case 'oChu': return da.answers.length;
     }
     return 0;
@@ -461,6 +486,10 @@
       /* word-select: CHỈ từ đúng mới là một câu; chọn sai KHÔNG trừ (§32.4, giữ đúng wsSubmit). */
       case 'chonTu':
         return ketQua(dapAn.dung.map((c, i) => c ? bl[i] === 1 : null));
+
+      /* word-web gạch từ: MỖI CHÂN là một câu — đúng khi trạng thái gạch khớp khóa. */
+      case 'gach':
+        return ketQua(dapAn.x.map((c, i) => (bl[i] === 1) === (c === 1)));
 
       case 'oChu':
         return ketQua(dapAn.answers.map((a, i) => {
@@ -564,6 +593,10 @@
         return ds('.wc-slot').map(s => s.dataset.ans === '-1' ? -1
           : (s.dataset.picked === undefined ? null : Number(s.dataset.picked)));
 
+      case 'match-line':
+        return ds('.nl-l').map(l => l.dataset.ans === '-1' ? -1
+          : ((l.dataset.pick === undefined || l.dataset.pick === '') ? null : Number(l.dataset.pick)));
+
       case 'ket-reading-part7': case 'ket-reading-part3-16-20': {
         const drops = ds('.kp7-drop');
         if (drops.length) return drops.map(chip);
@@ -574,6 +607,7 @@
       case 'pic-match': return ds('.pm-box').map(chip);
 
       case 'word-web':
+        if (ds('.ww-xword').length) return ds('.ww-xword').map(w => w.classList.contains('ww-xon') ? 1 : 0);
         return ds('.ww-web').map(web => [].slice.call(web.querySelectorAll('.ww-drop')).map(chip));
 
       case 'word-select':
@@ -625,6 +659,7 @@
     if (!baiLam) return 0;
     if (layout === 'word-select') return baiLam.some(v => v === 1) ? 0 : 1;   // wsSubmit: cần ≥1 từ
     if (layout === 'word-web') {
+      if (baiLam.length && !Array.isArray(baiLam[0])) return baiLam.some(v => v === 1) ? 0 : 1;   // gạch từ: cần ≥1 từ gạch
       let n = 0;
       baiLam.forEach(web => (web || []).forEach(o => { if (o === null || o === undefined) n++; }));
       return n;
@@ -692,6 +727,26 @@
         });
         break;
 
+      /* Nối bằng đường: tô THẺ TRÁI (đường giữ màu riêng của hàng), đường sai thành nét đứt.
+         Hé lộ (khi server gửi khóa) = ghi "→ e)" cạnh cụm trái — không vẽ đè thêm đường. */
+      case 'match-line': {
+        ds('.nl-l').forEach((l, i) => {
+          l.dataset.graded = '1'; l.classList.remove('nl-sel', 'nl-ok', 'nl-bad');
+          if (dung[i] != null) l.classList.add(dung[i] ? 'nl-ok' : 'nl-bad');
+          const a = lo && lo.answers ? chiSo(lo.answers[i]) : null;
+          if (a !== null && a >= 0 && !dung[i] && !l.querySelector('.nl-goi')) {
+            const s = l.ownerDocument.createElement('span');
+            s.className = 'nl-goi';
+            s.textContent = '→ ' + (a < 26 ? String.fromCharCode(97 + a) : String(a + 1)) + ')';
+            const t = l.querySelector('.nl-t'); (t || l).appendChild(s);
+          }
+        });
+        const w = sl.querySelector('.nl-wrap');
+        const g = (typeof window !== 'undefined') ? window : null;
+        if (w && g && typeof g.nlRedraw === 'function') { try { g.nlRedraw(w); } catch (e) { /* chỉ là vẽ lại đường */ } }
+        break;
+      }
+
       case 'ket-reading-part7': case 'ket-reading-part3-16-20': {
         const drops = ds('.kp7-drop');
         if (drops.length) {
@@ -749,6 +804,15 @@
         break;
 
       case 'word-web': {
+        if (ds('.ww-xword').length) {
+          const xd = (opts && opts.dapAn && opts.dapAn.kieu === 'gach') ? opts.dapAn.x : null;
+          ds('.ww-xword').forEach((w, i) => {
+            w.classList.remove('ok', 'bad'); w.classList.add('graded');
+            if (dung[i] != null) w.classList.add(dung[i] ? 'ok' : 'bad');
+            if (xd && xd[i] === 1) w.classList.add('ww-xans');       // hé lộ: từ phải gạch
+          });
+          break;
+        }
         let k = 0;
         ds('.ww-web').forEach(web => {
           [].slice.call(web.querySelectorAll('.ww-drop')).forEach(o => toChip(o, dung[k++]));

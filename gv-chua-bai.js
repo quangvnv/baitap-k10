@@ -25,7 +25,7 @@
     'spk-dialogue': 'Hoàn thành hội thoại', 'spk-reading-part3': 'Đọc hiểu Đúng/Sai', 'ket-reading-part1': 'Biển báo A–H',
     'reading-cloze': 'Điền chỗ trống (chọn)', 'ket-reading-part7': 'Điền từ vào đoạn', 'ket-reading-part3-16-20': 'Hoàn thành hội thoại',
     'gap-fill': 'Điền từ (kéo thả)', 'pic-match': 'Nối từ với hình', 'word-web': 'Sơ đồ từ',
-    'word-select': 'Chọn mục từ', 'reorder': 'Sắp xếp thứ tự', 'matching': 'Nối cột',
+    'word-select': 'Chọn mục từ', 'reorder': 'Sắp xếp thứ tự', 'matching': 'Nối cột', 'match-line': 'Nối cặp bằng đường',
     'word-choice': 'Chọn phương án đúng', 'spk-reading-part5': 'Tìm lỗi sai', 'spk-reading-part6': 'Mô tả từ', 'ket-reading-part8': 'Điền phiếu', 'crossword': 'Ô chữ',
   };
 
@@ -263,6 +263,20 @@
         break;
       }
 
+      /* ── Nối cặp bằng đường: mỗi cụm trái (đã có đáp án) là một câu; phương án = các cụm phải ── */
+      case 'match-line': {
+        const paAll = ds('.nl-r').map(r => ({
+          k: String(r.dataset.j),
+          chu: ((r.querySelector('.nl-no') || {}).textContent || '') + ' ' + chu(r.querySelector('.nl-t')),
+        }));
+        ds('.nl-l').forEach((l, i) => {
+          if (!coCau(i)) return;
+          rows.push({ raw: i, nhan: chu(l.querySelector('.nl-t')) || ('Cụm ' + (i + 1)),
+            pa: paAll, dungKeys: new Set([String(answers[i])]) });
+        });
+        break;
+      }
+
       /* ── Chọn mục từ: mỗi TỪ ĐÚNG là một câu, chỉ có chọn / không chọn ───────────────────── */
       case 'word-select': {
         const dung = (da && da.dung) || [];
@@ -356,6 +370,23 @@
 
       /* ── Sơ đồ từ: bài làm là mảng LỒNG [web][ô] ─────────────────────────────────────────── */
       case 'word-web': {
+        /* §32.39.1 chế độ GẠCH TỪ: mỗi chân là một câu, bài làm phẳng 1 = gạch / 0 = giữ. */
+        if (da && da.kieu === 'gach') {
+          const xs = da.x || [];
+          let k = 0;
+          ds('.ww-web').forEach((w, wi) => {
+            const nhanWeb = chu(w.querySelector('.ww-label'), 'Sơ đồ ' + (wi + 1));
+            ds('.ww-xword', w).forEach((x) => {
+              const i = k++;
+              rows.push({
+                raw: i, nhan: nhanWeb + ' · ' + chu(x),
+                pa: [{ k: '1', chu: 'Gạch' }, { k: '0', chu: 'Giữ' }],
+                dungKeys: new Set([xs[i] === 1 ? '1' : '0']),
+              });
+            });
+          });
+          break;
+        }
         const pa = paChip('.ww-bank .ww-chip');
         const webs = (da && da.webs) || [];
         ds('.ww-web').forEach((w, wi) => {

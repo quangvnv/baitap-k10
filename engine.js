@@ -56,12 +56,85 @@ function wsPick(el){
   el.classList.toggle('sel');
 }
 
+/* ── wwXPick — trích từ baigiang-soan.js ── */
+function wwXPick(el){
+  const web=el.closest('.ww-web');
+  if(el.classList.contains('graded') || (web && web.dataset.shown)) return;
+  el.classList.toggle('ww-xon');
+}
+
 /* ── wcPick — trích từ baigiang-word-choice.js ── */
 function wcPick(el){
   const slot=el.closest('.wc-slot'); if(!slot || slot.classList.contains('wc-graded')) return;
   slot.querySelectorAll('.wc-opt').forEach(o=>o.classList.remove('wc-sel'));
   el.classList.add('wc-sel');
   slot.dataset.picked=el.dataset.oi;
+}
+
+/* ── nlPick — trích từ baigiang-noi-duong.js ── */
+function nlPick(el){
+  nlSelFlow(el, (L,R)=>{
+    const j=R.dataset.j;
+    if(L.dataset.pick===j) delete L.dataset.pick; else L.dataset.pick=j;
+    nlRedraw(L.closest('.nl-wrap'));
+  });
+}
+
+/* ── nlSelFlow — trích từ baigiang-noi-duong.js ── */
+function nlSelFlow(el, onLink){
+  const wrap=el.closest('.nl-wrap'); if(!wrap) return;
+  const isL=el.classList.contains('nl-l');
+  if(isL && (el.dataset.shown || el.dataset.graded)) return;
+  const sel=wrap.querySelector('.nl-sel');
+  if(sel===el){ el.classList.remove('nl-sel'); return; }
+  if(sel && sel.classList.contains('nl-l')!==isL){
+    sel.classList.remove('nl-sel');
+    const L=isL?el:sel, R=isL?sel:el;
+    onLink.call(null, L, R);   // .call: bộ dò phụ thuộc của build-web-player coi `onLink(` là hàm ngoài
+    return;
+  }
+  if(sel) sel.classList.remove('nl-sel');
+  el.classList.add('nl-sel');
+}
+
+/* ── nlUnlink — trích từ baigiang-noi-duong.js ── */
+function nlUnlink(ln){
+  const wrap=ln.closest('.nl-wrap'); if(!wrap) return;
+  const i=ln.getAttribute('data-i');
+  if(wrap.classList.contains('nl-edit')){ if(typeof window.nlSetAns==='function') window.nlSetAns(+i,-1); return; }
+  const L=wrap.querySelector('.nl-l[data-i="'+i+'"]');
+  if(!L || L.dataset.shown || L.dataset.graded) return;
+  delete L.dataset.pick;
+  nlRedraw(wrap);
+}
+
+/* ── nlRedraw — trích từ baigiang-noi-duong.js ── */
+function nlRedraw(wrap){
+  if(!wrap) return;
+  const svg=wrap.querySelector('.nl-svg'); if(!svg) return;
+  const hit=wrap.classList.contains('nl-live')||wrap.classList.contains('nl-edit');
+  const rs=[].slice.call(wrap.querySelectorAll('.nl-r'));
+  rs.forEach(r=>{ r.classList.remove('nl-on'); r.style.removeProperty('--nl-rc'); });
+  const ds=[];
+  [].slice.call(wrap.querySelectorAll('.nl-l')).forEach(l=>{
+    const i=+l.dataset.i, p=l.dataset.pick;
+    l.classList.toggle('nl-on', p!==undefined && p!=='');
+    if(p===undefined || p==='') return;
+    const j=+p, c=l.style.getPropertyValue('--nl-c')||'#1976D2';
+    ds.push({i, j, c, cls:l.classList.contains('nl-bad')?'nl-dash':''});
+    const r=rs.find(x=>+x.dataset.j===j);
+    if(r && !r.classList.contains('nl-on')){ r.classList.add('nl-on'); r.style.setProperty('--nl-rc', c); }
+  });
+  svg.innerHTML=nlLinesHtml(ds, hit);
+}
+
+/* ── nlLinesHtml — trích từ baigiang-noi-duong.js ── */
+function nlLinesHtml(ds, hit){
+  return ds.map(d=>{
+    const y1=(d.i+0.5).toFixed(3), y2=(d.j+0.5).toFixed(3);
+    const ln=`<line class="nl-ln${d.cls?' '+d.cls:''}" data-i="${d.i}" x1="0" y1="${y1}" x2="100" y2="${y2}" stroke="${d.c}" vector-effect="non-scaling-stroke"/>`;
+    return ln + (hit ? `<line class="nl-hit" data-i="${d.i}" x1="0" y1="${y1}" x2="100" y2="${y2}" vector-effect="non-scaling-stroke" onclick="nlUnlink(this)"/>` : '');
+  }).join('');
 }
 
 /* ── wdSyncWord — trích từ baigiang-spk-reading-part6.js ── */

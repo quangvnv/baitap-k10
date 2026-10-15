@@ -83,7 +83,8 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .slide-thumb .th-warn{position:absolute;top:1px;right:3px;font-size:12px;line-height:1;z-index:2;
   color:var(--orange-primary,#d4740a);text-shadow:0 0 2px #fff}
 /* dấu 🌐 góc phải-dưới thumbnail: slide đã đẩy lên web (§41) */
-.slide-thumb .th-web{position:absolute;bottom:3px;right:4px;font-size:11px;line-height:1;z-index:2;
+/* cụm dấu góc phải-dưới: 🔊 (slide có âm thanh) bên trái 🌐 */
+.slide-thumb .th-marks{position:absolute;bottom:3px;right:4px;display:flex;gap:3px;font-size:11px;line-height:1;z-index:2;
   filter:drop-shadow(0 0 1px #fff)}
 /* thumb CỐ ĐỊNH 160×90 (không co giãn theo panel) */
 .slide-thumb .th-stage{width:160px;height:90px;margin:0 auto;pointer-events:none;overflow:hidden;background:#fff}
@@ -660,7 +661,7 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .player.anno-draw .gf-foot-block,.player.anno-draw .pptx-text,.player.anno-draw .ws-box,
 .player.anno-draw .kp7-passage,.player.anno-draw .kp7-bank,.player.anno-draw .cw-side,.player.anno-draw .cw-left,
 .player.anno-draw .pptx-tbl-el td,.player.anno-draw .mt-body,.player.anno-draw .ro-list,
-.player.anno-draw .wc-body,.player.anno-draw .vf-body,.player.anno-draw .sw8-body,.player.anno-draw .sw9-body,.player.anno-draw .tb-text{touch-action:none}
+.player.anno-draw .wc-body,.player.anno-draw .nl-body,.player.anno-draw .vf-body,.player.anno-draw .sw8-body,.player.anno-draw .sw9-body,.player.anno-draw .tb-text{touch-action:none}
 .bg-anno-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:6}
 .bg-anno-shape{fill:none}
 /* Lớp bắt nét trên deck iSpring khi BẬT BÚT — z6 để nằm TRÊN .isp-guard (z4): bật bút thì nét vẽ
@@ -1081,6 +1082,21 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 /* Kết quả Kiểm tra: tô VIỀN + CHỮ của chip (từ) — KHÔNG đổi viền ô drop (đỡ rối). */
 .ww-chip.ok{border-color:var(--green-primary);color:var(--green-primary);background:#EDFAF4}
 .ww-chip.bad{border-color:#DC2626;color:#DC2626;background:#FEECEC}
+
+/* §32.39.1 CHẾ ĐỘ GẠCH TỪ KHÔNG PHÙ HỢP — chữ nằm sẵn ở đầu chân (như sách), bấm để gạch.
+   Kết quả tô VIỀN quanh từ (xanh = đúng, đỏ = sai) để vẫn nhìn rõ nét gạch. */
+.ww-xword{display:inline-block;padding:2px 7px;border:1.5px solid transparent;border-radius:12px;background:#fff;
+  font-size:13.5px;line-height:1.2;color:#1A2332;text-align:center;
+  text-decoration-thickness:2px;text-decoration-color:#DC2626}
+.ww-xmode .ww-xword[onclick]{cursor:pointer}
+.ww-xmode .ww-xword[onclick]:hover{background:var(--blue-light)}
+.ww-xword.ww-xon{text-decoration-line:line-through;color:#7A8594}
+.ww-xword.ok{border-color:var(--green-primary);background:#EDFAF4}
+.ww-xword.bad{border-color:#DC2626;background:#FEECEC}
+.ww-xword.ww-xrev{border-color:var(--green-primary)}
+.ww-xword.graded,.ww-xword.ww-xrev{cursor:default}
+/* Trang web (§41) hé lộ đáp án: từ PHẢI gạch mà học viên chưa gạch → dấu ✗ đỏ. */
+.ww-xword.ww-xans:not(.ww-xon)::after{content:' ¹7';color:#DC2626;font-weight:700}
 
 /* ══ CHỌN TỪ ĐÚNG (layout='word-select') — xếp DỌC: BẢNG 5 CỘT các TỪ (sát header 10px, thấp gọn) rồi ẢNH TỰ
    CĂNG đầy chiều cao còn lại. Từ CHƯA chọn = KHÔNG viền (chỉ chữ); BẤM → viền ÔM từ (.sel, fit-content); CHẤM

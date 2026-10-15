@@ -1,0 +1,66 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-noi-duong.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'match-line' — NỐI CẶP BẰNG ĐƯỜNG                                      CLAUDE.md §32.51
+   Đi kèm js/baigiang-noi-duong.js. Text bài giảng 15px × var(--bgz) (§32.1); UI không zoom.
+   ⚠ Lưới KHÔNG có row-gap: đường nối tính tâm hàng i ở y = i+0.5 (viewBox theo SỐ HÀNG).
+     Khoảng cách giữa các thẻ nằm TRONG ô (padding .nl-cell).
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.sl.lay-match-line{padding:10px}
+.sl.lay-match-line.has-head{padding-top:0}   /* §32.9 — viết lại kẻo header bị đẩy xuống 10px */
+
+.sl .nl-wrap{flex:1;min-height:0;display:flex;flex-direction:column}
+.sl .nl-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 3px 0 0;
+  font-size:calc(15px * var(--bgz,1));line-height:1.35;color:#2c3e50}
+.sl .nl-body::-webkit-scrollbar{width:4px}
+.sl .nl-body::-webkit-scrollbar-thumb{background:#c8ced8;border-radius:2px}
+.sl .nl-empty{padding:10px;text-align:center;color:var(--text-muted,#8a94a6);font-size:13px}
+
+/* Lưới: trái · khoảng vẽ đường · phải. Hàng chia ĐỀU (1fr) ⇒ mọi hàng cao bằng nhau. */
+.sl .nl-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(70px,22%,200px) minmax(0,1.25fr);
+  min-height:100%;column-gap:0;row-gap:0}
+.sl .nl-cell{padding:3px 0;display:flex;align-items:center;min-width:0}
+.sl .nl-cl{grid-column:1;justify-content:flex-end}
+.sl .nl-cr{grid-column:3}
+.sl .nl-lines{grid-column:2;position:relative;min-height:0}
+.sl .nl-svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.sl .nl-ln{stroke-width:3;stroke-linecap:round;fill:none}
+.sl .nl-ln.nl-dash{stroke-dasharray:7 5;opacity:.9}
+.sl .nl-hit{stroke:transparent;stroke-width:14;pointer-events:stroke;cursor:pointer}
+
+/* Thẻ cụm: kiểu .option-item (§32.2) — viền mảnh, bo 6px, nền trắng */
+.sl .nl-l,.sl .nl-r{position:relative;display:flex;align-items:baseline;gap:6px;width:100%;
+  padding:5px 10px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;min-width:0;
+  transition:border-color .12s, background .12s, box-shadow .12s}
+.sl .nl-wrap.nl-live .nl-l,.sl .nl-wrap.nl-live .nl-r,
+.sl .nl-wrap.nl-edit .nl-l,.sl .nl-wrap.nl-edit .nl-r{cursor:pointer;user-select:none}
+.sl .nl-wrap.nl-live .nl-l:hover,.sl .nl-wrap.nl-live .nl-r:hover,
+.sl .nl-wrap.nl-edit .nl-l:hover,.sl .nl-wrap.nl-edit .nl-r:hover{border-color:#90b8e6}
+.sl .nl-no{flex:0 0 auto;font-weight:700;color:#1976D2;min-width:1.1em}
+.sl .nl-t{flex:1;min-width:0;overflow-wrap:anywhere}
+
+/* Chấm nối ở mép giáp vùng đường: trái = mép PHẢI thẻ, phải = mép TRÁI thẻ */
+.sl .nl-dot{position:absolute;top:50%;width:11px;height:11px;margin-top:-5.5px;border-radius:50%;
+  background:#fff;border:2px solid #b0bac8;box-sizing:border-box}
+.sl .nl-l .nl-dot{right:-6px}
+.sl .nl-r .nl-dot{left:-6px}
+.sl .nl-l.nl-on .nl-dot{background:var(--nl-c);border-color:var(--nl-c)}
+.sl .nl-r.nl-on .nl-dot{background:var(--nl-rc);border-color:var(--nl-rc)}
+.sl .nl-l.nl-on{border-color:var(--nl-c)}
+
+/* Đang chọn chờ nối */
+.sl .nl-l.nl-sel,.sl .nl-r.nl-sel{border-color:#1976D2;background:#e3f0fd;box-shadow:0 0 0 2px #90c2f5}
+.sl .nl-l.nl-sel .nl-dot,.sl .nl-r.nl-sel .nl-dot{border-color:#1976D2}
+
+/* Soạn: cụm trái chưa chốt đáp án */
+.sl .nl-l.nl-pending{border-color:var(--orange-primary,#E67E22);border-style:dashed}
+
+/* Chấm / hé lộ: tô THẺ TRÁI (đường giữ màu riêng để còn phân biệt); sai = đường nét đứt */
+.sl .nl-l.nl-ok{background:#e8f5e9;border-color:#43A047}
+.sl .nl-l.nl-bad{background:#ffebee;border-color:#E53935}
+.sl .nl-goi{margin-left:6px;font-weight:700;color:#2E7D32;white-space:nowrap}
+
+.nl-hint{margin-top:6px;font-size:11px;color:var(--text-secondary,#5a6577);line-height:1.45}
+.props-body textarea.nl-in{width:100%;resize:vertical;font-family:var(--font-base);line-height:1.5}
