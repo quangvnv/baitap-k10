@@ -125,14 +125,18 @@ function nlRedraw(wrap){
     const r=rs.find(x=>+x.dataset.j===j);
     if(r && !r.classList.contains('nl-on')){ r.classList.add('nl-on'); r.style.setProperty('--nl-rc', c); }
   });
-  svg.innerHTML=nlLinesHtml(ds, hit, wrap.classList.contains('nl-curve'));
+  const gc=wrap.querySelector('.nl-lines');
+  svg.innerHTML=nlLinesHtml(ds, hit, wrap.classList.contains('nl-curve'), (gc&&gc.offsetWidth)||+svg.dataset.gw||0);
 }
 
 /* ── nlLinesHtml — trích từ baigiang-noi-duong.js ── */
-function nlLinesHtml(ds, hit, curve){
+function nlLinesHtml(ds, hit, curve, gw){
+  const st = curve ? Math.min(30, 16*100/Math.max(gw||200, 40)) : 0;   // NL_STUB = 16px (mũi tên 12px + dư)
+  const k = (100-2*st)*0.45;
   return ds.map(d=>{
     const y1=(d.i+0.5).toFixed(3), y2=(d.j+0.5).toFixed(3);
-    const g = curve ? `d="M0 ${y1} C45 ${y1} 55 ${y2} 100 ${y2}"` : `d="M0 ${y1} L100 ${y2}"`;
+    const a=st.toFixed(2), b=(100-st).toFixed(2), c1=(st+k).toFixed(2), c2=(100-st-k).toFixed(2);
+    const g = curve ? `d="M0 ${y1} H${a} C${c1} ${y1} ${c2} ${y2} ${b} ${y2} H100"` : `d="M0 ${y1} L100 ${y2}"`;
     const ln=`<path class="nl-ln${d.cls?' '+d.cls:''}" data-i="${d.i}" ${g} stroke="${d.c}" vector-effect="non-scaling-stroke"/>`;
     return ln + (hit ? `<path class="nl-hit" data-i="${d.i}" ${g} vector-effect="non-scaling-stroke" onclick="nlUnlink(this)"/>` : '');
   }).join('');
