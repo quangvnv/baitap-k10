@@ -217,12 +217,18 @@ function slideCuaPhien(p) {
   return out.length ? out : null;
 }
 function chonTheoSlide(ds) {
-  const sl = parseInt(new URLSearchParams(location.search).get('sl'), 10);
+  const q = new URLSearchParams(location.search);
+  const sl = parseInt(q.get('sl'), 10);
+  if (q.get('chac') === '1') return null;            // app đã biết phiên nào chứa slide này (dữ liệu cục bộ chính xác hơn tên bài tập)
   if (!(sl > 0) || !ds || !ds.length) return null;
   const moi = (a, b) => String(b.mo_luc).localeCompare(String(a.mo_luc));
   const chua = ds.map(p => ({ p, s: slideCuaPhien(p) }));
   const trung = chua.filter(x => !x.s || x.s.includes(sl))
     .sort((a, b) => (a.s ? a.s.length : 1e9) - (b.s ? b.s.length : 1e9) || moi(a.p, b.p));
+  // Phiên app gửi sang cũng chứa slide này (kể cả phiên không có đuôi "(slide …)") ⇒ GIỮ, đừng đổi
+  // sang phiên mở muộn hơn — không thì mọi phiên đặt tên tay đều thua phiên đẩy cuối cùng.
+  const giu = trung.find(x => x.p.ma_phien === q.get('chieu'));
+  if (giu) return giu.p;
   if (trung.length) return trung[0].p;
   let tot = null, d0 = 1e9;
   chua.forEach(x => (x.s || []).forEach(j => {
