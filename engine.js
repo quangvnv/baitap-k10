@@ -63,6 +63,12 @@ function wwXPick(el){
   el.classList.toggle('ww-xon');
 }
 
+/* ── sxPick — trích từ baigiang-spot-wrong.js ── */
+function sxPick(el){
+  if(el.classList.contains('graded') || el.dataset.shown) return;
+  el.classList.toggle('sel');
+}
+
 /* ── wcPick — trích từ baigiang-word-choice.js ── */
 function wcPick(el){
   const slot=el.closest('.wc-slot'); if(!slot || slot.classList.contains('wc-graded')) return;

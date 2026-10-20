@@ -171,3 +171,11 @@
 .sl .sl-gridov{position:absolute;inset:0;pointer-events:none;z-index:3}
 #previewStage.bg-capturing .sl-gridov{display:none!important}
 .bgp-grid{display:flex;gap:10px;margin-top:6px}
+
+/* ── Đổi chữ khi bấm [chữ trước|chữ sau] (§32.40.2) ── */
+.sl .tb-swap .tb-sw-b{display:none}
+.sl .tb-swap.on .tb-sw-a{display:none}
+.sl .tb-swap.on .tb-sw-b{display:inline;color:#E03E2D;font-weight:bold}
+.sl .tb-swap.tb-swap-ed{text-decoration:underline dotted #E03E2D}
+.sl .tb-swap.tb-swap-ed::after{content:attr(data-sw);font-size:.5em;vertical-align:super;color:#E03E2D;
+  font-weight:bold;margin-left:1px}

@@ -79,6 +79,10 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .slide-thumb.multi-sel.sel{border-color:var(--blue-primary);box-shadow:0 0 0 2px var(--blue-light),0 0 0 4px rgba(212,116,10,.35)}
 .slide-thumb .th-num{position:absolute;top:2px;left:4px;font-size:10px;font-weight:700;
   color:var(--text-muted);z-index:2}
+/* Slide ẩn (Ẩn slide như PowerPoint): thumbnail mờ + số slide gạch chéo */
+.slide-thumb.th-hidden .th-stage{opacity:.35}
+.slide-thumb.th-hidden .th-num{color:var(--text-muted);background:#fff;padding:0 3px;border:1px solid var(--text-muted);
+  background-image:linear-gradient(to top right,transparent calc(50% - .5px),var(--text-muted) 50%,transparent calc(50% + .5px))}
 /* §title-warn: dấu ⚠ góc phải-trên thumbnail khi slide thiếu tiêu đề */
 .slide-thumb .th-warn{position:absolute;top:1px;right:3px;font-size:12px;line-height:1;z-index:2;
   color:var(--orange-primary,#d4740a);text-shadow:0 0 2px #fff}

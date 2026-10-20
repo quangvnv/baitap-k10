@@ -69,6 +69,7 @@
     'ket-reading-part8',                                     // điền phiếu KET P8 — CÙNG ô gõ .wd-in (§32.46)
     'word-web',                                              // thả chip theo TẬP đáp án
     'word-select',                                           // chọn nhiều từ đúng
+    'spot-wrong',                                            // tìm ô sai — mỗi ô 1 câu, kiểu khóa 'gach' (§32.53)
     'reorder', 'matching',                                   // sắp thứ tự / nối cột
     'crossword',                                             // ô chữ
     'spk-writing-part8', 'spk-writing-part9',                // viết lại câu / đặt câu — Ô GÕ, so khớp BỎ DẤU CÂU
@@ -338,6 +339,16 @@
         return { html: h, dapAn: webs.length ? { kieu: 'tapHop', webs } : null };
       }
 
+      /* ── Tìm ô sai: .sx-card[data-x] ("1" = ô SAI, phải chọn) — dùng lại kiểu khóa 'gach' ───── */
+      case 'spot-wrong': {
+        const x = [];
+        h = quetThe(h, 'sx-card', (the) => {
+          x.push(docAttr(the, 'data-x') === '1' ? 1 : 0);
+          return datAttr(the, 'data-x', '0');            // đồng loạt "0" ⇒ không lộ gì
+        });
+        return { html: h, dapAn: x.length ? { kieu: 'gach', x } : null };
+      }
+
       /* ── Chọn các từ đúng: .ws-word[data-c] ("1" = từ đúng) ────────────────────────────── */
       case 'word-select': {
         const dung = [];
@@ -489,6 +500,8 @@
 
       /* word-web gạch từ: MỖI CHÂN là một câu — đúng khi trạng thái gạch khớp khóa. */
       case 'gach':
+        /* Nộp bỏ trống cả slide (baiLam không phải mảng) ⇒ mọi câu sai, nếu không ô "không chọn" sẽ được điểm miễn phí. */
+        if (!Array.isArray(baiLam)) return ketQua(dapAn.x.map(() => false));
         return ketQua(dapAn.x.map((c, i) => (bl[i] === 1) === (c === 1)));
 
       case 'oChu':
@@ -613,6 +626,9 @@
       case 'word-select':
         return ds('.ws-word').map(w => w.classList.contains('sel') ? 1 : 0);
 
+      case 'spot-wrong':
+        return ds('.sx-card').map(w => w.classList.contains('sel') ? 1 : 0);
+
       case 'reorder':
         return ds('.ro-drop').map(d => { const c = d.querySelector('.ro-card'); return c ? Number(c.dataset.i) : null; });
 
@@ -657,7 +673,7 @@
        làm" và không ai nộp bài được — xem nhánh `matching` của `thuHoach` (§41.17). */
   function soCauChuaLam(baiLam, layout) {
     if (!baiLam) return 0;
-    if (layout === 'word-select') return baiLam.some(v => v === 1) ? 0 : 1;   // wsSubmit: cần ≥1 từ
+    if (layout === 'word-select' || layout === 'spot-wrong') return baiLam.some(v => v === 1) ? 0 : 1;   // cần ≥1 từ/ô được chọn
     if (layout === 'word-web') {
       if (baiLam.length && !Array.isArray(baiLam[0])) return baiLam.some(v => v === 1) ? 0 : 1;   // gạch từ: cần ≥1 từ gạch
       let n = 0;
@@ -819,6 +835,16 @@
         });
         ds('.ww-chip').forEach(c => c.classList.add('locked'));
         ds('.ww-freein').forEach(i => { i.disabled = true; });
+        break;
+      }
+
+      case 'spot-wrong': {
+        const xd = (opts && opts.dapAn && opts.dapAn.kieu === 'gach') ? opts.dapAn.x : null;
+        ds('.sx-card').forEach((w, i) => {
+          w.classList.remove('ok', 'bad'); w.classList.add('graded');
+          if (dung[i] != null) w.classList.add(dung[i] ? 'ok' : 'bad');
+          if (xd && xd[i] === 1) w.classList.add('sx-rev-bad');        // hé lộ: ô phải chọn
+        });
         break;
       }
 

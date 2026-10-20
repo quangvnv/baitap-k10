@@ -25,7 +25,7 @@
     'spk-dialogue': 'Hoàn thành hội thoại', 'spk-reading-part3': 'Đọc hiểu Đúng/Sai', 'ket-reading-part1': 'Biển báo A–H',
     'reading-cloze': 'Điền chỗ trống (chọn)', 'ket-reading-part7': 'Điền từ vào đoạn', 'ket-reading-part3-16-20': 'Hoàn thành hội thoại',
     'gap-fill': 'Điền từ (kéo thả)', 'pic-match': 'Nối từ với hình', 'word-web': 'Sơ đồ từ',
-    'word-select': 'Chọn mục từ', 'reorder': 'Sắp xếp thứ tự', 'matching': 'Nối cột', 'match-line': 'Nối cặp bằng đường',
+    'word-select': 'Chọn mục từ', 'spot-wrong': 'Tìm ô sai', 'reorder': 'Sắp xếp thứ tự', 'matching': 'Nối cột', 'match-line': 'Nối cặp bằng đường',
     'word-choice': 'Chọn phương án đúng', 'spk-reading-part5': 'Tìm lỗi sai', 'spk-reading-part6': 'Mô tả từ', 'ket-reading-part8': 'Điền phiếu', 'crossword': 'Ô chữ',
   };
 
@@ -273,6 +273,19 @@
           if (!coCau(i)) return;
           rows.push({ raw: i, nhan: chu(l.querySelector('.nl-t')) || ('Cụm ' + (i + 1)),
             pa: paAll, dungKeys: new Set([String(answers[i])]) });
+        });
+        break;
+      }
+
+      /* ── Tìm ô sai: mỗi Ô là một câu — chọn (ô sai) / không chọn (ô đúng); bài làm phẳng 1/0 ── */
+      case 'spot-wrong': {
+        const xs = (da && da.x) || [];
+        ds('.sx-card').forEach((c, i) => {
+          rows.push({
+            raw: i, nhan: 'Ô ' + (i + 1) + ' · ' + chu(c.querySelector('.sx-tt') || c),
+            pa: [{ k: '1', chu: 'Chọn (ô sai)' }, { k: '0', chu: 'Không chọn' }],
+            dungKeys: new Set([xs[i] === 1 ? '1' : '0']),
+          });
         });
         break;
       }
