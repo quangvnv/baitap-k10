@@ -70,6 +70,11 @@
 .tb-toolbar .tw-pop{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:5;background:#fff;
   border:1px solid #D6DEE8;border-radius:6px;box-shadow:0 6px 18px rgba(15,23,42,.18);padding:6px}
 .tb-toolbar .tw-dd.open > .tw-pop{display:block}
+/* Thiếu chỗ phía dưới cửa sổ → lật lên trên nút (tbfFitPop); cả hai phía đều chật thì tự cuộn */
+.tb-toolbar .tw-pop.up{top:auto;bottom:calc(100% + 4px)}
+.tb-toolbar .tw-pop.fit-scroll{overflow-y:auto}
+.tb-toolbar .tw-pop.fit-scroll::-webkit-scrollbar{width:4px}
+.tb-toolbar .tw-pop.fit-scroll::-webkit-scrollbar-thumb{background:#C5CDD8;border-radius:2px}
 .tb-toolbar .tw-pal{padding:0;overflow:hidden}
 /* Bảng màu kiểu TinyMCE: ô vuông 34px sát nhau, hàng cuối Đen · Trắng · Bỏ màu · Chọn màu khác */
 .tb-toolbar .tw-sws{display:grid;grid-template-columns:repeat(5,34px);grid-auto-rows:34px}
@@ -96,6 +101,10 @@
 /* Bảng trong KHỐI CHỮ TỰ DO (chèn từ thanh định dạng) — cả bảng tính là MỘT "dòng" khi gán hiệu ứng từng dòng */
 .sl .tb-text table.tb-tbl{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 .3em}
 .sl .tb-text table.tb-tbl td{border:1px solid #94A3B8;padding:.1em .35em;vertical-align:top;word-break:break-word}
+/* Vùng ô đang kéo chọn (chỉ khi gõ) — phủ xanh mờ lên trên cả màu ô; ẩn vùng bôi đen gốc trong lúc chọn */
+.sl .tb-text table.tb-tbl td.tb-csel{box-shadow:inset 0 0 0 999px rgba(53,152,219,.28)}
+.sl .tb-text table.tb-tbl.tb-cselecting ::selection{background:transparent}
+.tb-toolbar .tw-cfwrap.off{opacity:.4}
 /* Ô bảng slide PowerPoint đang gõ */
 .pptx-tbl-el td.pptx-cell-editing{outline:2px solid var(--blue-primary,#1A6FBF);outline-offset:-2px;cursor:text;user-select:text}
 

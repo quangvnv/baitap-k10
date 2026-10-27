@@ -114,11 +114,23 @@ function vaoLamBai() {
   $('lopSlide').innerHTML = '';
   Object.keys(KHUNG).forEach(k => delete KHUNG[k]);
   $('menuTen').textContent = (PHIEN && PHIEN.ten) || 'Bài tập';
+  napPhong(PHIEN.de && PHIEN.de.fonts);
   veSlide();
   if (PHIEN.khach) bao('Mã của bạn không có trong danh sách lớp — vẫn làm bài được, điểm ghi dạng khách.', 'nhac');
   if (PHIEN.conLaiGiay != null) chayDongHo(PHIEN.conLaiGiay);
 }
 
+/* PHÔNG CHỮ của bài (§41.36): app tải từng biến thể lên Storage, đề mang
+   de.fonts = [{f:tên họ, w:weight, s:style, u:url}]. Slide đã ghi sẵn tên phông trong style (--font-base,
+   font-family) ⇒ chỉ cần khai @font-face. Đề cũ không có fonts ⇒ xoá khối (không để phông bài trước). */
+function napPhong(fonts) {
+  let el = document.getElementById('dePhong');
+  if (!el) { el = document.createElement('style'); el.id = 'dePhong'; document.head.appendChild(el); }
+  const q = s => '"' + String(s || '').replace(/[\\"]/g, '\\$&') + '"';
+  el.textContent = (Array.isArray(fonts) ? fonts : []).filter(x => x && x.f && /^https:\/\//.test(x.u || ''))
+    .map(x => '@font-face{font-family:' + q(x.f) + ';font-weight:' + (+x.w || 400) + ';font-style:'
+      + (x.s === 'italic' ? 'italic' : 'normal') + ';font-display:swap;src:url(' + q(x.u) + ')}').join('\n');
+}
 function slides() { return (PHIEN && PHIEN.de && PHIEN.de.slides) || []; }
 function layoutCua(i) { const s = slides()[i]; return (s && s.layout) || ''; }
 function coBaiTap(i) { return ChamDiem.LAYOUT_CO_BAI.indexOf(layoutCua(i)) >= 0; }
@@ -400,6 +412,7 @@ function luuDaNop() {
     localStorage.setItem(KHOA_DA_NOP, JSON.stringify({
       luc: Date.now(), maPhien: PHIEN.maPhien || '', ten: PHIEN.ten || '', luotId: PHIEN.luotId,
       ketQua: KET_QUA, loi: KET_QUA ? '' : 'chưa gửi được', slides: ds,
+      fonts: (PHIEN.de && PHIEN.de.fonts) || [],
     }));
   } catch (e) { /* hết chỗ / trình duyệt chặn — chỉ mất tính năng xem lại sau khi tải lại trang */ }
 }
@@ -410,7 +423,8 @@ function moLaiDaNop() {
   if (Date.now() - (r.luc || 0) > DA_NOP_GIU_GIO * 3600e3) { boDaNop(); return false; }
   const p = new URLSearchParams(location.search).get('p');
   if (p && /^\d{6}$/.test(p) && r.maPhien && p !== r.maPhien) return false;   // quét QR phiên khác ⇒ vào bài mới
-  PHIEN = { luotId: r.luotId, maPhien: r.maPhien, ten: r.ten, de: { slides: r.slides } };
+  PHIEN = { luotId: r.luotId, maPhien: r.maPhien, ten: r.ten, de: { slides: r.slides, fonts: r.fonts || [] } };
+  napPhong(PHIEN.de.fonts);
   CHI_SO = 0; XEM_LAI = false;
   $('lopSlide').innerHTML = '';
   Object.keys(KHUNG).forEach(k => delete KHUNG[k]);

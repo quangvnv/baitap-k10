@@ -70,5 +70,31 @@
 .sl .nl-l.nl-bad{background:#ffebee;border-color:#E53935}
 .sl .nl-goi{margin-left:6px;font-weight:700;color:#2E7D32;white-space:nowrap}
 
+/* ── KIỂU "RẢI TỰ DO" (slots.nlLook='scatter') ─────────────────────────────────────────────────
+   Bề rộng + lệch ngang của từng ô đặt INLINE lúc render (nlScatterBox). Ở đây chỉ lo 3 kiểu ô:
+   viền 2px + nền gradient dọc + vệt bóng nửa trên + bóng đổ nhẹ (theo tool "Cycling adjectives").
+   ⚠ Trạng thái chọn / đã nối / đúng / sai PHẢI viết lại trong .nl-scatter (độ ưu tiên cao hơn kiểu ô). */
+.sl .nl-scatter .nl-cl{justify-content:flex-end}
+.sl .nl-scatter .nl-cr{justify-content:flex-start}
+.sl .nl-scatter .nl-l,.sl .nl-scatter .nl-r{flex:0 0 auto;border-width:2px;border-radius:4px;
+  box-shadow:0 1.6px 3px rgba(26,51,80,.22);padding:5px 10px}
+.sl .nl-scatter .nl-l::after,.sl .nl-scatter .nl-r::after{content:'';position:absolute;left:1px;right:1px;top:1px;height:48%;
+  border-radius:3px 3px 0 0;pointer-events:none;background:linear-gradient(#fff9,#fff0)}
+.sl .nl-scatter .nl-st-t{border-color:#2F8F88;background:linear-gradient(#F5FBFA,#E0F2EF 55%,#CBE8E3)}
+.sl .nl-scatter .nl-st-a{border-color:#C98A1B;background:linear-gradient(#FFFBF2,#FBEFD6 55%,#F3DFB5)}
+.sl .nl-scatter .nl-st-g{border-color:#8A9096;background:linear-gradient(#F7F8F9,#E7E9EB 55%,#D5D8DB)}
+.sl .nl-scatter .nl-l .nl-dot{right:-7px}
+.sl .nl-scatter .nl-r .nl-dot{left:-7px}
+.sl .nl-scatter.nl-curve .nl-l.nl-on .nl-dot{right:-13px}
+.sl .nl-scatter.nl-curve .nl-r.nl-on .nl-dot{left:-13px}
+.sl .nl-scatter .nl-l.nl-on{border-color:var(--nl-c)}
+.sl .nl-scatter .nl-r.nl-on{border-color:var(--nl-rc)}
+.sl .nl-scatter .nl-l.nl-pending{border-color:var(--orange-primary,#E67E22);border-style:dashed}
+.sl .nl-scatter .nl-l.nl-sel,.sl .nl-scatter .nl-r.nl-sel{border-color:#1976D2;background:#e3f0fd;box-shadow:0 0 0 2px #90c2f5}
+.sl .nl-scatter .nl-l.nl-ok{background:#e8f5e9;border-color:#43A047}
+.sl .nl-scatter .nl-l.nl-bad{background:#ffebee;border-color:#E53935}
+.sl .nl-scatter .nl-l.nl-ok::after,.sl .nl-scatter .nl-l.nl-bad::after,
+.sl .nl-scatter .nl-l.nl-sel::after,.sl .nl-scatter .nl-r.nl-sel::after{display:none}
+
 .nl-hint{margin-top:6px;font-size:11px;color:var(--text-secondary,#5a6577);line-height:1.45}
 .props-body textarea.nl-in{width:100%;resize:vertical;font-family:var(--font-base);line-height:1.5}

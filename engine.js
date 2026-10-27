@@ -121,14 +121,19 @@ function nlRedraw(wrap){
   const hit=wrap.classList.contains('nl-live')||wrap.classList.contains('nl-edit');
   const rs=[].slice.call(wrap.querySelectorAll('.nl-r'));
   rs.forEach(r=>{ r.classList.remove('nl-on'); r.style.removeProperty('--nl-rc'); });
+  // Kiểu rải tự do: svg phủ cả lưới. Điện thoại (--nl-flat:1, trang.css) ô về thẳng ⇒ đầu đường = mép cột
+  // (34.667 / 56.667 = NL_XL / NL_XR, viết thẳng vì hàm này được nhúng một mình sang web/trang tự học).
+  const full=svg.getAttribute('data-full')==='1';
+  let flat=false; try{ flat=full && getComputedStyle(wrap).getPropertyValue('--nl-flat').trim()==='1'; }catch(_){ }
+  const xOf=(el, dflt)=>(!full ? null : (flat || !el || el.dataset.x==null || el.dataset.x==='') ? dflt : +el.dataset.x);
   const ds=[];
   [].slice.call(wrap.querySelectorAll('.nl-l')).forEach(l=>{
     const i=+l.dataset.i, p=l.dataset.pick;
     l.classList.toggle('nl-on', p!==undefined && p!=='');
     if(p===undefined || p==='') return;
     const j=+p, c=l.style.getPropertyValue('--nl-c')||'#1976D2';
-    ds.push({i, j, c, cls:l.classList.contains('nl-bad')?'nl-dash':''});
     const r=rs.find(x=>+x.dataset.j===j);
+    ds.push({i, j, c, cls:l.classList.contains('nl-bad')?'nl-dash':'', x1:xOf(l, 34.667), x2:xOf(r, 56.667)});
     if(r && !r.classList.contains('nl-on')){ r.classList.add('nl-on'); r.style.setProperty('--nl-rc', c); }
   });
   const gc=wrap.querySelector('.nl-lines');
@@ -137,12 +142,15 @@ function nlRedraw(wrap){
 
 /* ── nlLinesHtml — trích từ baigiang-noi-duong.js ── */
 function nlLinesHtml(ds, hit, curve, gw){
-  const st = curve ? Math.min(30, 16*100/Math.max(gw||200, 40)) : 0;   // NL_STUB = 16px (mũi tên 12px + dư)
-  const k = (100-2*st)*0.45;
+  const px = 16*100/Math.max(gw||200, 40);                               // NL_STUB = 16px (mũi tên 12px + dư)
+  const f = v=>{ const t=(+v).toFixed(2); return t==='0.00' ? '0' : t==='100.00' ? '100' : t; };
   return ds.map(d=>{
     const y1=(d.i+0.5).toFixed(3), y2=(d.j+0.5).toFixed(3);
-    const a=st.toFixed(2), b=(100-st).toFixed(2), c1=(st+k).toFixed(2), c2=(100-st-k).toFixed(2);
-    const g = curve ? `d="M0 ${y1} H${a} C${c1} ${y1} ${c2} ${y2} ${b} ${y2} H100"` : `d="M0 ${y1} L100 ${y2}"`;
+    const x1 = d.x1==null ? 0 : +d.x1, x2 = d.x2==null ? 100 : +d.x2, gap = x2-x1;
+    const st = curve ? Math.min(30*gap/100, px, gap/3) : 0;
+    const k = (gap-2*st)*0.45;
+    const g = curve ? `d="M${f(x1)} ${y1} H${f(x1+st)} C${f(x1+st+k)} ${y1} ${f(x2-st-k)} ${y2} ${f(x2-st)} ${y2} H${f(x2)}"`
+                    : `d="M${f(x1)} ${y1} L${f(x2)} ${y2}"`;
     const ln=`<path class="nl-ln${d.cls?' '+d.cls:''}" data-i="${d.i}" ${g} stroke="${d.c}" vector-effect="non-scaling-stroke"/>`;
     return ln + (hit ? `<path class="nl-hit" data-i="${d.i}" ${g} vector-effect="non-scaling-stroke" onclick="nlUnlink(this)"/>` : '');
   }).join('');

@@ -647,3 +647,18 @@ select.o {
   .san .sl .kp7-bank.kp7-side .ww-chip { display: inline-flex !important; width: auto !important; margin: 0 !important; }
   .san .sl .kp7-bank .kp7-bankw { display: none; }
 }
+
+/* ── Nối cặp bằng đường — kiểu "Rải tự do" (§32.51): điện thoại đưa ô về THẲNG HÀNG ──────────────
+   --nl-flat:1 báo cho nlRedraw (engine.js) dùng mép CỘT làm đầu đường thay cho data-x của ô. */
+@media (max-width: 700px) {
+  .san .sl .nl-scatter { --nl-flat: 1; }
+  .san .sl .nl-scatter .nl-l, .san .sl .nl-scatter .nl-r { width: 100% !important; margin: 0 !important; }
+}
+
+/* Hội thoại sơ đồ (§32.54) trên điện thoại: bỏ khung kéo-thả tuyệt đối + zoom, cụm chảy theo bề rộng màn hình */
+@media (max-width:700px){
+  .san .sl .rp-area{position:static;margin-top:6px}
+  .san .sl .rp-box{position:static;width:100% !important;height:auto !important}
+  .san .sl .rp-box .rp-in{height:auto;display:block}
+  .san .sl .rp-arrow{width:100%;height:auto}
+}

@@ -1,0 +1,78 @@
+/* ⚠⚠⚠ FILE TỰ SINH — ĐỪNG SỬA Ở ĐÂY ⚠⚠⚠
+   Nguồn: src/renderer/css/baigiang-hoi-thoai-so-do.css
+   Sửa ở nguồn rồi chạy: node tools/dong-bo-web.js   (§41.10) */
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   LAYOUT 'hoi-thoai-so-do' — HỘI THOẠI SƠ ĐỒ (Role-play)                     CLAUDE.md §32.54
+   Đi kèm js/baigiang-hoi-thoai-so-do.js. Màu theo sách Speakout: trái xanh ngọc, phải cam.
+   Kéo cỡ tự do: khung thoại rộng theo % khung bao; khi khung bao có chiều cao (.rp-fixh) thì các
+   khung thoại chia đều chiều cao còn lại (flex), hàng tên vai + mũi tên giữ cao cố định.
+   Chữ khung thoại 16px × --bgz (§32.1).
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.sl.lay-hoi-thoai-so-do{padding:10px}
+.sl.lay-hoi-thoai-so-do.has-head{padding-top:0}   /* BẮT BUỘC (§32.9) */
+
+.sl .rp-area{position:relative;flex:1;min-height:0;margin-top:10px}
+.sl .rp-box{position:absolute}
+.sl .rp-box.rp-edit{cursor:move;outline:1px dashed transparent;outline-offset:4px}
+.sl .rp-box.rp-edit:hover{outline-color:#9fb4cc}
+.sl .rp-in{width:100%;font-family:var(--font-base)}
+/* Khung không bao giờ thấp hơn nội dung (sau khi hàng mũi tên đã co hết) ⇒ viền + tay cầm luôn ôm đủ chữ. */
+.sl .rp-box.rp-fixh{display:flex;flex-direction:column;min-height:max-content}
+.sl .rp-box.rp-fixh .rp-in{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+/* Khung có chiều cao: khung thoại KHÔNG BAO GIỜ co dưới chiều cao chữ (flex-shrink 0) — đủ chỗ thì giãn
+   đều; thiếu chỗ thì HÀNG MŨI TÊN co trước (tới 10px), vẫn thiếu thì khung tự cao thêm (không cắt chữ). */
+.sl .rp-box.rp-fixh .rp-bub{flex:1 0 auto}
+/* Hàng mũi tên: gốc 10px, ưu tiên giãn TRƯỚC (grow 100) tới tối đa 28px, phần dư còn lại mới chia cho
+   khung thoại. Gốc nhỏ để min-height:max-content của khung tính theo mũi tên đã co hết. */
+.sl .rp-box.rp-fixh .rp-gap{flex:100 0 10px;min-height:10px;max-height:28px;height:auto}
+.sl .rp-box.rp-fixh .rp-row-name{flex:0 0 auto}
+
+.sl .rp-row-name{height:24px;position:relative}
+.sl .rp-name{position:absolute;bottom:3px;font-weight:700;font-size:16px;line-height:1;white-space:nowrap}
+.sl .rp-name-L{left:0;color:#2F8C8C}
+.sl .rp-name-R{right:0;color:#C0392B}
+
+.sl .rp-gap{height:28px;position:relative}
+.sl .rp-arrow{display:block;width:100%;height:100%;overflow:visible}
+.sl .rp-head{position:absolute;bottom:-8px;width:16px;height:16px;margin-left:-8px;overflow:visible;transform-origin:8px 8px}
+
+.sl .rp-bub{position:relative;width:56%;box-sizing:border-box;padding:6px 10px;border:1.5px solid;border-radius:4px;
+  min-height:2.6em;color:#1A2332;font-size:calc(16px * var(--bgz,1));line-height:1.35}
+.sl .rp-bub.rp-L{margin-right:44%;border-color:#5BB5BF;background:#E8F6F7}
+.sl .rp-bub.rp-R{margin-left:44%;border-color:#E0896B;background:#FCECE5}
+.sl .rp-text{outline:none;min-height:1.35em;word-wrap:break-word}
+.sl .rp-text p,.sl .rp-text div{margin:0}
+.sl .rp-ph{color:#8a94a6;font-style:italic;font-size:13px}
+.sl .rp-bub.rp-editing{box-shadow:0 0 0 2px var(--blue-primary,#1A6FBF);cursor:text}
+.sl .rp-edit .rp-bub{cursor:inherit}
+/* Đang gõ: con trỏ chữ I (phải đứng SAU rule trên — cùng độ ưu tiên thì rule sau thắng) */
+.sl .rp-edit .rp-bub.rp-editing,.sl .rp-edit .rp-bub.rp-editing *{cursor:text}
+.sl .rp-badge{position:absolute;top:-9px;left:-9px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;
+  background:#1A6FBF;color:#fff;font-size:11px;line-height:18px;text-align:center;font-weight:600;z-index:2}
+
+/* Tay cầm phóng/thu cả cụm (chỉ khung soạn) */
+.sl .rp-rh{position:absolute;width:10px;height:10px;border-radius:50%;background:#fff;border:1.5px solid #1A6FBF;z-index:3;
+  opacity:0;transition:opacity .12s}
+.sl .rp-box.rp-edit:hover .rp-rh{opacity:1}
+.sl .rp-rh-nw{left:-9px;top:-9px;cursor:nwse-resize}
+.sl .rp-rh-ne{right:-9px;top:-9px;cursor:nesw-resize}
+.sl .rp-rh-sw{left:-9px;bottom:-9px;cursor:nesw-resize}
+.sl .rp-rh-se{right:-9px;bottom:-9px;cursor:nwse-resize}
+.sl .rp-rh-w{left:-9px;top:calc(50% - 5px);cursor:ew-resize}
+.sl .rp-rh-n{top:-9px;left:calc(50% - 5px);cursor:ns-resize}
+.sl .rp-rh-s{bottom:-9px;left:calc(50% - 5px);cursor:ns-resize}
+.sl .rp-rh-e{right:-9px;top:calc(50% - 5px);cursor:ew-resize}
+#previewStage.bg-capturing .rp-rh,#previewStage.bg-capturing .rp-badge{display:none}
+
+/* Panel */
+.rp-pf{display:flex;align-items:center;gap:6px;margin-top:6px}
+.rp-pf label{flex:0 0 90px;font-size:12px}
+.rp-pf input,.rp-pf select{flex:1;min-width:0}
+.rp-note{font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.4}
+.rp-prow{display:flex;align-items:center;gap:6px;margin-top:4px}
+.rp-pdot{flex:0 0 10px;height:10px;border-radius:2px;border:1.5px solid}
+.rp-pdot.rp-L{border-color:#5BB5BF;background:#E8F6F7}
+.rp-pdot.rp-R{border-color:#E0896B;background:#FCECE5}
+.rp-ptxt{flex:1;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-prow input{flex:0 0 46px;width:46px}

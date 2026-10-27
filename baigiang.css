@@ -20,7 +20,10 @@
   --bgz:1;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
+/* overscroll-behavior-x:none — chặn cử chỉ "vuốt ngang để lùi/tiến trang" có sẵn của Chromium trên màn
+   cảm ứng (bảng tương tác): chỉ áp cho trang Soạn bài giảng (2026-10-21). Vuốt đổi slide khi trình chiếu
+   là cử chỉ RIÊNG của app, bật/tắt bằng nút ↔ trên dock. */
+html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:var(--font-base);
   background:var(--bg-page);color:var(--text-primary);font-size:15px}
 /* NỘI DUNG SLIDE giữ Segoe UI (03/10/2026): giao diện app đổi sang Be Vietnam Pro nhưng slide là
    khung cố định 960×540 — Be Vietnam Pro rộng hơn ~15% sẽ làm tràn chữ ở các bài đã soạn.
@@ -156,6 +159,38 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .pcard.pc-flat .pcard-body > .slot-group{border:0;padding:0;background:none}
 .pcard.pc-flat .pcard-body > .slot-group > .slot-title:first-child{display:none}
 .bgp-note{font-size:11px;line-height:1.4;color:var(--text-muted)}
+/* PANEL 3 TAB (2026-10-21, §32.42.2): Slide · Khối · Hiệu ứng. Thanh tab dính đỉnh vùng cuộn
+   (#propsBody padding 5px ⇒ top/margin âm để phủ kín). Tab Hiệu ứng = danh sách nhịp bấm kéo thả. */
+.bgp-tabs{display:flex;position:sticky;top:-5px;z-index:3;margin:-5px -5px 0;background:#fff;border-bottom:1px solid var(--border)}
+.bgp-tab{flex:1;height:32px;border:0;border-bottom:2px solid transparent;background:none;cursor:pointer;
+  font-family:var(--font-base);font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em}
+.bgp-tab:hover:not(:disabled){color:var(--blue-primary);background:#F1F5FA}
+.bgp-tab.on{color:var(--blue-primary);border-bottom-color:var(--blue-primary)}
+.bgp-tab:disabled{opacity:.4;cursor:not-allowed}
+.bgp-pane{display:flex;flex-direction:column;gap:10px}
+.bgp-pane > .bgp-tier:first-child{display:none}
+.bgp-flat .tb-prop{margin-bottom:6px}
+.bal-grp{display:flex;gap:6px;align-items:flex-start;border:1px solid var(--border);background:#FAFBFD;padding:4px}
+.bal-k{flex:0 0 22px;height:22px;border-radius:50%;background:var(--blue-primary);color:#fff;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center}
+.bal-zero .bal-k{background:#9AA5B1}
+.bal-items{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.bal-cap{font-size:11px;color:var(--text-muted)}
+.bal-it{display:flex;align-items:center;gap:5px;padding:3px 5px;background:#fff;border:1px solid #E3E6EA;cursor:grab;font-size:12px}
+.bal-it:hover{border-color:var(--blue-primary)}
+.bal-it.on{border-color:var(--orange-primary);background:#FFF6EC}
+.bal-ic{flex:0 0 auto}
+.bal-lab{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bal-an{flex:0 0 auto;font-size:11px;color:var(--text-muted)}
+.bal-auto{font-size:11px;font-style:italic;color:var(--text-muted);padding:3px 2px}
+.bal-gap{height:6px;margin:-3px 0}
+.bal-gap-end{height:auto;margin:0;padding:4px;font-size:11px;color:var(--text-muted);text-align:center;border:1px dashed var(--border)}
+.bal-over{outline:2px dashed var(--orange-primary);outline-offset:-1px;background:#FFF6EC}
+.bal-gap.bal-over{height:14px}
+.bal-sel{border-top:2px solid var(--blue-primary)}
+.bal-it{touch-action:none;user-select:none}
+.bal-src{opacity:.4}
+.bal-ghost{position:fixed;z-index:9000;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:.95;cursor:grabbing}
 /* Card "Phông chữ" trong panel Thuộc tính (§32.33). Chữ nhỏ như mọi dòng chú thích của panel;
    KHÔNG dùng .hint-tiny (class đó bị display:none toàn trang — xem §32.13). */
 /* Menu chọn phông kiểu Word (§32.33): mỗi dòng vẽ bằng chính phông đó, cỡ to hơn chữ giao diện cho dễ so */
@@ -406,6 +441,11 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
    của từng câu (KHÔNG cố định 4 cột). minmax(0,1fr) → các cột rộng đều, đáp án dài tự xuống dòng trong ô. */
 .sl .options-container.opts-c2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
 .sl .options-container.opts-c4{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+/* NHÃN PHƯƠNG ÁN (mcq-list, slot S.optLbl) — CSS counter theo thứ tự HIỂN THỊ (đúng cả khi trộn đáp án). */
+.sl .options-container.opts-lbl-up,.sl .options-container.opts-lbl-lo{counter-reset:optlbl}
+.sl .opts-lbl-up>.option-item,.sl .opts-lbl-lo>.option-item{counter-increment:optlbl}
+.sl .opts-lbl-up>.option-item>span::before{content:counter(optlbl,upper-alpha) ". ";font-weight:600}
+.sl .opts-lbl-lo>.option-item>span::before{content:counter(optlbl,lower-alpha) ". ";font-weight:600}
 .sl .option-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #e0e0e0;
   border-radius:6px;cursor:pointer;transition:.15s;background:#fff;color:#333;line-height:1.4;
   font-size:calc(14px * var(--bgz,1))}
@@ -666,6 +706,12 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
 .player.anno-draw .kp7-passage,.player.anno-draw .kp7-bank,.player.anno-draw .cw-side,.player.anno-draw .cw-left,
 .player.anno-draw .pptx-tbl-el td,.player.anno-draw .mt-body,.player.anno-draw .ro-list,
 .player.anno-draw .wc-body,.player.anno-draw .nl-body,.player.anno-draw .vf-body,.player.anno-draw .sw8-body,.player.anno-draw .sw9-body,.player.anno-draw .tb-text{touch-action:none}
+/* BẬT BÚT → CẢ SLIDE không nhận cử chỉ cuộn/phóng native của 1 ngón (bug 26/10/2026: vẽ khung lên ẢNH
+   trên bảng thông minh chỉ ra một đoạn ngắn rồi đứt — trình duyệt giành cử chỉ thành cuộn ⇒ pointercancel;
+   chuột không dính vì touch-action chỉ áp cho cảm ứng). Danh sách vùng chữ ở trên không phủ ảnh/khối pptx/
+   khối ảnh tự do/vùng trống. Ảnh pptx vốn draggable ⇒ tắt luôn kéo ảnh native khi đang bật bút. */
+.player.anno-draw .sl,.player.anno-draw .sl *{touch-action:none}
+.player.anno-draw .sl img{-webkit-user-drag:none;user-drag:none}
 .bg-anno-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:6}
 .bg-anno-shape{fill:none}
 /* Lớp bắt nét trên deck iSpring khi BẬT BÚT — z6 để nằm TRÊN .isp-guard (z4): bật bút thì nét vẽ
@@ -846,6 +892,7 @@ html,body{height:100vh;overflow:hidden;font-family:var(--font-base);
   display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
 .abar-bmk:hover{background:#26355c;border-color:#3d4d78}
 .abar-bmk.on{background:var(--blue-primary);border-color:var(--blue-primary);color:#fff}
+.abar-bmk.is-seg{border-bottom:2px solid var(--orange-primary,#D4740A)}   /* mốc đoạn (có điểm cuối) */
 /* Nút chọn chế độ phát theo mốc (Đoạn / Liền) — đứng đầu cụm mốc */
 .abar-bmkmode{white-space:nowrap;margin-right:2px}
 .abar-bmkmode.seg{border-color:#d4740a;color:#ffd7a8}
