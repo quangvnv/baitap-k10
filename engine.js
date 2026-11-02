@@ -374,7 +374,7 @@ function wireKp7(root){
 function wireReorder(root){
   root.querySelectorAll('.ro-wrap.ro-live').forEach(wrap=>{
     if(wrap._roWired) return; wrap._roWired=true;
-    let drag=null, ghost=null, fromSrc=false;
+    let drag=null, ghost=null, fromSrc=false, x0=0, y0=0;
     const src=wrap.querySelector('.ro-src');
     const sortedAfter=(el,i)=>[...src.querySelectorAll('.ro-card')].find(x=>x!==el && +x.dataset.i>i)||null;
     // Đoạn gốc bên trái LUÔN ở lại: khi 1 card được đặt vào ô phải, để lại BẢN MỜ (placeholder,
@@ -406,7 +406,7 @@ function wireReorder(root){
       const c=e.target.closest && e.target.closest('.ro-card');
       if(!c || c.classList.contains('locked')) return;
       e.preventDefault(); e.stopPropagation();
-      drag=c; fromSrc=src.contains(c);
+      drag=c; fromSrc=src.contains(c); x0=e.clientX; y0=e.clientY;
       const r=c.getBoundingClientRect();
       ghost=c.cloneNode(true); ghost.classList.add('ro-ghost'); ghost.classList.remove('ro-dragging');
       ghost.style.width=r.width+'px'; document.body.appendChild(ghost);
@@ -420,6 +420,15 @@ function wireReorder(root){
     });
     function drop(e){
       if(!drag) return; e.preventDefault();
+      // BẤM (không kéo) = đặt nhanh: card ở cột nguồn → ô trống ĐẦU TIÊN; card đã đặt → trả về cột nguồn.
+      // Cần cho điện thoại: card cao kín màn hình nên ô thả nằm khuất dưới, kéo xa không được.
+      if(Math.abs(e.clientX-x0)<8 && Math.abs(e.clientY-y0)<8){
+        if(fromSrc){
+          const d=[...wrap.querySelectorAll('.ro-drop')].find(x=>!x.querySelector('.ro-card') && !x.dataset.shown);
+          if(d){ drag.classList.remove('ok','bad'); d.appendChild(drag); if(!phFor(+drag.dataset.i)) mkPlaceholder(drag); }
+        } else toSrc(drag);
+        cleanup(); return;
+      }
       let t=targetUnder(e);
       // Ô GV đã HÉ LỘ đáp án (§32.27.1) → khoá, không cho thả đè lên.
       if(t && t.classList && t.classList.contains('ro-drop') && (t.dataset.shown || t.querySelector('.ro-card.locked'))) t=null;

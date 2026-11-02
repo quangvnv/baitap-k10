@@ -411,6 +411,11 @@ select.o {
   }
   .san .sl .gf-cols { display: block !important; }
 
+  /* Sắp xếp thứ tự: card cao gần kín màn hình ⇒ touch-action:none trên card làm KHÔNG CUỘN được
+     tới các ô thả bên dưới. Điện thoại cho cuộn dọc trên card; xếp bằng cách BẤM card
+     (vào ô trống đầu tiên / bấm lại để trả về) — wireReorder lo phần bấm. */
+  .san .sl .ro-card, .san .sl .ro-drop { touch-action: pan-y; }
+
   /* ⚠ KHUNG BÀI TẬP KÉO BỀ RỘNG (§32.41, `.bw-wrap`) mang `width:<px>` + `margin-left:<px>` INLINE
      tính cho khung 960px ⇒ trên điện thoại vẫn đòi đúng bề rộng đó, chữ không xuống dòng và cả
      trang phải cuộn ngang (người dùng báo 2026-09-30, ket-reading-part7). Màn hẹp trả về bề rộng
