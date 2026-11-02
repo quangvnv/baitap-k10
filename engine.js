@@ -402,33 +402,61 @@ function wireReorder(root){
     }
     function clearHot(){ wrap.querySelectorAll('.ro-drop-hot').forEach(c=>c.classList.remove('ro-drop-hot')); }
     function cleanup(){ if(ghost){ ghost.remove(); ghost=null; } if(drag) drag.classList.remove('ro-dragging'); drag=null; clearHot(); }
-    wrap.addEventListener('pointerdown',e=>{
-      const c=e.target.closest && e.target.closest('.ro-card');
-      if(!c || c.classList.contains('locked')) return;
-      e.preventDefault(); e.stopPropagation();
-      drag=c; fromSrc=src.contains(c); x0=e.clientX; y0=e.clientY;
+    // BẤM (không kéo) = đặt nhanh: card ở cột nguồn → ô trống ĐẦU TIÊN; card đã đặt → trả về cột nguồn.
+    // Cần cho điện thoại: card cao kín màn hình nên ô thả nằm khuất dưới, kéo xa không được.
+    function tapPlace(c){
+      if(src.contains(c)){
+        const d=[...wrap.querySelectorAll('.ro-drop')].find(x=>!x.querySelector('.ro-card') && !x.dataset.shown);
+        if(d){ c.classList.remove('ok','bad'); d.appendChild(c); if(!phFor(+c.dataset.i)) mkPlaceholder(c); }
+      } else toSrc(c);
+    }
+    function startDrag(c,x,y,pid){
+      drag=c; fromSrc=src.contains(c);
       const r=c.getBoundingClientRect();
       ghost=c.cloneNode(true); ghost.classList.add('ro-ghost'); ghost.classList.remove('ro-dragging');
       ghost.style.width=r.width+'px'; document.body.appendChild(ghost);
-      c.classList.add('ro-dragging'); moveGhost(e);
-      try{ wrap.setPointerCapture(e.pointerId); }catch(_){}
+      c.classList.add('ro-dragging'); moveGhost({clientX:x,clientY:y});
+      try{ wrap.setPointerCapture(pid); }catch(_){}
+    }
+    // CẢM ỨNG khi card cho cuộn dọc (touch-action:pan-y — web trên điện thoại): vuốt = cuộn trang,
+    // GIỮ NGÓN ~0,3s mới bắt đầu kéo (kéo ngay thì trình duyệt giành lấy thao tác để cuộn ⇒ lúc được lúc không).
+    let wait=null, lastY=0, scr=0;
+    function stopWait(){ if(wait){ clearTimeout(wait.t); wait=null; } }
+    function autoScroll(){   // đang kéo mà ngón tay sát mép trên/dưới màn hình ⇒ tự cuộn để với tới ô ở xa
+      scr=0; if(!drag) return;
+      const m=70, v=lastY<m ? -14 : (lastY>innerHeight-m ? 14 : 0);
+      if(v) window.scrollBy(0,v);
+      scr=requestAnimationFrame(autoScroll);
+    }
+    wrap.addEventListener('touchmove',e=>{ if(drag) e.preventDefault(); },{passive:false});
+    wrap.addEventListener('contextmenu',e=>{ if(drag||wait) e.preventDefault(); });
+    wrap.addEventListener('pointerdown',e=>{
+      const c=e.target.closest && e.target.closest('.ro-card');
+      if(!c || c.classList.contains('locked')) return;
+      x0=e.clientX; y0=e.clientY; lastY=e.clientY;
+      if(e.pointerType==='touch' && getComputedStyle(c).touchAction==='pan-y'){
+        stopWait();
+        wait={c, x:e.clientX, y:e.clientY, pid:e.pointerId, t:setTimeout(()=>{
+          const w=wait; wait=null; if(!w) return;
+          startDrag(w.c, w.x, w.y, w.pid);
+          if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){}
+          if(!scr) scr=requestAnimationFrame(autoScroll);
+        },280)};
+        return;
+      }
+      e.preventDefault(); e.stopPropagation();
+      startDrag(c, e.clientX, e.clientY, e.pointerId);
     });
     wrap.addEventListener('pointermove',e=>{
-      if(!drag) return; e.preventDefault(); moveGhost(e);
+      if(wait){ if(Math.abs(e.clientX-wait.x)>8 || Math.abs(e.clientY-wait.y)>8) stopWait(); return; }
+      if(!drag) return; e.preventDefault(); moveGhost(e); lastY=e.clientY;
       clearHot(); const t=targetUnder(e);
       if(t && t!==src && !t.querySelector('.ro-fixed')) t.classList.add('ro-drop-hot');
     });
     function drop(e){
+      if(wait){ const c=wait.c; stopWait(); tapPlace(c); return; }   // nhấc ngón trước khi kịp giữ = BẤM
       if(!drag) return; e.preventDefault();
-      // BẤM (không kéo) = đặt nhanh: card ở cột nguồn → ô trống ĐẦU TIÊN; card đã đặt → trả về cột nguồn.
-      // Cần cho điện thoại: card cao kín màn hình nên ô thả nằm khuất dưới, kéo xa không được.
-      if(Math.abs(e.clientX-x0)<8 && Math.abs(e.clientY-y0)<8){
-        if(fromSrc){
-          const d=[...wrap.querySelectorAll('.ro-drop')].find(x=>!x.querySelector('.ro-card') && !x.dataset.shown);
-          if(d){ drag.classList.remove('ok','bad'); d.appendChild(drag); if(!phFor(+drag.dataset.i)) mkPlaceholder(drag); }
-        } else toSrc(drag);
-        cleanup(); return;
-      }
+      if(Math.abs(e.clientX-x0)<8 && Math.abs(e.clientY-y0)<8){ tapPlace(drag); cleanup(); return; }
       let t=targetUnder(e);
       // Ô GV đã HÉ LỘ đáp án (§32.27.1) → khoá, không cho thả đè lên.
       if(t && t.classList && t.classList.contains('ro-drop') && (t.dataset.shown || t.querySelector('.ro-card.locked'))) t=null;
@@ -442,7 +470,7 @@ function wireReorder(root){
       cleanup();
     }
     wrap.addEventListener('pointerup',drop);
-    wrap.addEventListener('pointercancel',()=>cleanup());
+    wrap.addEventListener('pointercancel',()=>{ stopWait(); cleanup(); });
   });
 }
 

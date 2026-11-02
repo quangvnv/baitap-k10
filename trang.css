@@ -415,6 +415,8 @@ select.o {
      tới các ô thả bên dưới. Điện thoại cho cuộn dọc trên card; xếp bằng cách BẤM card
      (vào ô trống đầu tiên / bấm lại để trả về) — wireReorder lo phần bấm. */
   .san .sl .ro-card, .san .sl .ro-drop { touch-action: pan-y; }
+  /* Kéo = GIỮ NGÓN ~0,3s rồi kéo (wireReorder) — chặn bôi đen chữ / menu chép khi giữ ngón */
+  .san .sl .ro-card { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
   /* ⚠ KHUNG BÀI TẬP KÉO BỀ RỘNG (§32.41, `.bw-wrap`) mang `width:<px>` + `margin-left:<px>` INLINE
      tính cho khung 960px ⇒ trên điện thoại vẫn đòi đúng bề rộng đó, chữ không xuống dòng và cả
