@@ -382,7 +382,7 @@ function wireReorder(root){
     const phFor=i=>src.querySelector('.ro-card.ro-used[data-i="'+i+'"]');
     const mkPlaceholder=c=>{
       const p=c.cloneNode(true);
-      p.classList.add('ro-used','locked'); p.classList.remove('ro-dragging','ok','bad','ro-drop-hot');
+      p.classList.add('ro-used','locked'); p.classList.remove('ro-dragging','ro-held','ok','bad','ro-drop-hot');
       src.insertBefore(p, sortedAfter(null,+c.dataset.i));
     };
     const toSrc=c=>{   // trả card về cột nguồn (sáng lại), chèn ĐÚNG vị trí theo nhãn (A<B<C…)
@@ -401,7 +401,7 @@ function wireReorder(root){
       return null;
     }
     function clearHot(){ wrap.querySelectorAll('.ro-drop-hot').forEach(c=>c.classList.remove('ro-drop-hot')); }
-    function cleanup(){ if(ghost){ ghost.remove(); ghost=null; } if(drag) drag.classList.remove('ro-dragging'); drag=null; clearHot(); }
+    function cleanup(){ if(ghost){ ghost.remove(); ghost=null; } if(drag) drag.classList.remove('ro-dragging','ro-held'); drag=null; clearHot(); }
     // BẤM (không kéo) = đặt nhanh: card ở cột nguồn → ô trống ĐẦU TIÊN; card đã đặt → trả về cột nguồn.
     // Cần cho điện thoại: card cao kín màn hình nên ô thả nằm khuất dưới, kéo xa không được.
     function tapPlace(c){
@@ -439,6 +439,7 @@ function wireReorder(root){
         wait={c, x:e.clientX, y:e.clientY, pid:e.pointerId, t:setTimeout(()=>{
           const w=wait; wait=null; if(!w) return;
           startDrag(w.c, w.x, w.y, w.pid);
+          w.c.classList.add('ro-held'); if(ghost) ghost.classList.add('ro-held');   // viền đỏ = đã kéo được
           if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){}
           if(!scr) scr=requestAnimationFrame(autoScroll);
         },280)};
