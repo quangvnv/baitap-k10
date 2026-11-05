@@ -209,6 +209,7 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .bg-chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-main,#1F2937);cursor:pointer;user-select:none}
 .bg-chk input{width:13px;height:13px;margin:0;flex-shrink:0;cursor:pointer}
 .block-add{display:flex;gap:4px;flex-wrap:wrap}
+.block-add.bg-qb-btn{margin-bottom:6px}  /* nút Soạn câu hỏi luôn ở đầu card, mô tả bên dưới */
 .block-add .btn{height:24px;padding:2px 8px;font-size:11px}
 .hint-tiny{font-size:11px;color:var(--text-muted);line-height:1.4; display:none;}
 /* THANG CỠ CHỮ PANEL THUỘC TÍNH (chốt 2026-10-03) — 3 bậc, mọi mục trong #propsBody theo đúng thang này:
@@ -829,9 +830,16 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 /* Điều khiển player = DOCK OVERLAY ở CẢ 2 MÉP (trái + phải), CANH GIỮA chiều cao màn hình.
    Gọi bằng nút BÁN NGUYỆT: cạnh THẲNG ốp sát mép màn hình, nửa tròn hướng vào trong.
    Nút mờ 50% để không che bài giảng; rê chuột vào thì rõ hẳn. KHÔNG chiếm layout, KHÔNG tự ẩn. */
-.pbar-dock{position:fixed;top:50%;transform:translateY(-50%);z-index:9700;display:flex;align-items:center}
-.pbar-dock--right{right:0}
-.pbar-dock--left{left:0;flex-direction:row-reverse}      /* panel bung ra bên phải nút */
+/* 02/11/2026: nút bán nguyệt + panel đặt RIÊNG bằng JS (pbarPlace) — nút kéo lên/xuống được,
+   panel căn theo nút nhưng luôn kẹp trong cửa sổ. Dock chỉ còn là vỏ (KHÔNG transform — sẽ phá position:fixed của con). */
+.pbar-dock{position:fixed;top:0;height:0;z-index:9700}
+.pbar-dock .pbar-toggle{position:fixed;top:calc(50% - 20px);touch-action:none}
+.pbar-dock--right .pbar-toggle{right:0}
+.pbar-dock--left  .pbar-toggle{left:0}
+.pbar-dock .pbar{position:fixed;overflow-y:auto;scrollbar-width:none}
+.pbar-dock--right .pbar{right:20px}                      /* panel bung ra bên trái nút */
+.pbar-dock--left  .pbar{left:20px}                       /* panel bung ra bên phải nút */
+.pbar-toggle.dragging{cursor:ns-resize;opacity:1}
 .pbar-dock.is-hidden{display:none}
 /* Bán nguyệt: cao gấp đôi rộng + bo tròn TOÀN BỘ 2 góc phía trong → nửa hình tròn */
 .pbar-toggle{width:20px;height:40px;border:0;background:#121a28;color:#fff;opacity:.5;
@@ -863,6 +871,7 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .pdiv{width:22px;height:1px;background:#2a3550;margin:2px 0}
 .pen-colors{display:none;flex-direction:column;gap:4px}
 .pen-colors.on{display:flex}
+.pbar .free-btn:not(.on){display:none}             /* nút Vẽ tự do chỉ hiện khi bật bút */
 .swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent}
 .swatch.sel{border-color:var(--text-primary);box-shadow:0 0 0 2px var(--bg-white)}
 /* ── AUDIOBAR (mép ĐÁY) — cùng ngôn ngữ với .pbar-dock: nút bán nguyệt + panel trượt ──────
@@ -904,6 +913,7 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
   background:#1c2740;color:#cdd6ea;font-size:11px;line-height:1;cursor:pointer;
   display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
 .abar-tbtn:hover:not(:disabled){background:#26355c;border-color:#3d4d78}
+.abar-replay{flex:0 0 auto;font-size:15px;line-height:1}   /* phát lại từ đầu (2026-11-04) */
 .abar-tbtn:disabled{opacity:.35;cursor:not-allowed}
 .phelp{position:fixed;top:14px;right:16px;z-index:9700;color:#7b88a5;font-size:12px;
   background:rgba(18,26,40,.85);padding:8px 12px;border-radius:8px;line-height:1.6; display: none;}
@@ -1037,6 +1047,9 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .bmkp-body .tbl-region{margin:0}                 /* popup đã có padding riêng → bỏ gap 5px của vùng bảng */
 .bmkp-name{width:100%;height:26px;border:1px solid var(--border);border-radius:5px;
   padding:0 6px;font-size:12.5px;color:var(--text-primary);background:#fff}
+.bmkp-beat{width:48px;height:26px;border:1px solid var(--border);border-radius:5px;padding:0 4px;
+  font-size:12.5px;text-align:center;color:var(--text-primary);background:#fff}
+.bmkp-beat:focus{outline:none;border-color:var(--blue-primary)}
 .bmkp-name:focus{outline:none;border-color:var(--blue-primary)}
 .bmkp-t{display:inline-flex;align-items:center;gap:4px;justify-content:center}
 .bmkp-play{width:22px;height:22px;padding:0;border:1px solid var(--border);border-radius:4px;
@@ -1327,6 +1340,12 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .pm-slots{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;flex-direction:column;
   align-items:center;gap:4px;max-width:calc(100% - 8px);z-index:1}
 .pm-slots > .pm-box{position:relative;transform:none;max-width:100%}
+/* NHÃN ẢNH A/B/C (S.pmLbl): ô vuông đỏ chữ trắng ở góc trái-trên ảnh; nổi trên thẻ lật, không bắt chuột.
+   Lưới phóng to (--pmz) thì co ngược để nhãn giữ cỡ. */
+.pm-lbl{position:absolute;left:0;top:0;z-index:2;min-width:26px;height:26px;padding:0 5px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;background:#B31B2B;color:#fff;
+  font-weight:700;font-size:16px;line-height:1;pointer-events:none;user-select:none;
+  transform-origin:0 0;transform:scale(calc(1 / var(--pmz,1)))}
 .pm-author .pm-cell.pm-cell-hot{outline:2px solid var(--blue-primary);outline-offset:-2px}   /* soạn: ảnh sẽ nhận ô */
 /* Ô drop tự do: neo tâm vào (x%,y%) → toạ độ không đổi khi slide bị scale */
 .pm-box{position:absolute;transform:translate(-50%,-50%);min-width:80px;min-height:26px;
@@ -1348,6 +1367,29 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .pm-card:hover{box-shadow:inset 0 0 0 3px #fff,0 4px 10px rgba(0,0,0,.3)}
 .pm-card.open{transform:perspective(800px) rotateY(180deg);opacity:0;pointer-events:none}
 .pm-box.pm-hid{visibility:hidden}
+/* BĂNG CHUYỀN (S.pmCar, chỉ khi chiếu) — pmCarWire() đặt transform/opacity/z-index cho từng .pm-cell:
+   ảnh giữa to, 2 ảnh mỗi bên thu nhỏ + mờ. Ảnh xếp tuyệt đối quanh TÂM khung (chừa 30px dưới cho
+   dải nút ‹ ● ›). Ô thả + thẻ lật của ảnh bên KHÔNG nhận chuột ⇒ chỉ ảnh giữa nhận thả.
+   ⚠ width:max-content — ô tuyệt đối đặt left:50% chỉ còn 50% bề ngang để co theo nội dung; thiếu dòng
+   này thì ảnh giữa không bao giờ rộng quá nửa khung (ảnh bị viền trắng trên/dưới). */
+.pm-wrap.pm-car .pm-canvas{overflow:hidden}
+.pm-wrap.pm-car .pm-grid{display:block;bottom:30px;overflow:visible;touch-action:pan-y}
+.pm-wrap.pm-car .pm-grid > .pm-cell{position:absolute;left:50%;top:50%;height:calc(100% - 8px);max-width:50%;width:max-content;
+  transform:translate(-50%,-50%);transition:transform .35s ease,opacity .35s ease;will-change:transform;cursor:pointer}
+.pm-wrap.pm-car .pm-grid.pm-car-drag > .pm-cell{transition:none}
+.pm-wrap.pm-car .pm-grid > .pm-cell::after{content:'';position:absolute;inset:0;z-index:4;background:#fff;pointer-events:none;
+  opacity:var(--pmcar-dim,0);transition:opacity .35s ease}
+.pm-wrap.pm-car .pm-grid.pm-car-drag > .pm-cell::after{transition:none}
+.pm-wrap.pm-car .pm-grid > .pm-cell.pm-car-act{cursor:default;box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.pm-wrap.pm-car .pm-grid > .pm-cell:not(.pm-car-act) .pm-slots,
+.pm-wrap.pm-car .pm-grid > .pm-cell:not(.pm-car-act) .pm-card{pointer-events:none}
+.pm-car-nav{position:absolute;left:0;right:0;bottom:0;height:28px;display:flex;align-items:center;justify-content:center;gap:10px;z-index:30}
+.pm-car-nav > button{width:34px;height:26px;border:1px solid var(--border);border-radius:6px;background:#fff;
+  font-size:20px;line-height:1;color:var(--blue-primary);cursor:pointer;padding:0}
+.pm-car-nav > button:disabled{opacity:.35;cursor:default}
+.pm-car-dots{display:flex;gap:6px;align-items:center}
+.pm-car-dots button{width:9px;height:9px;padding:0;border:0;border-radius:50%;background:#c4d3e6;cursor:pointer}
+.pm-car-dots button.on{background:var(--blue-primary);transform:scale(1.25)}
 .pm-grid > .pm-cell > img.pm-flip-in{animation:pmFlipIn .45s ease}
 @keyframes pmFlipIn{0%{transform:scaleX(0)}45%{transform:scaleX(0)}100%{transform:scaleX(1)}}
 /* Chế độ SOẠN: ô hiện viền đứt để thấy vị trí đã đặt; từ nhiễu mờ, không kéo được */

@@ -246,6 +246,117 @@ function pmFlipWire(root){
   });
 }
 
+/* ── pmCarWire — trích từ baigiang-soan.js ── */
+function pmCarWire(root){
+  if(!root || !root.querySelectorAll) return;
+  root.querySelectorAll('.pm-wrap.pm-car').forEach(wrap=>{
+    if(wrap._pmCarWired) return; wrap._pmCarWired=true;
+    const canvas=wrap.querySelector('.pm-canvas'), grid=canvas && canvas.querySelector('.pm-grid');
+    const cells=grid ? [...grid.querySelectorAll(':scope > .pm-cell')] : [];
+    if(cells.length<2) return;
+    // Tâm ảnh thứ k bên cạnh đặt ở ±POS[k]×bề ngang khung (không theo bề ngang ảnh) ⇒ ảnh to/ảnh ngang
+    // không đẩy ảnh bên ra khỏi khung; ảnh bên nằm SAU ảnh giữa, chồng lên một phần như Recent apps.
+    // DIM = độ phủ trắng (mờ 50% / 75%) bằng lớp ::after — ảnh vẫn ĐỤC nên ảnh bên chồng nhau không lẫn màu.
+    // Khung hẹp (< 520px — điện thoại trên web): ảnh giữa rộng hơn, ảnh bên đẩy ra mép để còn thấy một phần.
+    const n=cells.length, SC=[1,.72,.52], DIM=[0,.5,.75];
+    const narrow=()=>canvas.clientWidth>0 && canvas.clientWidth<520;
+    const POS=()=>narrow()?[0,.42,.5,.62]:[0,.33,.44,.6];
+    const MAXW=()=>narrow()?.72:.5;
+    const nav=document.createElement('div'); nav.className='pm-car-nav no-click-nav';
+    nav.innerHTML='<button type="button" class="pm-car-prev" aria-label="Ảnh trước">‹</button>'
+      +'<div class="pm-car-dots">'+cells.map((c,j)=>'<button type="button" data-j="'+j+'" aria-label="Ảnh '+(j+1)+'"></button>').join('')+'</div>'
+      +'<button type="button" class="pm-car-next" aria-label="Ảnh sau">›</button>';
+    canvas.appendChild(nav);
+    const dots=[...nav.querySelectorAll('.pm-car-dots button')];
+    let act=0;
+    // Bố cục khi ảnh a ở giữa: toạ độ x (px, tâm khung = 0), tỉ lệ, độ đậm cho từng ảnh.
+    const layoutAt=a=>{
+      const W=canvas.clientWidth||1, P=POS();
+      return cells.map((c,j)=>{ const k=Math.abs(j-a), dir=Math.sign(j-a);
+        return k===0 ? {x:0,s:1,o:0} : {x:dir*W*P[Math.min(k,3)], s:SC[Math.min(k,2)]*(k>2?.85:1), o:k<=2?DIM[k]:1}; });
+    };
+    const apply=p=>{                                            // p thực: đang kéo dở thì nằm giữa 2 ảnh
+      const a=Math.max(0,Math.min(n-1,Math.floor(p))), b=Math.min(n-1,a+1), f=p-a;
+      const A=layoutAt(a), B=f>0?layoutAt(b):A;
+      cells.forEach((c,j)=>{
+        const x=A[j].x+(B[j].x-A[j].x)*f, s=A[j].s+(B[j].s-A[j].s)*f, o=A[j].o+(B[j].o-A[j].o)*f;
+        c.style.transform='translate(-50%,-50%) translateX('+x.toFixed(1)+'px) scale('+s.toFixed(3)+')';
+        c.style.setProperty('--pmcar-dim', o.toFixed(3));
+        c.style.visibility=o>.98?'hidden':'';
+        c.style.zIndex=String(20-Math.round(Math.abs(j-p)*2));
+        c.classList.toggle('pm-car-act', j===Math.round(p));
+      });
+    };
+    const clearInk=()=>{ const sl=wrap.closest('.sl');            // nét bút đè lên ảnh sẽ lệch khi ảnh chạy
+      if(sl && sl.querySelector('.bg-anno-svg') && wrap.closest('#playerStage') && typeof window.annoClearAll==='function') window.annoClearAll(); };
+    const go=j=>{ j=Math.max(0,Math.min(n-1,j|0)); const moved=j!==act; act=j;
+      grid.classList.remove('pm-car-drag'); apply(act);
+      dots.forEach((d,k)=>d.classList.toggle('on',k===act));
+      nav.querySelector('.pm-car-prev').disabled=act===0; nav.querySelector('.pm-car-next').disabled=act===n-1;
+      if(moved) clearInk(); };
+    wrap._pmCarGo=go;
+    nav.addEventListener('click',e=>{ const t=e.target.closest('button'); if(!t) return; e.stopPropagation();
+      if(t.classList.contains('pm-car-prev')) go(act-1); else if(t.classList.contains('pm-car-next')) go(act+1);
+      else if(t.dataset.j!=null) go(+t.dataset.j); });
+    // Vuốt: bấm xuống trên vùng ảnh (không phải chip/ô thả/nút), rê ngang > 8px ⇒ ảnh chạy theo tay.
+    let sw=null, swiped=false;
+    const step=()=>Math.max(80, (cells[act].offsetWidth||200)*.6);
+    canvas.addEventListener('pointerdown',e=>{
+      if(e.button>0 || (e.target.closest && e.target.closest('.ww-chip,.ww-drop,.pm-car-nav'))) return;
+      sw={x:e.clientX, y:e.clientY, id:e.pointerId, on:false}; swiped=false;
+    });
+    canvas.addEventListener('pointermove',e=>{
+      if(!sw || e.pointerId!==sw.id) return;
+      const dx=e.clientX-sw.x, dy=e.clientY-sw.y;
+      if(!sw.on){ if(Math.abs(dx)<8 || Math.abs(dx)<Math.abs(dy)) return;
+        sw.on=true; swiped=true; grid.classList.add('pm-car-drag'); try{ canvas.setPointerCapture(e.pointerId); }catch(_){} }
+      e.preventDefault();
+      apply(Math.max(-.35, Math.min(n-.65, act-dx/step())));
+    });
+    const end=e=>{ if(!sw || e.pointerId!==sw.id) return; const s=sw; sw=null; if(!s.on) return;
+      const dx=e.clientX-s.x, d=dx/step();             // vuốt ngắn = 1 ảnh; kéo xa mới qua nhiều ảnh
+      go(Math.abs(d)<.25 ? act : act-(d>0?1:-1)*Math.max(1,Math.round(Math.abs(d)-.3))); };
+    canvas.addEventListener('pointerup',end); canvas.addEventListener('pointercancel',end);
+    // Sau khi vuốt: nuốt cú click (không lật thẻ, không chọn ảnh). Bấm ảnh bên cạnh ⇒ đưa ảnh đó vào giữa.
+    canvas.addEventListener('click',e=>{
+      if(swiped){ swiped=false; e.stopPropagation(); e.preventDefault(); return; }
+      const c=e.target.closest && e.target.closest('.pm-cell'); if(!c) return;
+      const j=+c.dataset.j; if(j!==act){ e.stopPropagation(); e.preventDefault(); go(j); }
+    },true);
+    // Vuốt trên ảnh KHÔNG được tính là vuốt đổi slide (§32.16.1).
+    canvas.addEventListener('touchend',e=>{ if(swiped) e.stopPropagation(); });
+    // Đang kéo chip từ: giữ ở mép trái/phải khung ảnh ~0,6s ⇒ tự sang ảnh kế (lặp lại nếu vẫn giữ).
+    let edgeT=null, edgeDir=0;
+    const stopEdge=()=>{ if(edgeT){ clearTimeout(edgeT); edgeT=null; } edgeDir=0; };
+    wrap.addEventListener('pointermove',e=>{
+      if(!document.querySelector('.ww-ghost')){ stopEdge(); return; }
+      const r=canvas.getBoundingClientRect(), z=Math.max(30, r.width*.1);
+      const inY=e.clientY>=r.top && e.clientY<=r.bottom;
+      const dir=!inY?0:(e.clientX<r.left+z?-1:(e.clientX>r.right-z?1:0));
+      if(dir!==edgeDir){ stopEdge(); edgeDir=dir;
+        if(dir){ const tick=()=>{ go(act+edgeDir); edgeT=setTimeout(tick,700); }; edgeT=setTimeout(tick,600); } }
+    },true);
+    wrap.addEventListener('pointerup',stopEdge,true); wrap.addEventListener('pointercancel',stopEdge,true);
+    // Khung mỗi ảnh = ĐÚNG cỡ ảnh (cao tối đa = khung, rộng tối đa MAXW khung) ⇒ ô thả nằm trên ảnh,
+    // không rơi xuống khoảng trống dưới ảnh ngang.
+    const size=()=>{ const H=Math.max(1,grid.clientHeight-8), W=canvas.clientWidth*MAXW();
+      cells.forEach(c=>{ const im=c.querySelector('img'), r=im && im.naturalWidth && im.naturalHeight ? im.naturalWidth/im.naturalHeight : 4/3;
+        c.style.height=Math.min(H, W/r).toFixed(1)+'px'; c.style.maxWidth=(MAXW()*100+1)+'%'; }); };
+    // Khung vừa từ ẨN (cao/rộng 0 — trang web dựng slide trong khung ẩn) sang HIỆN: đặt vị trí NGAY,
+    // không chạy hiệu ứng trượt từ giữa ra.
+    let lastW=canvas.clientWidth;
+    const relayout=()=>{ const W=canvas.clientWidth, jump=!lastW && W; lastW=W; size(); if(sw) return;
+      if(jump) grid.classList.add('pm-car-drag');
+      apply(act);
+      if(jump) requestAnimationFrame(()=>requestAnimationFrame(()=>grid.classList.remove('pm-car-drag'))); };
+    cells.forEach(c=>{ const im=c.querySelector('img'); if(im && !im.complete){ im.addEventListener('load',relayout); im.addEventListener('error',relayout); } });
+    wrap._pmCarRelayout=relayout;                             // trang web gọi lại khi khung slide vừa HIỆN
+    let rafRO=0;                                               // dồn về khung hình sau: tránh cảnh báo "ResizeObserver loop"
+    if(typeof ResizeObserver==='function') new ResizeObserver(()=>{ cancelAnimationFrame(rafRO); rafRO=requestAnimationFrame(relayout); }).observe(canvas);
+    size(); go(0);
+  });
+}
+
 /* ── wireWordWeb — trích từ baigiang-soan.js ── */
 function wireWordWeb(root){
   root.querySelectorAll('.ww-wrap.ww-live').forEach(wrap=>{

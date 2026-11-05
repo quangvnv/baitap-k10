@@ -36,6 +36,23 @@
 .sl .tb-rh-nw{left:-3px;top:-3px;cursor:nwse-resize}   .sl .tb-rh-n{left:50%;top:-3px;cursor:ns-resize}    .sl .tb-rh-ne{left:calc(100% + 3px);top:-3px;cursor:nesw-resize}
 .sl .tb-rh-w{left:-3px;top:50%;cursor:ew-resize}                                                    .sl .tb-rh-e{left:calc(100% + 3px);top:50%;cursor:ew-resize}
 .sl .tb-rh-sw{left:-3px;top:calc(100% + 3px);cursor:nesw-resize} .sl .tb-rh-s{left:50%;top:calc(100% + 3px);cursor:ns-resize} .sl .tb-rh-se{left:calc(100% + 3px);top:calc(100% + 3px);cursor:nwse-resize}
+/* Phóng to khối khi trình chiếu (b.zoom — tbZoomToggle). Nút nằm TRONG khối nên phóng theo khối;
+   scale ngược --tbz-inv giữ nút đúng cỡ. Lớp khối được nâng lên trên mọi thứ của slide khi đang phóng. */
+/* Tâm nút nằm đúng GÓC phải-trên của khối (nửa ngoài khối) ⇒ không che chữ. */
+.sl .tb-zbtn{position:absolute;top:0;right:0;z-index:4;width:26px;height:26px;padding:0;border:2px solid #fff;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:rgba(26,111,191,.9);color:#fff;cursor:pointer;box-sizing:border-box;
+  pointer-events:auto;box-shadow:0 1px 3px rgba(0,0,0,.3);transform:translate(50%,-50%) scale(var(--tbz-inv,1));transform-origin:center;
+  transition:transform .25s ease}
+.sl .tb-zbtn:hover{background:var(--blue-primary)}
+.sl .tb-zbtn.tb-zbtn-ed{opacity:.45;pointer-events:none}
+.sl .tb-box{transition:transform .25s ease}
+.sl .tb-box.tbz-on{z-index:2;pointer-events:auto;box-shadow:0 8px 40px rgba(0,0,0,.45)}
+.sl .tb-box.tbz-on.tb-img,.sl .tb-box.tbz-on:not([style*="background"]){background:#fff}
+.sl.tbz-sl .tb-over,.sl.tbz-sl .tb-host,.sl.tbz-sl .tb-layer{z-index:60}
+.sl.tbz-sl .bg-anno-svg{visibility:hidden}
+.sl.tbz-sl .tb-box.tbz-on .bg-anno-svg{visibility:visible}   /* nét vẽ TRÊN khối đang phóng vẫn hiện */
+.sl .tbz-dim{position:absolute;left:-3000px;top:-3000px;right:-3000px;bottom:-3000px;z-index:1;
+  background:rgba(11,18,32,.6);pointer-events:auto}
 #previewStage.bg-capturing .tb-box{outline:none!important}
 #previewStage.bg-capturing .tb-rh,#previewStage.bg-capturing .tb-badge{display:none!important}
 

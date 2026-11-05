@@ -164,7 +164,7 @@ function khungCua(i) {
 /* Engine kéo-thả / ô chữ của app (engine.js). Mỗi hàm tự dò lớp `.*-live` của layout tương ứng
    và tự đánh dấu đã gắn, nên gọi thừa cũng vô hại — không cần rẽ nhánh theo layout ở đây. */
 function ganEngine(root) {
-  [window.pmFitGrids, window.pmFlipWire, window.wireWordWeb, window.wireKp7, window.wireReorder, window.wireMatching, window.wireSw9]
+  [window.pmFitGrids, window.pmFlipWire, window.pmCarWire, window.wireWordWeb, window.wireKp7, window.wireReorder, window.wireMatching, window.wireSw9]
     .forEach(f => { if (typeof f === 'function') { try { f(root); } catch (e) { console.warn(e); } } });
 }
 
@@ -175,6 +175,8 @@ function veSlide() {
   /* pmFitGrids đo lưới ảnh lúc dựng khung — khi đó khung còn ẨN (cao 0) và ảnh base64 đã `complete`
      ⇒ không bao giờ gắn .pm-fit, ảnh tràn/bị cắt (đề đẩy trước 29/09). Đo lại khi khung đã hiện. */
   if (typeof window.pmFitGrids === 'function') { const k = KHUNG[CHI_SO]; requestAnimationFrame(() => window.pmFitGrids(k)); }
+  /* Băng chuyền (pmCarWire) cũng đo khung lúc còn ẨN ⇒ đặt lại bố cục khi khung đã hiện. */
+  { const k = KHUNG[CHI_SO]; requestAnimationFrame(() => k.querySelectorAll('.pm-car').forEach(w => { if (w._pmCarRelayout) w._pmCarRelayout(); })); }
   $('dauCau').textContent = 'Slide ' + (CHI_SO + 1) + '/' + ds.length;
   $('btTruoc').disabled = CHI_SO === 0;
   $('btSau').disabled = CHI_SO >= ds.length - 1;
@@ -398,7 +400,7 @@ function chupKhung(k) {
     if (o.selected) o.setAttribute('selected', ''); else o.removeAttribute('selected');
   }));
   const c = k.cloneNode(true);
-  c.querySelectorAll('.pm-card').forEach(x => x.remove());
+  c.querySelectorAll('.pm-card, .pm-car-nav').forEach(x => x.remove());   // .pm-car-nav: dải nút băng chuyền (pmCarWire chèn)
   return c.innerHTML;
 }
 function luuDaNop() {
