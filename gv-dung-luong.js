@@ -32,7 +32,8 @@
   const NGUONG_CANH_BAO = 0.8;     // chấm đỏ trên nút tab
   const GH_CACHE_MS = 10 * 60 * 1000;
 
-  /* owner/repo suy từ địa chỉ trang (quangvnv.github.io/baitap-k10/…); chạy thử cục bộ thì rơi về
+  /* owner/repo suy từ địa chỉ trang (quangvnv.github.io/baitap-k10/…); tên miền riêng k10.vn (§41.37)
+     hoặc chạy thử cục bộ thì rơi về
      hằng số. */
   const GH = (() => {
     const m = location.hostname.match(/^([^.]+)\.github\.io$/i);
