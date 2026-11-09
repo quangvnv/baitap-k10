@@ -1489,6 +1489,8 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .ro-mv button:disabled{visibility:hidden}
 .ro-card.locked .ro-mv{display:none}
 .ro-1col .ro-drop.ro-drop-hot > .ro-card{box-shadow:0 0 0 2px var(--blue-primary)}
+/* panel: tóm tắt thứ tự đúng (nội dung soạn ở Question Bank — §34.14) */
+.ro-sum{font-size:12px;line-height:1.5;margin-top:6px}
 /* editor: mỗi câu/đoạn 1 dòng (nhãn + textarea + nút xóa) */
 .ro-ed-row{display:flex;gap:4px;align-items:flex-start;margin-bottom:4px}
 .ro-ed-lbl{flex:0 0 12px;font-size:12px;font-weight:800;color:var(--blue-primary);line-height:22px}
