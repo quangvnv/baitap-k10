@@ -481,9 +481,90 @@ function wireKp7(root){
   });
 }
 
+/* ── wireRo1 — trích từ baigiang-soan.js ── */
+function wireRo1(root){
+  root.querySelectorAll('.ro-wrap.ro-1col.ro-live').forEach(wrap=>{
+    if(wrap._roWired) return; wrap._roWired=true;
+    const free=()=>[...wrap.querySelectorAll('.ro-drop')].filter(d=>!d.dataset.shown && !d.dataset.graded && !d.querySelector('.ro-fixed'));
+    const sync=()=>{ const fs=free(); fs.forEach((d,j)=>{ const c=d.querySelector('.ro-card'); if(!c) return;
+      const u=c.querySelector('.ro-up'), dn=c.querySelector('.ro-dn'); if(u) u.disabled=(j===0); if(dn) dn.disabled=(j===fs.length-1); }); };
+    const move=(c,to)=>{
+      const fs=free(); const cards=fs.map(d=>d.querySelector('.ro-card'));
+      const from=cards.indexOf(c); if(from<0 || to<0 || to>=fs.length || to===from) return;
+      cards.splice(from,1); cards.splice(to,0,c);
+      cards.forEach((x,j)=>{ if(x){ x.classList.remove('ok','bad'); fs[j].appendChild(x); } });
+      sync();
+    };
+    wrap._roSync=sync; sync();
+    wrap.addEventListener('click',e=>{
+      const b=e.target.closest && e.target.closest('.ro-up,.ro-dn'); if(!b) return;
+      e.preventDefault(); e.stopPropagation();
+      const c=b.closest('.ro-card'); if(!c || c.classList.contains('locked')) return;
+      const j=free().indexOf(c.parentElement); if(j<0) return;
+      move(c, j+(b.classList.contains('ro-up')?-1:1));
+    });
+    let drag=null, ghost=null, wait=null, lastY=0, scr=0;
+    const clearHot=()=>wrap.querySelectorAll('.ro-drop-hot').forEach(x=>x.classList.remove('ro-drop-hot'));
+    const moveGhost=e=>{ if(ghost){ ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px'; } };
+    const dropUnder=e=>{
+      if(ghost) ghost.style.display='none';
+      const el=document.elementFromPoint(e.clientX,e.clientY);
+      if(ghost) ghost.style.display='';
+      const d=el && el.closest && el.closest('.ro-drop');
+      return (d && wrap.contains(d) && free().includes(d)) ? d : null;
+    };
+    const cleanup=()=>{ if(ghost){ ghost.remove(); ghost=null; } if(drag) drag.classList.remove('ro-dragging','ro-held'); drag=null; clearHot(); };
+    const stopWait=()=>{ if(wait){ clearTimeout(wait.t); wait=null; } };
+    const autoScroll=()=>{ scr=0; if(!drag) return;
+      const m=70, v=lastY<m ? -14 : (lastY>innerHeight-m ? 14 : 0);
+      if(v) window.scrollBy(0,v); scr=requestAnimationFrame(autoScroll); };
+    const start=(c,x,y,pid)=>{
+      drag=c; const r=c.getBoundingClientRect();
+      ghost=c.cloneNode(true); ghost.classList.add('ro-ghost'); ghost.classList.remove('ro-dragging');
+      ghost.style.width=r.width+'px'; document.body.appendChild(ghost);
+      c.classList.add('ro-dragging'); moveGhost({clientX:x,clientY:y});
+      try{ wrap.setPointerCapture(pid); }catch(_){}
+    };
+    wrap.addEventListener('touchmove',e=>{ if(drag) e.preventDefault(); },{passive:false});
+    wrap.addEventListener('contextmenu',e=>{ if(drag||wait) e.preventDefault(); });
+    wrap.addEventListener('pointerdown',e=>{
+      if(e.target.closest && e.target.closest('.ro-mv')) return;
+      const c=e.target.closest && e.target.closest('.ro-card');
+      if(!c || c.classList.contains('locked') || !free().includes(c.parentElement)) return;
+      lastY=e.clientY;
+      if(e.pointerType==='touch' && getComputedStyle(c).touchAction==='pan-y'){
+        stopWait();
+        wait={c, x:e.clientX, y:e.clientY, pid:e.pointerId, t:setTimeout(()=>{
+          const w=wait; wait=null; if(!w) return;
+          start(w.c, w.x, w.y, w.pid);
+          w.c.classList.add('ro-held'); if(ghost) ghost.classList.add('ro-held');
+          if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){}
+          if(!scr) scr=requestAnimationFrame(autoScroll);
+        },280)};
+        return;
+      }
+      e.preventDefault(); e.stopPropagation();
+      start(c, e.clientX, e.clientY, e.pointerId);
+    });
+    wrap.addEventListener('pointermove',e=>{
+      if(wait){ if(Math.abs(e.clientX-wait.x)>8 || Math.abs(e.clientY-wait.y)>8) stopWait(); return; }
+      if(!drag) return; e.preventDefault(); moveGhost(e); lastY=e.clientY;
+      clearHot(); const d=dropUnder(e); if(d && d!==drag.parentElement) d.classList.add('ro-drop-hot');
+    });
+    wrap.addEventListener('pointerup',e=>{
+      if(wait){ stopWait(); return; }
+      if(!drag) return; e.preventDefault();
+      const d=dropUnder(e); if(d) move(drag, free().indexOf(d));
+      cleanup();
+    });
+    wrap.addEventListener('pointercancel',()=>{ stopWait(); cleanup(); });
+  });
+}
+
 /* ── wireReorder — trích từ baigiang-soan.js ── */
 function wireReorder(root){
-  root.querySelectorAll('.ro-wrap.ro-live').forEach(wrap=>{
+  wireRo1(root);
+  root.querySelectorAll('.ro-wrap.ro-live:not(.ro-1col)').forEach(wrap=>{
     if(wrap._roWired) return; wrap._roWired=true;
     let drag=null, ghost=null, fromSrc=false, x0=0, y0=0;
     const src=wrap.querySelector('.ro-src');

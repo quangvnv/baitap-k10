@@ -208,6 +208,15 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 /* Checkbox trong panel Thuộc tính (vd "Ẩn header" ở card Tiêu đề slide — §32.16) */
 .bg-chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-main,#1F2937);cursor:pointer;user-select:none}
 .bg-chk input{width:13px;height:13px;margin:0;flex-shrink:0;cursor:pointer}
+/* (05/11/2026) Hàng "Ẩn tiêu đề" thay card Tiêu đề slide + sửa tiêu đề TẠI CHỖ bằng bấm đúp thanh header */
+.bg-head-row > .pcard-hd input{width:13px;height:13px;margin:0;flex-shrink:0;cursor:pointer}
+.bg-head-row .bg-head-warn{padding:0 8px 8px}
+#previewStage .sl-head-title,#previewStage .sl-head-sub{cursor:text}
+#previewStage:not(.bg-capturing) .sl-head-title .sl-head-txt:empty::before{content:'Bấm đúp để nhập tiêu đề';opacity:.55;font-style:italic}
+#previewStage:not(.bg-capturing) .sl-head-sub .sl-head-txt:empty::before{content:'Bấm đúp để nhập phụ đề';opacity:.55;font-style:italic}
+#previewStage .sl-head-txt.bg-head-editing{text-overflow:clip;overflow:hidden;outline:2px solid var(--orange-primary,#d4740a);outline-offset:1px;
+  border-radius:2px;background:rgba(255,255,255,.18);cursor:text;user-select:text;-webkit-user-select:text}
+#previewStage .sl-head-txt.bg-head-editing:empty::before{content:none}
 .block-add{display:flex;gap:4px;flex-wrap:wrap}
 .block-add.bg-qb-btn{margin-bottom:6px}  /* nút Soạn câu hỏi luôn ở đầu card, mô tả bên dưới */
 .block-add .btn{height:24px;padding:2px 8px;font-size:11px}
@@ -1463,6 +1472,23 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .ro-card.bad{border-color:#DC2626;background:#FEECEC;color:#DC2626}
 .ro-card.ok .ro-lbl{color:var(--green-primary)}
 .ro-card.bad .ro-lbl{color:#DC2626}
+/* KIỂU 1 CỘT (§32.56, S.roMode='1col'): số vị trí cố định bên trái, thẻ (tay nắm ⠿ + nhãn + chữ + ▲▼)
+   sắp xếp tại chỗ. Thẻ cách thẻ bằng padding/gap của danh sách; số thứ tự căn với dòng đầu của thẻ. */
+.ro-1col .ro-slots{padding:4px 6px}
+.ro-1col .ro-num{display:block;flex:0 0 30px;font-size:calc(15px * var(--bgz,1));line-height:1.35;padding-top:8px;text-align:right;color:#333;font-weight:600}
+.ro-1col .ro-card{padding:8px 10px;align-items:flex-start}
+.ro-1col .ro-card.locked{cursor:default}
+.ro-1col .ro-txt{font-size:calc(15px * var(--bgz,1))}
+.ro-1col .ro-lbl{font-size:calc(15px * var(--bgz,1));flex:0 0 auto}
+.ro-grip{flex:0 0 auto;color:#9aa5b1;font-size:16px;line-height:1.2;cursor:grab}
+.ro-card.locked .ro-grip{visibility:hidden}
+.ro-mv{flex:0 0 auto;display:flex;gap:4px;margin-left:auto;align-self:center}
+.ro-mv button{width:28px;height:28px;padding:0;border:1px solid var(--border);border-radius:6px;background:#fff;color:#333;
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ro-mv button:hover{background:var(--blue-light);border-color:var(--blue-primary)}
+.ro-mv button:disabled{visibility:hidden}
+.ro-card.locked .ro-mv{display:none}
+.ro-1col .ro-drop.ro-drop-hot > .ro-card{box-shadow:0 0 0 2px var(--blue-primary)}
 /* editor: mỗi câu/đoạn 1 dòng (nhãn + textarea + nút xóa) */
 .ro-ed-row{display:flex;gap:4px;align-items:flex-start;margin-bottom:4px}
 .ro-ed-lbl{flex:0 0 12px;font-size:12px;font-weight:800;color:var(--blue-primary);line-height:22px}
@@ -1722,3 +1748,61 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .bg-xmenu button{all:unset;box-sizing:border-box;padding:7px 12px;font:500 12px/1.2 var(--font-base,system-ui,sans-serif);
   color:var(--text-primary,#1F2937);cursor:pointer;white-space:nowrap}
 .bg-xmenu button:hover{background:var(--blue-light,#E8F1FB);color:var(--blue-primary,#1A6FBF)}
+
+/* ══ BĂNG CHUYỀN SLIDE khi trình chiếu (nút 🎞 trên dock — baigiang-bang-chuyen-slide.js) ═════════
+   Lớp phủ tối đè màn chiếu, DƯỚI dock (z9700) để nút bán nguyệt vẫn bấm được. Slide giữa to, 2 slide
+   mỗi bên thu nhỏ + tối dần (lớp ::after đen). Vị trí/tỉ lệ do JS đặt inline. */
+.scar{position:fixed;inset:0;z-index:9550;background:rgba(8,14,26,.94);display:none;user-select:none;touch-action:none}
+.scar.on{display:block}
+.scar-track{position:absolute;inset:0 0 70px 0;overflow:hidden;cursor:grab}
+.scar-track.drag{cursor:grabbing}
+.scar-card{position:absolute;left:50%;top:50%;background:#fff;border-radius:6px;overflow:hidden;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);transition:transform .35s ease;will-change:transform}
+.scar-track.drag .scar-card{transition:none}
+.scar-card::after{content:'';position:absolute;inset:0;background:#000;opacity:var(--scar-dim,0);transition:opacity .35s ease;pointer-events:none}
+.scar-track.drag .scar-card::after{transition:none}
+.scar-card.act{outline:3px solid var(--orange-primary,#D4740A);outline-offset:2px;cursor:pointer}
+.scar-sc{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0;pointer-events:none}
+.scar-sc .sl-check,.scar-sc .rmcq-submit-row,.scar-sc .sl1-play{display:none}
+.scar-num{position:absolute;left:6px;bottom:6px;z-index:2;min-width:26px;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,.6);
+  color:#fff;font-size:14px;font-weight:700;text-align:center;pointer-events:none}
+.scar-err{display:flex;align-items:center;justify-content:center;width:960px;height:540px;color:#999;font-size:28px}
+.scar-info{position:absolute;left:0;right:0;bottom:34px;text-align:center;color:#e8eef8;font-size:16px;padding:0 10px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scar-cur{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:10px;background:var(--orange-primary,#D4740A);color:#fff;font-size:12px}
+.scar-hint{position:absolute;left:0;right:0;bottom:10px;text-align:center;color:#8fa3c0;font-size:12px}
+.scar-x{position:absolute;top:10px;right:10px;z-index:30;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.08);color:#fff;font-size:18px;cursor:pointer}
+.scar-x:hover{background:rgba(255,255,255,.2)}
+.pbar .pen-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ══ CHUYỂN SLIDE KIỂU BẢN ĐỒ (Prezi) — js/baigiang-ban-do.js ══════════════════════════════════════
+   Lớp phủ TRONG #player (dưới dock z9700). Thế giới = các thẻ slide 960×540 + nút section + đường nối;
+   camera = transform của .bmap-world. */
+.bmap{position:absolute;inset:0;z-index:50;display:none;overflow:hidden;user-select:none;
+  background:radial-gradient(ellipse at 50% 40%,#1c2a44 0%,#0b1220 75%)}
+.bmap.on{display:block}
+.bmap-world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.bmap-lines{position:absolute;left:0;top:0;overflow:visible}
+.bmap-lines line{stroke:rgba(232,140,74,.55);stroke-width:14;stroke-linecap:round}
+.bmap-card{position:absolute;width:960px;height:540px;background:#fff;border-radius:8px;overflow:hidden;
+  box-shadow:0 20px 70px rgba(0,0,0,.55);transform-origin:50% 50%}
+.bmap-card.ph{background:linear-gradient(#fbf8f4,#efe7dc)}
+.bmap-card > .sl{pointer-events:none}
+.bmap-num{position:absolute;right:10px;bottom:8px;background:rgba(11,18,32,.75);color:#fff;
+  font:700 26px/1 var(--font-base);padding:6px 12px;border-radius:6px;display:none}
+.bmap.ov .bmap-num{display:block}
+.bmap.ov .bmap-card{cursor:pointer}
+.bmap.ov .bmap-card:hover{outline:14px solid #F59E0B}
+.bmap.ov .bmap-card.cur{outline:14px solid #E88C4A}
+.bmap-node{position:absolute;transform:translate(-50%,-50%);background:#E88C4A;color:#fff;
+  font:700 120px/1.05 var(--font-base);padding:40px 80px;border-radius:200px;white-space:nowrap;
+  box-shadow:0 18px 60px rgba(0,0,0,.5);max-width:2600px;overflow:hidden;text-overflow:ellipsis}
+.bmap.ov .bmap-node{cursor:pointer}
+.bmap-center{position:absolute;transform:translate(-50%,-50%);background:#fff;color:#1a2436;
+  font:800 150px/1.1 var(--font-base);padding:60px 110px;border-radius:30px;white-space:nowrap;
+  box-shadow:0 20px 70px rgba(0,0,0,.5);max-width:3600px;overflow:hidden;text-overflow:ellipsis}
+.bmap-hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:none;
+  background:rgba(0,0,0,.55);color:#fff;font:13px var(--font-base);padding:6px 14px;border-radius:16px;pointer-events:none}
+.bmap.ov .bmap-hint{display:block}
+.pbar .bmap-btn.act{background:#E88C4A;color:#fff}
