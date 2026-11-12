@@ -7,9 +7,9 @@
 .sl .tb-box{position:absolute;pointer-events:auto;box-sizing:border-box;padding:6px 10px;border:2px solid transparent;
   border-radius:6px;display:flex;flex-direction:column;min-width:0;min-height:0}
 .sl .tb-box.tb-bd{border-style:solid}
-/* Chữ co giãn theo zoom bài giảng (§32.1): gốc 24px = thân slide 1 cột; cỡ trong khối ghi bằng em. */
+/* Chữ co giãn theo zoom bài giảng (§32.1): gốc 32px = 24pt (chốt 12/11/2026, trước là 24px = 18pt). */
 .sl .tb-text{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;outline:none;
-  font-size:calc(24px * var(--bgz,1));line-height:1.4;color:var(--text-primary);word-break:break-word}
+  font-size:calc(32px * var(--bgz,1));line-height:1.4;color:var(--text-primary);word-break:break-word}
 .sl .tb-text::-webkit-scrollbar{width:4px}
 .sl .tb-text::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .sl .tb-text p{margin:0 0 .3em}
@@ -154,6 +154,15 @@
   color:#fff;font-size:14px;line-height:1.35;background:#1A2332}
 .sl .tb-vid-ph.on{display:flex}
 
+/* Khối TOOL tự viết (§32.26 tích hợp 4, 2026-11-11) — tool lấp kín khối; khi SOẠN tool chỉ để XEM
+   (bấm = chọn/kéo khối — cùng chốt với 3 nơi gắn tool kia); thumbnail/trang tự học/đẩy web nhận
+   ảnh chụp tĩnh .xw-thumb-img (hoặc 🧩 khi chưa có ảnh). */
+.sl .tb-box.tb-widget{padding:0;align-items:stretch}
+.sl .tb-box.tb-widget .xw-mount{width:100%;height:100%}
+.sl .tb-box.tb-edit.tb-widget .xw-mount{pointer-events:none}
+.sl .tb-box.tb-widget .xw-thumb-ph{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-size:30px;background:var(--blue-light,#eef4ff)}
+
 /* Dòng trong khối chữ CÓ hiệu ứng riêng (§32.38 mở rộng 2026-09-26): khi SOẠN hiện vạch + số nhịp
    bấm ở lề trái để GV biết dòng nào hiện ở bước mấy. Lúc trình chiếu không có data-lbadge nên sạch. */
 .sl .tb-box.tb-edit .tb-text > [data-lbadge]{position:relative;border-left:2px solid var(--accent);
@@ -167,9 +176,8 @@
    Slide trắng) nên lớp khối được bọc trong .tb-over neo thẳng vào .sl, tự chừa header. */
 .sl .tb-over{position:absolute;left:10px;right:10px;top:10px;bottom:10px;pointer-events:none;z-index:2}
 .sl.has-head .tb-over{top:calc(15% + 5px)}     /* header cao 15% + GAP CHUẨN 5px (xem .sl-head) */
-/* Cỡ chữ TEXT DỮ LIỆU mặc định của bài giảng = 15px (§32.1). Khối trên Slide trắng giữ 24px (chữ của
-   slide chiếu), còn ở đây khối là GHI CHÚ đi kèm câu hỏi 15px — để 24px sẽ lấn át chính bài tập. */
-.sl .tb-over .tb-text{font-size:calc(15px * var(--bgz,1))}
+/* Cỡ chữ mặc định khối tự do trên slide BÀI TẬP = 24px (18pt); trên Slide trắng = 32px (24pt) — chốt 12/11/2026. */
+.sl .tb-over .tb-text{font-size:calc(24px * var(--bgz,1))} /* 18pt (chốt 12/11/2026, trước 15px) */
 /* CHUỘT: khối là nội dung CHỈ ĐỌC, KHÔNG được chắn cú bấm chọn đáp án nằm dưới (áp cho cả máy học
    viên — trang HV lấy nguyên bộ CSS này qua /style.css, và nó KHÔNG có class .player).
    · khi SOẠN (#previewStage) → bắt chuột để chọn/kéo/đổi cỡ khối
@@ -178,6 +186,7 @@
    · video luôn bắt chuột để bấm ▶ (chỉ có trên máy GV — HV nhận khung báo) */
 .sl .tb-over .tb-box{pointer-events:none}
 .sl .tb-over .tb-box.tb-video{pointer-events:auto}
+.sl .tb-over .tb-box.tb-widget{pointer-events:auto}   /* tool phải tương tác được khi trình chiếu */
 .sl .tb-over .tb-box.tb-scroll{pointer-events:auto}   /* chữ TRÀN khối → bắt chuột lại để cuộn được (tbMarkScroll) */
 #previewStage .tb-over .tb-box{pointer-events:auto}
 .player.anno-draw .sl .tb-over .tb-box{pointer-events:auto}

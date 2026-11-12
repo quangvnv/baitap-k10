@@ -990,10 +990,13 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .btn-chude:hover{color:var(--blue-primary);background:var(--blue-light);border-color:var(--blue-primary)}
 .btn-chude+.btn-edit{margin-left:4px}
 /* Bảng Landing có 3 nút thao tác (Gán chủ đề/Sửa/Xóa) → nới cột 80px chuẩn (§7) lên 110px */
-#bgLandTable .td-actions{width:140px}   /* 4 nút: Xuất gói · Gán chủ đề · Sửa · Xóa */
+#bgLandTable .td-actions{width:170px}   /* 5 nút: Xuất gói · Gửi · Gán chủ đề · Sửa · Xóa */
 .btn-chude+.btn-chude{margin-left:4px}
 /* Ô "Chủ đề" ở bảng Landing: chưa gán → mờ đi cho dễ quét mắt */
 #bgLandBody .bgl-cd{text-align:center;cursor:default}
+#bgLandBody .bgl-dl{text-align:right;cursor:default;white-space:nowrap;padding-right:8px}
+#bgLandBody .bgl-dl.over{color:#C62828;font-weight:600}
+#bgLandBody .btn-gui:disabled{opacity:.35;cursor:not-allowed}
 #bgLandBody .bgl-cd.none{color:var(--text-muted);opacity:.55}
 
 /* ── Popup Gán chủ đề — danh sách checkbox chủ đề (vỏ .bg-overlay/.bg-box) ────
@@ -1547,17 +1550,30 @@ html,body{height:100vh;overflow:hidden;overscroll-behavior-x:none;font-family:va
 .gf-ed-body{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:8px 10px}
 .gf-ed-body::-webkit-scrollbar{width:4px}
 .gf-ed-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.gf-ed-hd{display:flex;gap:6px;align-items:center;padding-bottom:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
-.gf-ed-hd-l{flex:0 0 160px}
-.gf-ed-hd-r{flex:1}
-.gf-ed-hd-x{flex:0 0 24px}
-.gf-ed-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
-.gf-ed-row input{height:30px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;color:var(--text-primary)}
-.gf-ed-row input:focus{outline:none;border-color:var(--blue-primary)}
-.gf-ed-ans{flex:0 0 160px}
-.gf-ed-txt{flex:1;min-width:0}
-.gf-ed-del{flex:0 0 24px}   /* nút Xóa chuẩn app (.btn-del 24×24) */
-.gf-ed-del:disabled{opacity:.45;cursor:not-allowed}
+/* Popup gap-fill KIỂU SOẠN CÂU HỎI (2026-11-11): TRÁI = vùng dán text (dòng trống tách câu,
+   chỗ trống (1)(2)…) · PHẢI = danh sách đáp án theo số. (.gf-ed-body ở trên vẫn dùng cho popup Nối cột.) */
+.gfp-body{flex:1;min-height:0;display:flex;gap:8px;padding:8px 10px}
+.gfp-left{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.gfp-right{flex:0 0 280px;min-width:0;display:flex;flex-direction:column;gap:6px}
+.gfp-colhd{flex:0 0 auto;min-height:30px;display:flex;align-items:center;justify-content:space-between;gap:6px;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+.gfp-left textarea{flex:1;min-height:0;resize:none;padding:8px;border:1px solid var(--border);border-radius:6px;
+  font-size:14px;line-height:1.6;font-family:inherit;color:var(--text-primary)}  /* UI — KHÔNG nhân --bgz (§12) */
+.gfp-left textarea:focus{outline:none;border-color:var(--blue-primary)}
+.gfp-left textarea::-webkit-scrollbar{width:4px}
+.gfp-left textarea::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.gfp-anslist{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;border:1px solid var(--border);border-radius:6px;padding:6px}
+.gfp-anslist::-webkit-scrollbar{width:4px}
+.gfp-anslist::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.gfp-ans-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.gfp-ans-n{flex:0 0 34px;text-align:right;font-weight:700;font-size:13px;color:var(--blue-primary)}
+.gfp-ans-row input{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid var(--border);border-radius:6px;
+  font-size:14px;font-family:inherit;color:var(--text-primary)}
+.gfp-ans-row input:focus{outline:none;border-color:var(--blue-primary)}
+.gfp-ans-row .btn-del{flex:0 0 24px}
+.gfp-ans-empty{padding:10px 6px;font-size:12px;color:var(--text-muted);line-height:1.6}
+.gfp-info{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gfp-warn{color:#C2410C}
 .gf-foot{flex:0 0 40px;display:flex;align-items:center;gap:6px;padding:0 10px;border-top:1px solid var(--border)}
 .gf-foot-sp{flex:1}
 
