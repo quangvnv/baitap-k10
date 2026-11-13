@@ -35,34 +35,37 @@
     return kq;
   }
 
-  function hienXong(tieuDe, tu, phu) {
+  let NHIEU = false, DA_GUI = [];
+
+  function chips(el, tu) {
+    el.innerHTML = '';
+    (tu || []).forEach(t => { const s = document.createElement('span'); s.className = 'chip'; s.textContent = t; el.appendChild(s); });
+  }
+  function hienXong(tieuDe, tu, phu, coThem) {
     $('xongTt').textContent = tieuDe;
-    $('xongTu').innerHTML = '';
-    (tu || []).forEach(t => { const s = document.createElement('span'); s.className = 'chip'; s.textContent = t; $('xongTu').appendChild(s); });
+    chips($('xongTu'), tu);
     $('xongPhu').textContent = phu;
+    $('btThem').classList.toggle('an', !coThem);
     man('manXong');
   }
 
-  async function moMa(ma) {
-    loi(''); MA = ma;
-    const daGui = lsGet('tu_da_gui_' + ma);
-    if (daGui) {
-      let tu = []; try { tu = JSON.parse(daGui); } catch (e) { }
-      hienXong('Bạn đã gửi', tu, 'Mỗi người chỉ gửi một lần. Nhìn lên bảng để xem đám mây từ của cả lớp.');
-      return;
+  /* Dựng màn nhập: SO ô (1 lần) hoặc số ô CÒN LẠI (nhiều lần). Máy chủ là nguồn sự thật về
+     "đã gửi" — mã tạo trước được xoá câu trả lời sau mỗi lượt trình chiếu, gửi lại được. */
+  function hienNhap() {
+    const con = NHIEU ? SO - DA_GUI.length : SO;
+    if (NHIEU) {
+      $('goiY').textContent = DA_GUI.length
+        ? 'Bạn còn được gửi ' + con + ' từ nữa (tổng tối đa ' + SO + '). Gửi bao nhiêu cũng được, gửi tiếp lần sau.'
+        : (SO === 1 ? 'Nhập 1 từ hoặc cụm từ.' : 'Gửi tối đa ' + SO + ' từ — gửi từng từ một hoặc nhiều từ một lần đều được.');
+    } else {
+      $('goiY').textContent = SO === 1 ? 'Nhập 1 từ hoặc cụm từ.' : 'Nhập tối đa ' + SO + ' từ hoặc cụm từ, mỗi ô một từ.';
     }
-    $('dangTai').classList.remove('an');
-    let kq;
-    try { kq = await goi({ viec: 'xem', ma }); }
-    catch (e) { $('dangTai').classList.add('an'); man('manMa'); $('oMa').value = ma; loi(e.message); return; }
-    if (!kq.mo) { hienXong('Đã đóng nhận câu trả lời', [], 'Giáo viên đã đóng phần gửi từ.'); return; }
-    SO = Math.max(1, Math.min(10, +kq.soTu || 3));
-    $('cauHoi').textContent = kq.cauHoi || 'Nhập từ của bạn';
-    $('goiY').textContent = SO === 1 ? 'Nhập 1 từ hoặc cụm từ.' : 'Nhập tối đa ' + SO + ' từ hoặc cụm từ, mỗi ô một từ.';
+    chips($('daGuiTu'), DA_GUI);
+    $('daGui').classList.toggle('an', !DA_GUI.length);
     const ds = $('dsO'); ds.innerHTML = '';
-    for (let i = 0; i < SO; i++) {
+    for (let i = 0; i < con; i++) {
       const o = document.createElement('input');
-      o.className = 'o o-tu'; o.maxLength = TOI_DA; o.autocomplete = 'off'; o.placeholder = 'Từ ' + (i + 1);
+      o.className = 'o o-tu'; o.maxLength = TOI_DA; o.autocomplete = 'off'; o.placeholder = 'Từ ' + (DA_GUI.length + i + 1);
       o.addEventListener('keydown', e => {
         if (e.key !== 'Enter') return;
         e.preventDefault();
@@ -75,21 +78,41 @@
     ds.firstChild && ds.firstChild.focus();
   }
 
+  async function moMa(ma) {
+    loi(''); MA = ma;
+    $('dangTai').classList.remove('an');
+    let kq;
+    try { kq = await goi({ viec: 'xem', ma, thietBi: thietBi() }); }
+    catch (e) { $('dangTai').classList.add('an'); man('manMa'); $('oMa').value = ma; loi(e.message); return; }
+    SO = Math.max(1, Math.min(10, +kq.soTu || 3));
+    NHIEU = !!kq.nhieu;
+    DA_GUI = Array.isArray(kq.daGui) ? kq.daGui : [];
+    $('cauHoi').textContent = kq.cauHoi || 'Nhập từ của bạn';
+    const xem = 'Nhìn lên bảng để xem đám mây từ của cả lớp.';
+    if (!kq.mo) { hienXong('Đã đóng nhận câu trả lời', DA_GUI, 'Giáo viên đã đóng phần gửi từ.'); return; }
+    if (!NHIEU && DA_GUI.length) { hienXong('Bạn đã gửi', DA_GUI, 'Mỗi người chỉ gửi một lần. ' + xem); return; }
+    if (NHIEU && DA_GUI.length >= SO) { hienXong('Bạn đã gửi đủ ' + SO + ' từ', DA_GUI, xem); return; }
+    hienNhap();
+  }
+
   $('btGui').addEventListener('click', async () => {
     loi('');
     const tu = [...document.querySelectorAll('.o-tu')].map(o => o.value.replace(/\s+/g, ' ').trim()).filter(Boolean);
     if (!tu.length) { loi('Hãy nhập ít nhất một từ.'); return; }
     $('btGui').disabled = true; $('btGui').textContent = 'Đang gửi…';
+    const xem = 'Nhìn lên bảng để xem đám mây từ của cả lớp.';
     try {
       const kq = await goi({ viec: 'gui', ma: MA, thietBi: thietBi(), tu });
-      lsSet('tu_da_gui_' + MA, JSON.stringify(kq.tu || tu));
-      hienXong('Đã gửi — cảm ơn bạn!', kq.tu || tu, 'Nhìn lên bảng để xem đám mây từ của cả lớp.');
+      DA_GUI = kq.tatCa || DA_GUI.concat(kq.tu || tu);
+      if (NHIEU && kq.conLai > 0) hienXong('Đã gửi — cảm ơn bạn!', DA_GUI, 'Bạn còn được gửi ' + kq.conLai + ' từ nữa. ' + xem, true);
+      else hienXong('Đã gửi — cảm ơn bạn!', DA_GUI, xem);
     } catch (e) {
-      if (e.status === 409) { lsSet('tu_da_gui_' + MA, JSON.stringify(tu)); hienXong('Bạn đã gửi', [], e.message); }
-      else if (e.status === 403) hienXong('Đã đóng nhận câu trả lời', [], e.message);
+      if (e.status === 409) hienXong(NHIEU ? 'Bạn đã gửi đủ ' + SO + ' từ' : 'Bạn đã gửi', DA_GUI, e.message);
+      else if (e.status === 403) hienXong('Đã đóng nhận câu trả lời', DA_GUI, e.message);
       else loi(e.message);
     } finally { $('btGui').disabled = false; $('btGui').textContent = 'Gửi'; }
   });
+  $('btThem').addEventListener('click', () => moMa(MA));
 
   $('oMa').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
   $('oMa').addEventListener('keydown', e => { if (e.key === 'Enter') $('btMa').click(); });

@@ -6,7 +6,7 @@
 <title>Gửi từ — K10</title>
 <!-- ĐÁM MÂY TỪ (§41.38): học viên ẩn danh nhập từ, giáo viên chiếu đám mây trong app.
      ⚠ Ô nhập PHẢI ≥ 16px (§41.20) — iOS tự phóng cả trang khi chạm ô nhỏ hơn. -->
-<link rel="stylesheet" href="tu.css?v=1">
+<link rel="stylesheet" href="tu.css?v=2">
 </head>
 <body>
 <main class="hop">
@@ -23,6 +23,7 @@
   <section id="manTu" class="man an">
     <h1 id="cauHoi">…</h1>
     <p class="phu" id="goiY"></p>
+    <div id="daGui" class="an"><div class="phu">Bạn đã gửi:</div><div id="daGuiTu" class="chip-ds"></div></div>
     <div id="dsO"></div>
     <button id="btGui" class="bt bt-chinh">Gửi</button>
   </section>
@@ -32,12 +33,13 @@
     <h1 id="xongTt">Đã gửi — cảm ơn bạn!</h1>
     <div id="xongTu" class="chip-ds"></div>
     <p class="phu" id="xongPhu">Nhìn lên bảng để xem đám mây từ của cả lớp.</p>
+    <button id="btThem" class="bt bt-chinh an">Gửi thêm từ</button>
   </section>
 
   <div id="loi" class="loi"></div>
   <div id="dangTai" class="phu">Đang tải…</div>
 </main>
 <script src="../cauhinh.js?v=69"></script>
-<script src="tu.js?v=1"></script>
+<script src="tu.js?v=2"></script>
 </body>
 </html>

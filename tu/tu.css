@@ -20,3 +20,4 @@ h1{ font-size:20px; line-height:1.35; margin:8px 0 10px; }
 .chip-ds{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; }
 .chip{ background:#eaf2fb; color:var(--xanh-dam); border-radius:14px; padding:4px 12px; font-size:15px; font-weight:600; }
 .dem{ float:right; font-size:12px; color:var(--mo); margin-top:-4px; }
+#daGui .phu{ margin:0; }
