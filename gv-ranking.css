@@ -151,3 +151,12 @@ body.chieu .ct-ds { padding-right: 190px; }
 @media (prefers-reduced-motion: reduce) {
   .rk-nv .nv-than, .rk-nv .nv-tay, .rk-may, .rk-tia { animation: none !important; }
 }
+
+/* ══ Bản 3D (gv-ranking-3d.js) — bục + nhân vật vẽ trong canvas, thẻ .rk-buc chỉ còn là NHÃN
+   chữ đặt trùng mặt trước bục 3D (vị trí do JS chiếu toạ độ) ═════════════════════════════════ */
+.rk3-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#rkMan.rk-3d .rk-dat, #rkMan.rk-3d .rk-nvs { display: none; }
+#rkMan.rk-3d .rk-buc { background: none; box-shadow: none; border-radius: 0; transition: none; z-index: 2; }
+#rkMan.rk-3d .rk-ngoi { font-size: clamp(22px, 4.6vh, 50px); padding-top: 2px; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+#rkMan.rk-3d .rk-cho { z-index: 3; }
+#rkMan.rk-tai .rk-tieude::after { content: 'Đang tải nhân vật 3D…'; margin-top: 4px; font-size: 13px; color: #0f3e6e; opacity: .8; }

@@ -39,6 +39,9 @@
   let XONG_CU = false;
   const NV = new Map();                               // ma → { el, hang, k, n, mood, den, ep, epDen }
   let nhipMood = null, nhipPhao = null;
+  /* Bản 3D (gv-ranking-3d.js) nạp LƯỜI khi bật Ranking; lỗi ⇒ giữ bản 2D SVG. `?rk3d=0` = ép 2D. */
+  let R3 = null, dangNap3D = false;
+  const MUON_3D = QS.get('rk3d') !== '0';
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -91,6 +94,26 @@
     if (man) man.classList.toggle('rk-on', BAT);
     $('rkMan').classList.toggle('an', !BAT);
     if (!BAT) { dungHet(); xoaNV(); }
+    if (R3) R3.pause(!BAT);
+    if (BAT) nap3D();
+  }
+  function nap3D() {
+    if (R3 || dangNap3D || !MUON_3D) return;
+    dangNap3D = true;
+    $('rkMan').classList.add('rk-tai');
+    import('./gv-ranking-3d.js?v=1')
+      .then(m => m.khoiTao($('rkSan')))
+      .then(ok => {
+        if (!ok || !window.Ranking3D) throw new Error('không khởi tạo được cảnh 3D');
+        xoaNV();                                         // bỏ nhân vật 2D đang vẽ
+        R3 = window.Ranking3D;
+        $('rkMan').classList.add('rk-3d');
+        R3.pause(!BAT);
+        CU = null;
+        if (BAT && DATA) ve();
+      })
+      .catch(e => console.warn('[ranking] dùng bản 2D:', e && e.message))
+      .finally(() => { dangNap3D = false; $('rkMan').classList.remove('rk-tai'); });
   }
 
   /* ── Dữ liệu từ gv.js lamMoi ────────────────────────────────────────────────────────────── */
@@ -155,20 +178,23 @@
       const ds = g.ds.slice(0, TOI_DA_NV);
       ds.forEach((x, k) => {
         let o = NV.get(x.ma);
-        if (!o) { o = taoNV(x.ma, dauTien); NV.set(x.ma, o); coVao = true; }
+        if (!o) { o = R3 ? { id3: R3.add(x.ma, dauTien), hang: 0, k: 0, n: 1, mood: null, den: 0, ep: null, epDen: 0 } : taoNV(x.ma, dauTien); NV.set(x.ma, o); coVao = true; }
         const cu = truoc[x.ma];
+        const doiBuc = !dauTien && cu !== undefined && cu !== i;
         o.hang = i; o.k = k; o.n = ds.length;
-        datViTri(o);
-        o.el.classList.toggle('top1', i === 0);
-        if (!dauTien && cu !== undefined && cu !== i) {
-          o.el.querySelector('.nv-o').classList.remove('chuyen'); void o.el.offsetWidth;
-          o.el.querySelector('.nv-o').classList.add('chuyen');
+        datViTri(o, doiBuc);
+        if (o.el) o.el.classList.toggle('top1', i === 0);
+        if (doiBuc) {
+          if (o.el) {
+            o.el.querySelector('.nv-o').classList.remove('chuyen'); void o.el.offsetWidth;
+            o.el.querySelector('.nv-o').classList.add('chuyen');
+          }
           if (i > cu) epMood(o, 'buon', 5000); else epMood(o, 'vui', 3500);
           if (i > cu) amTieng('xuong');
         }
       });
       // quá TOI_DA_NV người cùng bục: người thừa không vẽ
-      g.ds.slice(TOI_DA_NV).forEach(x => { const o = NV.get(x.ma); if (o) { o.el.remove(); NV.delete(x.ma); } });
+      g.ds.slice(TOI_DA_NV).forEach(x => { const o = NV.get(x.ma); if (o) { boNV(o); NV.delete(x.ma); } });
     });
     if (!dauTien && coVao) amTieng('vao');
     if (!dauTien && coRoi) amTieng('xuong');
@@ -181,7 +207,9 @@
     doiMood();
   }
 
-  function datViTri(o) {
+  function boNV(o) { if (o.el) o.el.remove(); else if (R3) R3.remove(o.id3); }
+  function datViTri(o, doiBuc) {
+    if (!o.el) { R3.place(o.id3, o.hang, o.k, o.n, doiBuc); return; }
     const b = BUC[o.hang];
     const thu = o.n > 2 ? Math.max(.5, 2.2 / o.n) : 1;
     const x = b.left + (o.k + .5) / o.n * b.w;
@@ -193,6 +221,7 @@
 
   function roiBuc(ma, o, dien) {
     NV.delete(ma);
+    if (!o.el) { if (dien) R3.fall(o.id3); else R3.remove(o.id3); return; }
     if (!dien) { o.el.remove(); return; }
     o.el.className = o.el.className.replace(/\bm-\w+/g, '') + ' m-buon';
     o.el.querySelector('.nv-o').classList.add('roi');
@@ -207,6 +236,11 @@
   function datMood(o, m) {
     if (o.mood === m) return;
     o.mood = m;
+    if (!o.el) {
+      const tr = o.hang === 1 ? 1 : o.hang === 2 ? -1 : (Math.random() < .5 ? -1 : 1);
+      R3.mood(o.id3, m, tr);
+      return;
+    }
     o.el.classList.remove('m-vui', 'm-lo', 'm-nhin', 'm-buon', 'm-mung');
     o.el.classList.add('m-' + m);
     if (m === 'nhin') {
@@ -241,7 +275,7 @@
   }
   function dungMung() { clearInterval(nhipPhao); nhipPhao = null; NV.forEach(o => { o.mood = null; o.den = 0; }); }
   function dungHet() { dungMung(); clearInterval(nhipMood); nhipMood = null; const p = $('rkPhao'); if (p) p.innerHTML = ''; }
-  function xoaNV() { NV.forEach(o => o.el.remove()); NV.clear(); }
+  function xoaNV() { NV.forEach(boNV); NV.clear(); if (R3) R3.clear(); }
 
   const MAU_PHAO = ['#ff4d6d', '#ffd60a', '#4cc9f0', '#80ed99', '#b388ff', '#ff9f1c', '#ffffff'];
   function phao(n) {
