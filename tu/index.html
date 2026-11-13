@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gửi từ — K10</title>
+<!-- ĐÁM MÂY TỪ (§41.38): học viên ẩn danh nhập từ, giáo viên chiếu đám mây trong app.
+     ⚠ Ô nhập PHẢI ≥ 16px (§41.20) — iOS tự phóng cả trang khi chạm ô nhỏ hơn. -->
+<link rel="stylesheet" href="tu.css?v=1">
+</head>
+<body>
+<main class="hop">
+  <span class="kicker">Đám mây từ</span>
+
+  <!-- MÀN 1: nhập mã (chỉ hiện khi mở không kèm ?m=) -->
+  <section id="manMa" class="man an">
+    <h1>Nhập mã trên bảng</h1>
+    <input id="oMa" class="o o-ma" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="000000">
+    <button id="btMa" class="bt bt-chinh">Tiếp tục</button>
+  </section>
+
+  <!-- MÀN 2: nhập từ -->
+  <section id="manTu" class="man an">
+    <h1 id="cauHoi">…</h1>
+    <p class="phu" id="goiY"></p>
+    <div id="dsO"></div>
+    <button id="btGui" class="bt bt-chinh">Gửi</button>
+  </section>
+
+  <!-- MÀN 3: đã gửi / đã đóng -->
+  <section id="manXong" class="man an">
+    <h1 id="xongTt">Đã gửi — cảm ơn bạn!</h1>
+    <div id="xongTu" class="chip-ds"></div>
+    <p class="phu" id="xongPhu">Nhìn lên bảng để xem đám mây từ của cả lớp.</p>
+  </section>
+
+  <div id="loi" class="loi"></div>
+  <div id="dangTai" class="phu">Đang tải…</div>
+</main>
+<script src="../cauhinh.js?v=69"></script>
+<script src="tu.js?v=1"></script>
+</body>
+</html>
