@@ -509,6 +509,8 @@ async function lamMoi() {
   const tb = daNop.length ? (daNop.reduce((a, l) => a + (+l.diem || 0), 0) / daNop.length).toFixed(1) : '–';
   $('ctNop').textContent = daNop.length + '/' + hang.length;
   $('ctTB').textContent = tb;
+  // Màn Ranking (chế độ chiếu, gv-ranking.js §41.32.1) dùng CHÍNH dữ liệu đã gộp ở trên
+  if (window.Ranking) { try { window.Ranking.capNhat({ maPhien: p.ma_phien, theoHV, trongLop, dong: p.trang_thai !== 'mo' }); } catch (e) { console.error(e); } }
 
   $('ctBody').innerHTML = hang.map(ma => {
     const l = theoHV[ma];
