@@ -486,6 +486,14 @@ async function lamMoi() {
     ]);
   } catch (e) { bao(e.message, 'nhac'); return; }
 
+  // §41.39: có lượt quá hạn chưa nộp ⇒ nhờ máy chủ tự chấm bản nháp (tối đa 1 lần / 10 giây)
+  if (p.han_gio_giay && Date.now() - (p._chot || 0) > 10000 && luot.some(l => !l.nop_luc
+      && Date.now() > new Date(l.bat_dau).getTime() + (p.han_gio_giay + 20) * 1000)) {
+    p._chot = Date.now();
+    fetch(CAU_HINH.fnUrl('nop'), { method: 'POST', body: JSON.stringify({ viec: 'chot', phienId: p.id }),
+      headers: { 'content-type': 'application/json', apikey: CAU_HINH.anonKey, Authorization: 'Bearer ' + CAU_HINH.anonKey } })
+      .then(r => r.json()).then(k => { if (k && k.soChot) lamMoi(); }).catch(() => { });
+  }
   $('ctNhip').classList.add('dap');
   setTimeout(() => $('ctNhip').classList.remove('dap'), 400);
 
@@ -522,7 +530,7 @@ async function lamMoi() {
         <td class="giua">${phut(l.bat_dau)}</td><td></td><td class="giua">${soLan[ma] || 0}</td></tr>`;
     const qs = l.qs || [];
     return `<tr><td class="ma">${esc(ma)}${laKhach ? ' <i class="nhan-khach">khách</i>' : ''}</td>
-      <td class="giua xong">Đã nộp</td>
+      <td class="giua xong"${l.tu_chot ? ' title="Hết giờ — máy chủ tự chấm bản lưu cuối trước hạn"' : ''}>Đã nộp${l.tu_chot ? ' <i class="nhan-khach">tự chốt</i>' : ''}</td>
       <td class="giua diem-o">${l.so_dung}/${l.tong}</td>
       <td class="giua">${phut(l.bat_dau, l.nop_luc)}</td>
       <td class="o-qs">${qs.map(d => '<i class="' + (d ? 'd' : 's') + '"></i>').join('')}</td>

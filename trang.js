@@ -117,7 +117,7 @@ function vaoLamBai() {
   napPhong(PHIEN.de && PHIEN.de.fonts);
   veSlide();
   if (PHIEN.khach) bao('Mã của bạn không có trong danh sách lớp — vẫn làm bài được, điểm ghi dạng khách.', 'nhac');
-  if (PHIEN.conLaiGiay != null) chayDongHo(PHIEN.conLaiGiay);
+  if (PHIEN.conLaiGiay != null) { batNhap(); chayDongHo(PHIEN.conLaiGiay); }
 }
 
 /* PHÔNG CHỮ của bài (§41.36): app tải từng biến thể lên Storage, đề mang
@@ -298,27 +298,81 @@ $('sanKhau').addEventListener('input', e => {
   $('sanKhau').addEventListener(ev, () => setTimeout(veMucLuc, 0)));
 
 /* ── Đồng hồ ─────────────────────────────────────────────────────────────────────────────── */
+/* ⚠ ĐẾM THEO GIỜ THỰC (§41.39, 2026-11-13), KHÔNG đếm lùi từng nhịp: điện thoại khoá màn hình /
+   chuyển app thì trình duyệt TẠM DỪNG setInterval ⇒ đồng hồ cũ đứng lại, mở lại vẫn "còn giờ"
+   (phiên 916409 có lượt nộp sau 688 giây với hạn 180). Nay mốc hết giờ = lúc nhận đề + số giây
+   máy chủ báo còn lại; mỗi nhịp và mỗi lần trang hiện lại đều so với giờ thực. Hạn thật vẫn do
+   máy chủ giữ (Edge Function `nop` tự chấm bản nháp cuối khi quá hạn). */
+let HAN_DEN = 0;
 function chayDongHo(giay) {
   clearInterval(DONG_HO);
-  let conLai = giay;
-  const ve = () => {
-    const m = Math.floor(conLai / 60), s = conLai % 60;
-    $('dauGio').textContent = '⏱ ' + m + ':' + String(s).padStart(2, '0');
-    $('dauGio').classList.toggle('gap', conLai <= 60);
-  };
-  ve();
-  DONG_HO = setInterval(() => {
-    conLai--;
+  HAN_DEN = Date.now() + Math.max(0, giay) * 1000;
+  const kiem = () => {
+    const conLai = Math.ceil((HAN_DEN - Date.now()) / 1000);
     if (conLai <= 0) {
-      clearInterval(DONG_HO);
+      clearInterval(DONG_HO); DONG_HO = null; HAN_DEN = 0;
       $('dauGio').textContent = '⏱ hết giờ';
       bao('Hết giờ — đang nộp bài của bạn.', 'nhac');
       nop(true);
       return;
     }
-    ve();
-  }, 1000);
+    const m = Math.floor(conLai / 60), s = conLai % 60;
+    $('dauGio').textContent = '⏱ ' + m + ':' + String(s).padStart(2, '0');
+    $('dauGio').classList.toggle('gap', conLai <= 60);
+  };
+  kiem();
+  if (HAN_DEN) DONG_HO = setInterval(kiem, 1000);
+  KIEM_GIO = kiem;
 }
+let KIEM_GIO = null;
+/* Trang hiện lại (mở khoá máy, quay về tab) ⇒ kiểm giờ NGAY, đừng chờ nhịp kế tiếp. */
+['visibilitychange', 'pageshow', 'focus'].forEach(ev => window.addEventListener(ev, () => {
+  if (document.visibilityState === 'visible' && DONG_HO && KIEM_GIO) KIEM_GIO();
+}));
+
+/* ── LƯU NHÁP LÊN MÁY CHỦ (§41.39) ─────────────────────────────────────────────────────────
+   Chỉ phiên có hạn giờ. Vài giây một lần (và ngay khi trang bị ẩn) gửi bài đang làm lên máy chủ;
+   hết giờ mà máy không tự nộp được (khoá màn hình, đóng tab, hết pin) thì máy chủ chấm bản nháp
+   cuối. Chỉ gửi khi bài đổi. Slide chưa mở tới không cần đọc (chưa làm gì). */
+const NHAP_MS = 6000;
+let NHAP = null, NHAP_CU = '', NHAP_DANG = false;
+function baiLamDaMo() {
+  const out = [];
+  slides().forEach((sl, i) => { if (coBaiTap(i) && KHUNG[i]) out.push({ slideIdx: i, baiLam: baiLamCua(i) || [] }); });
+  return out;
+}
+async function guiNhap(giuKetNoi) {
+  if (!PHIEN || KET_QUA || NHAP_DANG || !PHIEN.luotId) return;
+  let baiLam;
+  try { baiLam = baiLamDaMo(); } catch (e) { return; }
+  const chuoi = JSON.stringify(baiLam);
+  if (chuoi === NHAP_CU) return;
+  const goi = { viec: 'nhap', luotId: PHIEN.luotId, baiLam };
+  if (giuKetNoi) {                                     // trang sắp ẩn/đóng: gửi kèm keepalive, không chờ
+    try {
+      fetch(CAU_HINH.fnUrl('nop'), { method: 'POST', keepalive: true, body: JSON.stringify(goi),
+        headers: { 'content-type': 'application/json', apikey: CAU_HINH.anonKey, Authorization: 'Bearer ' + CAU_HINH.anonKey } });
+      NHAP_CU = chuoi;
+    } catch (e) { }
+    return;
+  }
+  NHAP_DANG = true;
+  try {
+    const kq = await goiFn('nop', goi);
+    NHAP_CU = chuoi;
+    if (kq && kq.daChot) { dungNhap(); clearInterval(DONG_HO); DONG_HO = null; xong(kq); }
+  } catch (e) {
+    if (/đã nộp rồi/.test(e.message)) dungNhap();
+  } finally { NHAP_DANG = false; }
+}
+function batNhap() {
+  dungNhap();
+  NHAP_CU = '';
+  if (PHIEN && PHIEN.conLaiGiay != null) NHAP = setInterval(() => guiNhap(false), NHAP_MS);
+}
+function dungNhap() { if (NHAP) { clearInterval(NHAP); NHAP = null; } }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && NHAP) guiNhap(true); });
+window.addEventListener('pagehide', () => { if (NHAP) guiNhap(true); });
 
 /* ── Nộp bài ─────────────────────────────────────────────────────────────────────────────── */
 $('btNop').addEventListener('click', () => {
@@ -346,6 +400,7 @@ async function nop(tuDong) {
   }
 
   clearInterval(DONG_HO);
+  dungNhap();
   $('btNop').disabled = true;
   $('btNop').textContent = 'Đang nộp…';
   const goi = { luotId: PHIEN.luotId, baiLam };
@@ -367,8 +422,9 @@ function xong(kq, loi, moLai) {
     /* `qs` chỉ có khi GV cho xem đáp án. Khi answer_visibility = NONE, máy chủ CỐ Ý không gửi
        đúng/sai từng câu về (chống dò đáp án bằng cách nộp nhiều lượt) ⇒ chỉ hiện tổng điểm. */
     $('xongQs').innerHTML = (kq.qs || []).map(d => '<i class="' + (d ? 'd' : 's') + '"></i>').join('');
-    $('xongNhan').textContent = kq.quaGio
-      ? 'Bài nộp sau khi hết giờ, vẫn được ghi nhận.'
+    $('xongNhan').textContent = kq.tuChot
+      ? 'Đã hết giờ — máy chủ chấm bài bạn đã làm tới trước lúc hết giờ.'
+      : kq.quaGio ? 'Bài nộp sau khi hết giờ, vẫn được ghi nhận.'
       : 'Giáo viên sẽ chữa bài trên lớp.';
   } else {
     $('xongDiem').textContent = '—';

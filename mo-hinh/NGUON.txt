@@ -1,8 +1,10 @@
-Mô hình nhân vật 3D cho màn Ranking (gv-ranking-3d.js) — tác giả Quaternius, giấy phép CC0 (public domain),
-tải từ Poly Pizza ngày 2026-11-13:
-  nv-vest.glb   ← "Business Man"   https://poly.pizza/m/JFrLIKqvCH
-  nv-thuong.glb ← "Casual Character" (Quaternius, Poly Pizza, resource 90a9e2d4-053f-42f1-99a2-8f5e1180ea7f)
-  nv-xanh.glb   ← "Adventurer"     (Quaternius, Poly Pizza, resource bbe369ee-a686-42c7-adad-14356f5f2f15)
-Đã bỏ các động tác không dùng (súng, kiếm, đá…), chỉ giữ: Idle, Idle_Neutral, Wave, HitRecieve, Interact, Run, Walk.
-Ba mô hình dùng CHUNG bộ xương "CharacterArmature" ⇒ cùng tên khớp (Head, Neck, Chest, UpperArm.L/R, LowerArm.L/R…).
-Thư viện Three.js r160.1 (MIT) ở ../vendor/three/.
+Nhân vật + động tác 3D của màn Ranking (gv-ranking-3d.js) — Adobe Mixamo (mixamo.com).
+Từ 2026-11-15 thay bộ Quaternius (CC0) trước đây.
+
+  mixamo/nv-<khoá>.glb    nhân vật (lưới + bộ xương + texture, không kèm động tác)
+  mixamo/dong-tac.json    động tác: quaternion cục bộ theo khớp mixamorig*, dùng chung mọi nhân vật
+
+Dựng bằng:  "<electron>" tools/dung-mixamo/main.js [thư-mục-ảnh-xem-thử]
+File FBX gốc giữ ở tools/mau/mixamo/{nhan-vat,dong-tac}/ — KHÔNG đưa lên web (điều khoản Mixamo cho
+dùng trong sản phẩm, kể cả thương mại, nhưng không cho phát tán file gốc riêng lẻ).
+Chưa có nhân vật nào trong nhan-vat/ ⇒ công cụ tạm dùng X Bot (giữ chỗ).

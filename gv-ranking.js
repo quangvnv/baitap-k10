@@ -5,8 +5,10 @@
    (app gửi theo ô tick ở card "Đẩy lên web" của slide).
 
    ĐÃ CHỐT VỚI NGƯỜI DÙNG (2026-11-13):
-   • Chỉ tính học viên ĐÃ NỘP, KHÔNG tính khách. Điểm = lượt CAO NHẤT (gv.js lamMoi đã gộp).
-   • BẰNG ĐIỂM ⇒ ĐỨNG CHUNG một bục (xếp hạng theo 3 mức điểm cao nhất).
+   • Chỉ tính học viên ĐÃ NỘP. KHÁCH (mã ngoài lớp) chỉ tính khi tick "Tính cả khách" (mặc định bỏ tick,
+     không nhớ — mỗi lần mở cửa sổ lại bỏ tick). Điểm = lượt CAO NHẤT (gv.js lamMoi đã gộp).
+   • MỖI BỤC ĐÚNG MỘT NGƯỜI (đổi 2026-11-15, thay "bằng điểm đứng chung bục"): xếp theo điểm, bằng điểm
+     thì ai LÀM BÀI NHANH HƠN (nộp − bắt đầu) đứng trên, vẫn bằng thì ai nộp trước. Mặt bục ghi cả thời gian.
    • KẾT THÚC = mọi học viên của lớp ĐÃ VÀO làm bài đều đã nộp (hoặc phiên đã đóng) ⇒ ăn mừng.
      Có người vào muộn ⇒ quay lại trạng thái "tạm thời".
    • Không hiện hạng 4 trở đi. Tên in trên mặt bục, được xuống dòng.
@@ -32,6 +34,7 @@
   const TOI_DA_NV = 6;                                // tối đa nhân vật vẽ trên một bục
 
   let BAT = QS.get('rk') === '1';
+  let KHACH = false;                                   // ô "Tính cả khách" — mặc định bỏ tick
   let AM = false; try { AM = localStorage.getItem(KHOA_AM) === '1'; } catch { }
   let DATA = null;                                    // lần cập nhật gần nhất
   let MA_PHIEN = '';
@@ -49,6 +52,7 @@
     const t = window.__tenHV && window.__tenHV[String(ma).toLowerCase()];
     return t || ma;
   };
+  const fmtTg = (ms) => { const g = Math.round(ms / 1000); return Math.floor(g / 60) + ':' + String(g % 60).padStart(2, '0'); };
   const fmtDiem = (d) => (Math.round((+d || 0) * 100) / 100).toLocaleString('vi-VN') + ' điểm';
   function bam(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 
@@ -59,6 +63,7 @@
     const bar = document.createElement('div');
     bar.id = 'rkBar';
     bar.innerHTML = '<label title="Chuyển sang màn bảng xếp hạng (bục 3 thứ hạng)"><input type="checkbox" id="rkChk"> Ranking</label>'
+      + '<label title="Xếp hạng cả học viên vào bằng mã ngoài danh sách lớp"><input type="checkbox" id="rkKhach"> Tính cả khách</label>'
       + '<button type="button" id="rkAm" title="Bật / tắt âm thanh"></button>';
     document.body.appendChild(bar);
     const s = document.createElement('div');
@@ -74,6 +79,7 @@
     man.appendChild(s);
     $('rkChk').checked = BAT;
     $('rkChk').addEventListener('change', e => bat(e.target.checked));
+    $('rkKhach').addEventListener('change', e => { KHACH = e.target.checked; if (BAT && DATA) ve(); });
     $('rkAm').addEventListener('click', () => {
       AM = !AM; try { localStorage.setItem(KHOA_AM, AM ? '1' : '0'); } catch { }
       veNutAm(); if (AM) { amCtx(); amTieng('vao'); }
@@ -101,7 +107,7 @@
     if (R3 || dangNap3D || !MUON_3D) return;
     dangNap3D = true;
     $('rkMan').classList.add('rk-tai');
-    import('./gv-ranking-3d.js?v=1')
+    import('./gv-ranking-3d.js?v=8')
       .then(m => m.khoiTao($('rkSan')))
       .then(ok => {
         if (!ok || !window.Ranking3D) throw new Error('không khởi tạo được cảnh 3D');
@@ -129,20 +135,19 @@
     const lop = new Set(trongLop);
     const nop = [], vao = [];
     Object.keys(theoHV).forEach(ma => {
-      if (!lop.has(ma)) return;                        // bỏ khách
+      if (!lop.has(ma) && !KHACH) return;              // bỏ khách (trừ khi tick "Tính cả khách")
       const l = theoHV[ma];
       vao.push(ma);
-      if (l.nop_luc) nop.push({ ma, diem: +l.diem || 0, luc: l.nop_luc });
+      if (l.nop_luc) {
+        const tg = Date.parse(l.nop_luc) - Date.parse(l.bat_dau);
+        nop.push({ ma, diem: +l.diem || 0, luc: l.nop_luc, tg: isFinite(tg) && tg >= 0 ? tg : Infinity });
+      }
     });
-    nop.sort((a, b) => b.diem - a.diem || String(a.luc).localeCompare(String(b.luc)));
-    const nhom = [];
-    nop.forEach(x => {
-      const g = nhom[nhom.length - 1];
-      if (g && g.diem === x.diem) g.ds.push(x);
-      else if (nhom.length < 3) nhom.push({ diem: x.diem, ds: [x] });
-    });
+    nop.sort((a, b) => b.diem - a.diem || a.tg - b.tg || String(a.luc).localeCompare(String(b.luc)));
+    const nhom = nop.slice(0, 3).map(x => ({ diem: x.diem, tg: x.tg, ds: [x] }));   // mỗi bục một người
     const xong = nop.length > 0 && (dong || nop.length === vao.length);
-    return { nhom, nop: nop.length, vao: vao.length, lop: trongLop.length, xong };
+    const soKhach = KHACH ? vao.filter(m => !lop.has(m)).length : 0;
+    return { nhom, nop: nop.length, vao: vao.length, lop: trongLop.length + soKhach, xong };
   }
 
   /* ── Vẽ ──────────────────────────────────────────────────────────────────────────────────── */
@@ -162,7 +167,8 @@
       const ds = g.ds, hien = ds.slice(0, 4).map(x => '<span>' + esc(tenCua(x.ma)) + '</span>').join('');
       const them = ds.length > 4 ? '<span class="rk-them">và ' + (ds.length - 4) + ' bạn khác</span>' : '';
       m.className = 'rk-mat n' + Math.min(ds.length, 5);
-      m.innerHTML = '<div class="rk-ten">' + hien + them + '</div><div class="rk-diem">' + fmtDiem(g.diem) + '</div>';
+      m.innerHTML = '<div class="rk-ten">' + hien + them + '</div><div class="rk-diem">' + fmtDiem(g.diem)
+        + (isFinite(g.tg) ? ' · ' + fmtTg(g.tg) : '') + '</div>';
     });
 
     // Nhân vật
@@ -223,14 +229,16 @@
     NV.delete(ma);
     if (!o.el) { if (dien) R3.fall(o.id3); else R3.remove(o.id3); return; }
     if (!dien) { o.el.remove(); return; }
-    o.el.className = o.el.className.replace(/\bm-\w+/g, '') + ' m-buon';
+    o.el.className = o.el.className.replace(/\b[mk]-\w+/g, '') + ' m-buon';
     o.el.querySelector('.nv-o').classList.add('roi');
     setTimeout(() => o.el.remove(), 2600);
   }
 
   /* ── Tâm trạng ───────────────────────────────────────────────────────────────────────────── */
-  const MOOD_TAM = [                                  // trọng số theo hạng (vui, lo, nhin)
-    [5, 2, 4], [3, 4, 3], [2, 5, 2],
+  /* Trọng số theo hạng (vui, lo, nhin). Động tác "nhìn đối thủ" ĐÃ BỎ (người dùng chốt 2026-11-13)
+     ⇒ trọng số 0; mã vẽ tư thế vẫn giữ nếu muốn bật lại. */
+  const MOOD_TAM = [
+    [6, 2, 0], [4, 4, 0], [2, 5, 0],
   ];
   function epMood(o, m, ms) { o.ep = m; o.epDen = Date.now() + ms; o.den = 0; }
   function datMood(o, m) {
@@ -243,16 +251,30 @@
     }
     o.el.classList.remove('m-vui', 'm-lo', 'm-nhin', 'm-buon', 'm-mung');
     o.el.classList.add('m-' + m);
+    doiKieu2D(o);
     if (m === 'nhin') {
       const tr = o.hang === 1 ? 1 : o.hang === 2 ? -1 : (Math.random() < .5 ? -1 : 1);
       o.el.style.setProperty('--nghieng', (tr * 18) + 'deg');
       o.el.style.setProperty('--dx', (tr * 2.5) + 'px');
     }
   }
+  /* Bản 2D: kiểu tay khi vui / ăn mừng (khớp bản 3D) — đấm tay cổ vũ · vỗ tay · nhảy lắc, khác kiểu đang có */
+  const KIEU_2D = ['dam', 'vo', 'nhay'];
+  function doiKieu2D(o) {
+    if (!o.el) return;
+    const cu = o.kieu2d;
+    o.el.classList.remove('k-dam', 'k-vo', 'k-nhay');
+    o.kieu2d = '';
+    if (o.mood !== 'vui' && o.mood !== 'mung') return;
+    const ds = KIEU_2D.filter(k => k !== cu);
+    o.kieu2d = ds[Math.floor(Math.random() * ds.length)];
+    o.el.classList.add('k-' + o.kieu2d);
+    o.doiKieu = Date.now() + 3500 + Math.random() * 2500;
+  }
   function doiMood() {
     const now = Date.now();
     NV.forEach(o => {
-      if (XONG_CU) { datMood(o, 'mung'); return; }
+      if (XONG_CU) { datMood(o, 'mung'); if (o.el && now > (o.doiKieu || 0)) doiKieu2D(o); return; }
       if (o.ep && now < o.epDen) { datMood(o, o.ep); return; }
       o.ep = null;
       if (now < o.den) return;
@@ -333,14 +355,15 @@
         <g class="nv-chan"><rect x="37" y="102" width="11.5" height="30" rx="3" fill="${quan}"/><rect x="51.5" y="102" width="11.5" height="30" rx="3" fill="${quan}"/>
           <path d="M33 134 Q33 129.5 39 129.5 L48.5 129.5 L48.5 135.5 L34 135.5Z" fill="#1a1a1a"/>
           <path d="M67 134 Q67 129.5 61 129.5 L51.5 129.5 L51.5 135.5 L66 135.5Z" fill="#1a1a1a"/></g>
-        <g class="nv-tay nv-tay-t"><rect x="23.5" y="58" width="10" height="35" rx="5" fill="${ao}"/><circle cx="28.5" cy="94" r="4.6" fill="${da}"/></g>
-        <g class="nv-tay nv-tay-p"><rect x="66.5" y="58" width="10" height="35" rx="5" fill="${ao}"/><circle cx="71.5" cy="94" r="4.6" fill="${da}"/></g>
         <path d="M28 64 Q28 56 37 56 L63 56 Q72 56 72 64 L71 104 L29 104Z" fill="${ao}"/>
         <path d="M50 58 L50 102" stroke="${co}" stroke-width=".8"/>
         <circle cx="50" cy="70" r=".9" fill="${co}"/><circle cx="50" cy="80" r=".9" fill="${co}"/><circle cx="50" cy="90" r=".9" fill="${co}"/>
         ${caVat ? `<path d="M48.4 61 L51.6 61 L53.2 83 L50 87 L46.8 83Z" fill="${caVat}"/><path d="M47.6 58 L52.4 58 L51.6 61.5 L48.4 61.5Z" fill="${toi(caVat, .8)}"/>` : ''}
         <path d="M43 55.5 L50 61.5 L44.5 65Z M57 55.5 L50 61.5 L55.5 65Z" fill="${co}"/>
         <rect x="29" y="99" width="42" height="4.5" fill="#222"/><rect x="47.5" y="99.3" width="5" height="3.9" rx="1" fill="none" stroke="#c9a227" stroke-width="1"/>
+        <!-- tay vẽ SAU thân áo: vỗ tay đưa vào trước ngực mới không bị thân che (2026-11-15) -->
+        <g class="nv-tay nv-tay-t"><rect x="23.5" y="58" width="10" height="35" rx="5" fill="${ao}"/><circle cx="28.5" cy="94" r="4.6" fill="${da}"/></g>
+        <g class="nv-tay nv-tay-p"><rect x="66.5" y="58" width="10" height="35" rx="5" fill="${ao}"/><circle cx="71.5" cy="94" r="4.6" fill="${da}"/></g>
         <g class="nv-mien"><path d="M45 56 L50 70 L55 56" fill="none" stroke="#c1121f" stroke-width="3"/>
           <circle cx="50" cy="73" r="5.6" fill="#ffd60a" stroke="#c99700" stroke-width="1.2"/><text x="50" y="75.6" text-anchor="middle" font-size="7" font-weight="700" fill="#8a6200">1</text></g>
         <rect x="45" y="47" width="10" height="10" fill="${da}"/>
