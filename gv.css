@@ -339,3 +339,6 @@ body.chieu #thanhTren, body.chieu #thanhTab, body.chieu #manCT > header.tb { dis
 .ct-qr-chu { display: flex; flex-direction: column; gap: 2px; }
 .ct-qr-chu b { font-size: 18px; letter-spacing: 2px; color: #1A6FBF; }
 .ct-qr-chu small { font-size: 12px; color: #64748b; white-space: nowrap; }
+
+/* Ô chọn Mã / Họ tên ở tiêu đề cột học viên (bảng Tiến độ lớp, chỉ khi app tiêm họ tên) */
+.bang th .sel-hv { font: inherit; font-weight: 600; border: 1px solid #c9d3df; border-radius: 4px; padding: 1px 4px; background: #fff; color: inherit; max-width: 100%; }

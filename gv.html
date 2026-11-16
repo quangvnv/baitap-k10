@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Bảng theo dõi — Cán bộ, giảng viên</title>
 <link rel="stylesheet" href="trang.css?v=53">
-<link rel="stylesheet" href="gv.css?v=53">
+<link rel="stylesheet" href="gv.css?v=54">
 <link rel="stylesheet" href="gv-ranking.css?v=4">
 <!-- Three.js cho màn Ranking 3D (gv-ranking-3d.js nạp lười) — import map phải đứng TRƯỚC mọi module -->
 <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js"}}</script>
@@ -120,7 +120,7 @@
   <div class="vung">
     <table class="bang">
       <thead><tr>
-        <th style="width:130px">Mã học viên</th>
+        <th id="thHV" style="width:130px"><span id="thHVNhan">Mã học viên</span><select id="selHienHV" class="sel-hv" hidden title="Hiển thị mã hay họ tên học viên (họ tên chỉ có trong ứng dụng, không lên mạng)"><option value="ma">Mã học viên</option><option value="ten">Họ tên</option></select></th>
         <th style="width:110px">Trạng thái</th>
         <th style="width:70px">Điểm</th>
         <th style="width:80px">Thời gian</th>
@@ -385,8 +385,8 @@
 <script src="cauhinh.js?v=53"></script>
 <script src="qr.js?v=53"></script>
 <script src="cham-diem.js?v=53"></script>
-<script src="gv.js?v=57"></script>
-<script src="gv-ranking.js?v=13"></script>
+<script src="gv.js?v=58"></script>
+<script src="gv-ranking.js?v=14"></script>
 <script src="gv-chua-bai.js?v=53"></script>
 <script src="gv-theo-doi.js?v=53"></script>
 <script src="admin.js?v=53"></script>

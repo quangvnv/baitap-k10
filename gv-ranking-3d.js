@@ -20,7 +20,7 @@ import { GLTFLoader } from './vendor/three/GLTFLoader.js';
 import { clone as cloneSkel } from './vendor/three/SkeletonUtils.js';
 import { RoundedBoxGeometry } from './vendor/three/RoundedBoxGeometry.js';
 
-const THU_MUC = 'mo-hinh/mixamo/', PHIEN_BAN = 'v=2';
+const THU_MUC = 'mo-hinh/mixamo/', PHIEN_BAN = 'v=3';
 let MO_HINH = [];                                      // khoá nhân vật (đọc từ dong-tac.json)
 const CAO_NV = 1.6;                                   // chiều cao nhân vật (đơn vị cảnh)
 const BUC = [                                          // hạng 1, 2, 3
@@ -35,7 +35,7 @@ const EP_DT = new URLSearchParams(location.search).get('rkdt') || '';
 const DT_TAM = {
   '': ['idle', 'breathing-idle', 'happy-idle'],
   vui: ['cheering', 'rallying', 'clapping', 'standing-clap', 'victory-idle', 'waving', 'happy-idle'],
-  mung: ['cheering', 'rallying', 'standing-clap', 'clapping', 'victory-idle', 'hip-hop-dancing', 'salsa-dancing', 'flair'],
+  mung: ['cheering', 'rallying', 'standing-clap', 'clapping', 'victory-idle', 'hip-hop-dancing', 'hip-hop-dancing-2', 'bboy-hip-hop-move', 'salsa-dancing', 'samba-dancing', 'flair', 'breakdance-1990', 'breakdance-ending-1', 'breakdance-freeze-var-2'],
   lo: ['nervous', 'nervously-look-around', 'idle'],
   nhin: ['idle'],
   buon: ['defeated', 'sad-idle', 'angry', 'disappointed'],

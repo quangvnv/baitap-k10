@@ -520,16 +520,29 @@ async function lamMoi() {
   // Màn Ranking (chế độ chiếu, gv-ranking.js §41.32.1) dùng CHÍNH dữ liệu đã gộp ở trên
   if (window.Ranking) { try { window.Ranking.capNhat({ maPhien: p.ma_phien, theoHV, trongLop, dong: p.trang_thai !== 'mo' }); } catch (e) { console.error(e); } }
 
+  /* Mã hay HỌ TÊN học viên: họ tên chỉ có khi app tiêm `window.__tenHV` (cửa sổ Tiến độ lớp,
+     §41.32.1 — tên KHÔNG lên mạng). Không có tên ⇒ ẩn ô chọn, luôn hiện mã. Hiện tên ⇒ sắp Tên–Họ. */
+  const coTen = !!(window.__tenHV && Object.keys(window.__tenHV).length);
+  const hienTen = coTen && cheDoHV() === 'ten';
+  dongBoCotHV(coTen, hienTen);
+  const tenOf = (ma) => (window.__tenHV && window.__tenHV[String(ma).toLowerCase()]) || '';
+  const nhanHV = (ma) => { const t = hienTen ? tenOf(ma) : ''; return t ? `<span title="${esc(ma)}">${esc(t)}</span>` : esc(ma); };
+  if (hienTen) {
+    const k = (ma) => { const t = tenOf(ma).trim(); if (!t) return 'zzzz ' + ma; const w = t.split(/\s+/); return w[w.length - 1] + ' ' + t; };
+    const cmp = (a, b) => k(a).localeCompare(k(b), 'vi');
+    hang.splice(0, hang.length, ...trongLop.slice().sort(cmp).concat(khach.slice().sort(cmp)));
+  }
+
   $('ctBody').innerHTML = hang.map(ma => {
     const l = theoHV[ma];
     const laKhach = trongLop.indexOf(ma) < 0;
-    if (!l) return `<tr><td class="ma">${esc(ma)}</td><td class="giua mo-nhat">Chưa vào</td>
+    if (!l) return `<tr><td class="ma">${nhanHV(ma)}</td><td class="giua mo-nhat">Chưa vào</td>
         <td class="giua mo-nhat">–</td><td class="giua mo-nhat">–</td><td></td><td class="giua mo-nhat">–</td></tr>`;
-    if (!l.nop_luc) return `<tr><td class="ma">${esc(ma)}${laKhach ? ' <i class="nhan-khach">khách</i>' : ''}</td>
+    if (!l.nop_luc) return `<tr><td class="ma">${nhanHV(ma)}${laKhach ? ' <i class="nhan-khach">khách</i>' : ''}</td>
         <td class="giua dang-lam">Đang làm</td><td class="giua mo-nhat">–</td>
         <td class="giua">${phut(l.bat_dau)}</td><td></td><td class="giua">${soLan[ma] || 0}</td></tr>`;
     const qs = l.qs || [];
-    return `<tr><td class="ma">${esc(ma)}${laKhach ? ' <i class="nhan-khach">khách</i>' : ''}</td>
+    return `<tr><td class="ma">${nhanHV(ma)}${laKhach ? ' <i class="nhan-khach">khách</i>' : ''}</td>
       <td class="giua xong"${l.tu_chot ? ' title="Hết giờ — máy chủ tự chấm bản lưu cuối trước hạn"' : ''}>Đã nộp${l.tu_chot ? ' <i class="nhan-khach">tự chốt</i>' : ''}</td>
       <td class="giua diem-o">${l.so_dung}/${l.tong}</td>
       <td class="giua">${phut(l.bat_dau, l.nop_luc)}</td>
@@ -538,6 +551,21 @@ async function lamMoi() {
   }).join('');
 
   veCot(daNop, p.bai_tap ? p.bai_tap.so_cau : 0);
+}
+
+function cheDoHV() { try { return localStorage.getItem('gv_hien_hv') === 'ten' ? 'ten' : 'ma'; } catch (e) { return 'ma'; } }
+function dongBoCotHV(coTen, hienTen) {
+  const sel = $('selHienHV'); if (!sel) return;
+  sel.hidden = !coTen; $('thHVNhan').hidden = coTen;
+  if (sel.value !== (hienTen ? 'ten' : 'ma')) sel.value = hienTen ? 'ten' : 'ma';
+  $('thHV').style.width = hienTen ? '220px' : '130px';
+  if (!sel._gan) {
+    sel._gan = true;
+    sel.addEventListener('change', () => {
+      try { localStorage.setItem('gv_hien_hv', sel.value); } catch (e) { }
+      if (PHIEN_HIEN) lamMoi();
+    });
+  }
 }
 
 function phut(tu, den) {

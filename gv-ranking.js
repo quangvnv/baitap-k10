@@ -107,7 +107,7 @@
     if (R3 || dangNap3D || !MUON_3D) return;
     dangNap3D = true;
     $('rkMan').classList.add('rk-tai');
-    import('./gv-ranking-3d.js?v=8')
+    import('./gv-ranking-3d.js?v=9')
       .then(m => m.khoiTao($('rkSan')))
       .then(ok => {
         if (!ok || !window.Ranking3D) throw new Error('không khởi tạo được cảnh 3D');
