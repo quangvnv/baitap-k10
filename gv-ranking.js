@@ -15,7 +15,8 @@
    • Âm thanh tự tổng hợp (WebAudio, không tệp ngoài) — MẶC ĐỊNH TẮT, nút 🔇/🔊 cạnh ô tick.
    • Họ tên lấy từ window.__tenHV do app gửi sang qua main process (KHÔNG lên mạng, §41.3);
      mở trang bằng trình duyệt thường thì chỉ thấy mã định danh.
-   Nhân vật vẽ bằng SVG + CSS animation (gv-ranking.css), ngoại hình sinh theo mã học viên nên
+   Bản 2D: nhân vật là SPRITE chụp từ 6 nhân vật 3D (mo-hinh/sprite, tools/dung-mixamo/chup-sprite.js);
+   thiếu sprite thì vẽ SVG + CSS animation (gv-ranking.css), ngoại hình sinh theo mã học viên nên
    mỗi em giữ một nhân vật suốt buổi.
    ══════════════════════════════════════════════════════════════════════════════════════════════ */
 (function () {
@@ -101,7 +102,7 @@
     $('rkMan').classList.toggle('an', !BAT);
     if (!BAT) { dungHet(); xoaNV(); }
     if (R3) R3.pause(!BAT);
-    if (BAT) nap3D();
+    if (BAT) { napSprite(); nap3D(); }
   }
   function nap3D() {
     if (R3 || dangNap3D || !MUON_3D) return;
@@ -221,7 +222,7 @@
     const x = b.left + (o.k + .5) / o.n * b.w;
     o.el.style.left = x + '%';
     o.el.style.bottom = (SAN + b.h) + '%';
-    o.el.style.height = (NV_CAO * thu) + '%';
+    o.el.style.height = (NV_CAO * thu / (o.sp ? SP.cao / SP.h : 1)) + '%';   // sprite: người chiếm cao/h của khung
     o.el.style.zIndex = 10 - o.hang;
   }
 
@@ -231,6 +232,7 @@
     if (!dien) { o.el.remove(); return; }
     o.el.className = o.el.className.replace(/\b[mk]-\w+/g, '') + ' m-buon';
     o.el.querySelector('.nv-o').classList.add('roi');
+    if (o.sp) { o.mood = 'buon'; datSp(o, 'buon'); }
     setTimeout(() => o.el.remove(), 2600);
   }
 
@@ -252,6 +254,7 @@
     o.el.classList.remove('m-vui', 'm-lo', 'm-nhin', 'm-buon', 'm-mung');
     o.el.classList.add('m-' + m);
     doiKieu2D(o);
+    if (o.sp) datSp(o, trangSp(o));
     if (m === 'nhin') {
       const tr = o.hang === 1 ? 1 : o.hang === 2 ? -1 : (Math.random() < .5 ? -1 : 1);
       o.el.style.setProperty('--nghieng', (tr * 18) + 'deg');
@@ -269,6 +272,7 @@
     const ds = KIEU_2D.filter(k => k !== cu);
     o.kieu2d = ds[Math.floor(Math.random() * ds.length)];
     o.el.classList.add('k-' + o.kieu2d);
+    if (o.sp) datSp(o, trangSp(o));
     o.doiKieu = Date.now() + 3500 + Math.random() * 2500;
   }
   function doiMood() {
@@ -333,7 +337,52 @@
     const n = parseInt(hex.slice(1), 16), f = (v) => Math.max(0, Math.round(v * k));
     return '#' + [f(n >> 16), f((n >> 8) & 255), f(n & 255)].map(v => v.toString(16).padStart(2, '0')).join('');
   }
+  /* ── Sprite 2D (2026-11-16): ảnh chụp sẵn từ CHÍNH 6 nhân vật 3D (tools/dung-mixamo/chup-sprite.js) ⇒
+     bản 2D trông như người thật. Mỗi nhân vật × trạng thái = một dải khung WebP, CSS lật khung (steps).
+     Chưa tải được sprite.json ⇒ dùng nhân vật SVG cũ (dự phòng cuối). Rơi khỏi bục vẫn bằng CSS (.nv-o.roi). */
+  let SP = null, dangNapSp = null;
+  const SP_THU_MUC = 'mo-hinh/sprite/', SP_PB = 'v=1';
+  function napSprite() {
+    if (SP || dangNapSp) return dangNapSp;
+    dangNapSp = fetch(SP_THU_MUC + 'sprite.json?' + SP_PB).then(r => r.ok ? r.json() : null)
+      .then(j => { if (j && j.nhanVat && j.nhanVat.length) { SP = j; if (BAT && DATA && !R3) { xoaNV(); CU = null; ve(); } } })
+      .catch(() => { }).finally(() => { dangNapSp = null; });
+    return dangNapSp;
+  }
+  /* trạng thái sprite theo tâm trạng: vui/ăn mừng dùng kiểu tay đang chọn (đấm tay=cheering · vỗ tay · nhảy) */
+  function trangSp(o) {
+    if (o.mood === 'vui' || o.mood === 'mung') return o.kieu2d === 'vo' ? 'vo' : o.kieu2d === 'nhay' ? 'nhay' : 'vui';
+    return o.mood === 'lo' ? 'lo' : o.mood === 'buon' ? 'buon' : 'cho';
+  }
+  function datSp(o, tt) {
+    const sp = o.sp; if (!sp) return;
+    const t = SP.trang[sp.k][tt] || SP.trang[sp.k].cho; if (!t || sp.tt === tt) return;
+    sp.tt = tt;
+    const el = sp.el;
+    el.style.backgroundImage = 'url("' + SP_THU_MUC + sp.k + '-' + tt + '.webp?' + SP_PB + '")';
+    el.style.setProperty('--n', t.n);
+    el.style.animationDuration = (t.n / t.fps) + 's';
+    el.style.animationTimingFunction = 'steps(' + t.n + ', jump-none)';
+    el.style.animationName = 'none'; void el.offsetWidth; el.style.animationName = '';   // chạy lại từ khung đầu
+  }
+  function taoNVSp(ma, dauTien) {
+    const h = bam(ma), ds = SP.nhanVat;
+    /* mỗi người trên bục một nhân vật KHÁC nhau (như bản 3D): ưu tiên theo mã, trùng thì lấy mẫu còn trống */
+    const dung = new Set([...NV.values()].map(o => o.sp && o.sp.k).filter(Boolean));
+    let k = ds[h % ds.length];
+    if (dung.has(k)) { const trong = ds.filter(x => !dung.has(x)); if (trong.length) k = trong[h % trong.length]; }
+    Object.keys(SP.trang[k]).forEach(tt => { new Image().src = SP_THU_MUC + k + '-' + tt + '.webp?' + SP_PB; });   // tải trước, đổi trạng thái không nháy
+    const el = document.createElement('div');
+    el.className = 'rk-nv sp';
+    el.innerHTML = '<div class="nv-o' + (dauTien ? ' vao-nhe' : ' vao') + '"><i class="nv-bong-sp"></i><div class="nv-sp"></div></div>';
+    $('rkNvs').appendChild(el);
+    const o = { el, sp: { k, el: el.querySelector('.nv-sp'), tt: '' }, hang: 0, k: 0, n: 1, mood: null, den: 0, ep: null, epDen: 0 };
+    datSp(o, 'cho');
+    return o;
+  }
+
   function taoNV(ma, dauTien) {
+    if (SP) return taoNVSp(ma, dauTien);
     const h = bam(ma);
     const da = DA[h % 4], ao = AO[(h >>> 3) % AO.length], quan = QUAN[(h >>> 7) % QUAN.length];
     const toc = TOC[(h >>> 11) % TOC.length], kieu = (h >>> 14) % 4, kinh = ((h >>> 17) % 10) < 3;
