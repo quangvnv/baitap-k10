@@ -20,7 +20,7 @@ import { GLTFLoader } from './vendor/three/GLTFLoader.js';
 import { clone as cloneSkel } from './vendor/three/SkeletonUtils.js';
 import { RoundedBoxGeometry } from './vendor/three/RoundedBoxGeometry.js';
 
-const THU_MUC = 'mo-hinh/mixamo/', PHIEN_BAN = 'v=5';
+const THU_MUC = 'mo-hinh/mixamo/', PHIEN_BAN = 'v=6';
 let MO_HINH = [];                                      // khoá nhân vật (đọc từ dong-tac.json)
 const CAO_NV = 1.6;                                   // chiều cao nhân vật (đơn vị cảnh)
 const BUC = [                                          // hạng 1, 2, 3
