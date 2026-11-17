@@ -26,16 +26,19 @@
 
   const KHOA_AM = 'rk_am';
   const BUC = [                                       // vị trí (% sân khấu) — thứ tự hạng 1, 2, 3
-    { left: 37.5, w: 25, h: 40 },
-    { left: 12, w: 25, h: 29 },
-    { left: 63, w: 25, h: 20 },
+    { left: 37.5, w: 25, h: 9 },                      // bục cao nhất ≈ 1/4 người (NV_CAO) — sát thực tế
+    { left: 12, w: 25, h: 7 },
+    { left: 63, w: 25, h: 5.5 },
   ];
-  const SAN = 9;                                      // nền đất (% chiều cao) — đáy các bục
-  const NV_CAO = 30;                                  // chiều cao nhân vật (% sân khấu)
+  const SAN = 22;                                     // nền đất (% chiều cao) — đáy các bục
+  const NV_CAO = 36;                                  // chiều cao nhân vật (% sân khấu)
   const TOI_DA_NV = 6;                                // tối đa nhân vật vẽ trên một bục
 
   let BAT = QS.get('rk') === '1';
   let KHACH = false;                                   // ô "Tính cả khách" — mặc định bỏ tick
+  /* ô "Formal" (mặc định tick): chỉ động tác trang nghiêm — vỗ tay / vẫy / đứng vui, KHÔNG nhảy múa,
+     cổ vũ nhảy cẫng. Đặt window.RK_FORMAL để gv-ranking-3d.js đọc chung. */
+  window.RK_FORMAL = true;
   let AM = false; try { AM = localStorage.getItem(KHOA_AM) === '1'; } catch { }
   let DATA = null;                                    // lần cập nhật gần nhất
   let MA_PHIEN = '';
@@ -44,8 +47,10 @@
   const NV = new Map();                               // ma → { el, hang, k, n, mood, den, ep, epDen }
   let nhipMood = null, nhipPhao = null;
   /* Bản 3D (gv-ranking-3d.js) nạp LƯỜI khi bật Ranking; lỗi ⇒ giữ bản 2D SVG. `?rk3d=0` = ép 2D. */
-  let R3 = null, dangNap3D = false;
-  const MUON_3D = QS.get('rk3d') !== '0';
+  let R3 = null, R3_KHO = null, dangNap3D = false;   // R3 = bản 3D ĐANG dùng; R3_KHO = bản đã nạp (giữ khi tạm về 2D)
+  let CHE_2D = QS.get('rk3d') === '0';                // ô "2D" — tick = vẽ bản 2D (sprite) dù máy chạy được 3D
+  window.RK_2D = CHE_2D;
+  let STYLE_BUC = [];                                 // style gốc của thẻ .rk-buc (bản 3D ghi đè để làm nhãn)
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -65,6 +70,8 @@
     bar.id = 'rkBar';
     bar.innerHTML = '<label title="Chuyển sang màn bảng xếp hạng (bục 3 thứ hạng)"><input type="checkbox" id="rkChk"> Ranking</label>'
       + '<label title="Xếp hạng cả học viên vào bằng mã ngoài danh sách lớp"><input type="checkbox" id="rkKhach"> Tính cả khách</label>'
+      + '<label title="Chỉ dùng động tác trang nghiêm (vỗ tay, cổ vũ, vẫy tay) — không nhảy múa, vận động mạnh"><input type="checkbox" id="rkFormal" checked> Formal</label>'
+      + '<label title="Hiển thị nhân vật 2D thay cho 3D (nhẹ hơn cho máy yếu)"><input type="checkbox" id="rk2D"> 2D</label>'
       + '<button type="button" id="rkAm" title="Bật / tắt âm thanh"></button>';
     document.body.appendChild(bar);
     const s = document.createElement('div');
@@ -78,9 +85,16 @@
       + '<div class="rk-nvs" id="rkNvs"></div><div class="rk-cho" id="rkCho">Chờ bài nộp đầu tiên<i>.</i><i>.</i><i>.</i></div></div>'
       + '<div class="rk-phao" id="rkPhao"></div>';
     man.appendChild(s);
+    STYLE_BUC = [...s.querySelectorAll('.rk-buc')].map(el => el.getAttribute('style'));
     $('rkChk').checked = BAT;
+    $('rk2D').checked = CHE_2D;
+    $('rk2D').addEventListener('change', e => doiCheDo(e.target.checked));
     $('rkChk').addEventListener('change', e => bat(e.target.checked));
     $('rkKhach').addEventListener('change', e => { KHACH = e.target.checked; if (BAT && DATA) ve(); });
+    $('rkFormal').addEventListener('change', e => {
+      window.RK_FORMAL = e.target.checked;
+      NV.forEach(o => { const m = o.mood; if (!m) return; o.mood = null; datMood(o, m); });  // áp ngay cho mọi nhân vật
+    });
     $('rkAm').addEventListener('click', () => {
       AM = !AM; try { localStorage.setItem(KHOA_AM, AM ? '1' : '0'); } catch { }
       veNutAm(); if (AM) { amCtx(); amTieng('vao'); }
@@ -104,16 +118,36 @@
     if (R3) R3.pause(!BAT);
     if (BAT) { napSprite(); nap3D(); }
   }
+  /* Ô "2D": chuyển qua lại tại chỗ. Bản 3D đã nạp được giữ lại (tạm dừng vẽ) để bật lại không phải tải lại. */
+  function doiCheDo(la2D) {
+    CHE_2D = !!la2D; window.RK_2D = CHE_2D;
+    if (CHE_2D) {
+      if (!R3) return;
+      xoaNV(); R3.pause(true); R3 = null;
+      $('rkMan').classList.remove('rk-3d');
+      [...$('rkMan').querySelectorAll('.rk-buc')].forEach((el, i) => el.setAttribute('style', STYLE_BUC[i] || ''));
+    } else {
+      if (!R3_KHO) { if (BAT) nap3D(); return; }
+      xoaNV(); R3 = R3_KHO;
+      $('rkMan').classList.add('rk-3d');
+      R3.pause(!BAT);
+      if (R3.fit) R3.fit();
+    }
+    CU = null;
+    if (BAT && DATA) ve();
+  }
   function nap3D() {
-    if (R3 || dangNap3D || !MUON_3D) return;
+    if (R3 || R3_KHO || dangNap3D || CHE_2D) return;
     dangNap3D = true;
     $('rkMan').classList.add('rk-tai');
-    import('./gv-ranking-3d.js?v=12')
+    import('./gv-ranking-3d.js?v=22')
       .then(m => m.khoiTao($('rkSan')))
       .then(ok => {
         if (!ok || !window.Ranking3D) throw new Error('không khởi tạo được cảnh 3D');
+        R3_KHO = window.Ranking3D;
+        if (CHE_2D) { R3_KHO.pause(true); return; }      // người dùng đã tick 2D trong lúc đang tải
         xoaNV();                                         // bỏ nhân vật 2D đang vẽ
-        R3 = window.Ranking3D;
+        R3 = R3_KHO;
         $('rkMan').classList.add('rk-3d');
         R3.pause(!BAT);
         CU = null;
@@ -269,7 +303,8 @@
     o.el.classList.remove('k-dam', 'k-vo', 'k-nhay');
     o.kieu2d = '';
     if (o.mood !== 'vui' && o.mood !== 'mung') return;
-    const ds = KIEU_2D.filter(k => k !== cu);
+    const nguon = window.RK_FORMAL ? ['vo', 'dam'] : KIEU_2D;
+    const ds = nguon.filter(k => k !== cu).length ? nguon.filter(k => k !== cu) : nguon;
     o.kieu2d = ds[Math.floor(Math.random() * ds.length)];
     o.el.classList.add('k-' + o.kieu2d);
     if (o.sp) datSp(o, trangSp(o));
@@ -341,7 +376,7 @@
      bản 2D trông như người thật. Mỗi nhân vật × trạng thái = một dải khung WebP, CSS lật khung (steps).
      Chưa tải được sprite.json ⇒ dùng nhân vật SVG cũ (dự phòng cuối). Rơi khỏi bục vẫn bằng CSS (.nv-o.roi). */
   let SP = null, dangNapSp = null;
-  const SP_THU_MUC = 'mo-hinh/sprite/', SP_PB = 'v=1';
+  const SP_THU_MUC = 'mo-hinh/sprite/', SP_PB = 'v=8';
   function napSprite() {
     if (SP || dangNapSp) return dangNapSp;
     dangNapSp = fetch(SP_THU_MUC + 'sprite.json?' + SP_PB).then(r => r.ok ? r.json() : null)

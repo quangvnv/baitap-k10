@@ -20,13 +20,18 @@ import { GLTFLoader } from './vendor/three/GLTFLoader.js';
 import { clone as cloneSkel } from './vendor/three/SkeletonUtils.js';
 import { RoundedBoxGeometry } from './vendor/three/RoundedBoxGeometry.js';
 
-const THU_MUC = 'mo-hinh/mixamo/', PHIEN_BAN = 'v=6';
+const THU_MUC = 'mo-hinh/mixamo/', PHIEN_BAN = 'v=13';
+/* Bị người khác thay chỗ ⇒ RỜI BỤC bằng động tác Mixamo "Jumping Down" (2026-11-17, thay run + ngã nhào).
+   Clip này dịch hông thật (nhảy tới trước rồi hạ xuống thấp hơn) ⇒ clipCua lấy độ lệch so với KHUNG ĐẦU
+   (đứng đúng mặt bục) và giữ NGUYÊN quãng tới trước (không ×0,5) để nhảy qua mép bục. Phần cao còn thiếu
+   tới mặt thảm bù bằng rơi tự do trong lúc bay. Thiếu clip ⇒ quay về run + ngã nhào cũ. */
+const DT_XUONG = 'jumping-down', SAN_Y = 0.08;
 let MO_HINH = [];                                      // khoá nhân vật (đọc từ dong-tac.json)
 const CAO_NV = 1.6;                                   // chiều cao nhân vật (đơn vị cảnh)
 const BUC = [                                          // hạng 1, 2, 3
-  { x: 0, h: 1.3, mau: 0xf6c33a },
-  { x: -2.25, h: 1.0, mau: 0xc9d1d9 },
-  { x: 2.25, h: 0.78, mau: 0xd98a4e },
+  { x: 0, h: 0.42, mau: 0xf6c33a },                   // bục cao nhất ≈ 1/4 người (CAO_NV 1.6) — sát thực tế
+  { x: -2.25, h: 0.32, mau: 0xc9d1d9 },
+  { x: 2.25, h: 0.24, mau: 0xd98a4e },
 ];
 const BUC_RONG = 2.1, BUC_SAU = 1.5;
 const EP_DT = new URLSearchParams(location.search).get('rkdt') || '';
@@ -39,6 +44,11 @@ const DT_TAM = {
   lo: ['nervous', 'nervously-look-around', 'idle'],
   nhin: ['idle'],
   buon: ['defeated', 'sad-idle', 'angry', 'disappointed'],
+};
+/* Ô "Formal" (window.RK_FORMAL, mặc định bật): vui / ăn mừng chỉ dùng động tác trang nghiêm. */
+const DT_FORMAL = {
+  vui: ['clapping', 'cheering', 'waving', 'standing-idle'],
+  mung: ['clapping', 'cheering', 'waving', 'standing-idle'],
 };
 /* Chỉnh khớp theo tâm trạng (chỉ khi đang ĐỨNG CHỜ 'idle' — động tác riêng đã đủ dáng): [x,y,z] radian,
    NHÂN SAU tư thế clip. Khớp Mixamo: trục Y dọc xương ⇒ X = gật/cúi, Y = quay đầu. */
@@ -105,7 +115,7 @@ export async function khoiTao(el) {
   dangChay = true;
   renderer.setAnimationLoop(veKhung);
   window.Ranking3D = {
-    add, place, mood, fall, remove, clear, _nv: NV, _tuThe: TU_THE,
+    add, place, mood, fall, remove, clear, fit: doiCo, _nv: NV, _tuThe: TU_THE,
     pause(on) { dangChay = !on; renderer.setAnimationLoop(on ? null : veKhung); if (!on) dongHo.getDelta(); },
   };
   return true;
@@ -117,7 +127,7 @@ function doiCo() {
   if (!w || !h) return;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  const nuaRong = 3.7, tren = 3.15, duoi = -0.3;
+  const nuaRong = 3.7, tren = 2.55, duoi = -0.75;   // chừa dải đất trước bục cho tên + điểm
   const fov = THREE.MathUtils.degToRad(camera.fov);
   const tamY = (tren + duoi) / 2;
   const dDoc = (tren - duoi) / 2 / Math.tan(fov / 2);
@@ -134,6 +144,7 @@ function chieu(x, y, z) {
   return { x: (v.x + 1) / 2 * host.clientWidth, y: (1 - v.y) / 2 * host.clientHeight };
 }
 function datNhan() {
+  if (window.RK_2D) return;                            // đang hiện bản 2D: thẻ .rk-buc là bục 2D, không đặt lại
   BUC.forEach((b, i) => {
     const el = nhanBuc[i]; if (!el) return;
     const z = BUC_SAU / 2 + 0.01;
@@ -158,8 +169,9 @@ function clipCua(loai, goc) {
     const tg = Float32Array.from({ length: n }, (_, i) => Math.min(i / fps, c.dur)), tg2 = Float32Array.of(0, c.dur);
     const tr = Object.entries(c.q).filter(([, v]) => v.length === 8 || v.length === n * 4)
       .map(([b, v]) => new THREE.QuaternionKeyframeTrack(b + '.quaternion', v.length === 8 ? tg2 : tg, v));
+    const xuong = key === DT_XUONG, h0 = xuong ? c.hip.slice(0, 3) : [0, 0, 0];
     if (hip && c.hip) tr.push(new THREE.VectorKeyframeTrack('mixamorigHips.position', tg,
-      c.hip.map((v, i) => p0.getComponent(i % 3) + v * cao * (i % 3 === 1 ? 1 : 0.5))));   // đi ngang ít thôi, đứng trên bục
+      c.hip.map((v, i) => p0.getComponent(i % 3) + (v - h0[i % 3]) * cao * (i % 3 === 1 || (xuong && i % 3 === 2) ? 1 : 0.5))));   // đi ngang ít thôi, đứng trên bục
     return new THREE.AnimationClip(key, c.dur, tr);
   };
   for (const [key, c] of Object.entries(RAW.clips)) kq[key] = dung(key, c);
@@ -177,7 +189,9 @@ function clipCua(loai, goc) {
 /* Chọn động tác theo tâm trạng, khác động tác đang chạy. Trả TÊN clip trong nv.hd. */
 function chonKieu(nv, m, cu) {
   if (EP_DT && nv.hd[EP_DT] && (m === 'vui' || m === 'mung')) return EP_DT;
-  const co = (DT_TAM[m] || DT_TAM['']).filter(k => nv.hd[k]);
+  const bang = (window.RK_FORMAL && DT_FORMAL[m]) || DT_TAM[m] || DT_TAM[''];
+  let co = bang.filter(k => nv.hd[k]);
+  if (!co.length) co = DT_TAM[''].filter(k => nv.hd[k]);
   const ds = co.filter(k => k !== cu);
   return (ds.length ? ds : co)[Math.floor(Math.random() * Math.max(1, (ds.length ? ds : co).length))] || 'idle';
 }
@@ -214,8 +228,15 @@ function add(ma, dauTien) {
   const hd = {};
   const cl = clipCua(loai, goc);
   for (const key in cl) hd[key] = mixer.clipAction(cl[key]);
+  // chiều cao hông lúc nghỉ, đơn vị cảnh (chưa nhân cỡ tile) — để biết clip nhảy xuống tự hạ được bao nhiêu
+  let hipDv = CAO_NV * 0.55;
+  if (xuong.mixamorigHips) {
+    vo.updateMatrixWorld(true);
+    const s = new THREE.Vector3(); xuong.mixamorigHips.parent.getWorldScale(s);
+    hipDv = Math.abs(xuong.mixamorigHips.position.y * s.y) || hipDv;
+  }
   const nv = {
-    id: idTiep++, ma, loai, vo, tile, mixer, hd, xuong, clipDang: null, mood: '', tre: (h % 1000) / 1000 * 6,
+    id: idTiep++, ma, loai, vo, tile, mixer, hd, xuong, hipDv, clipDang: null, mood: '', tre: (h % 1000) / 1000 * 6,
     w: {}, goc: {}, pos: new THREE.Vector3(BUC[2].x, 0, 0), tu: null, den: null, tg0: 0, tg: 0, scale: 1,
     vao: dauTien ? 0 : 1, roi: 0, nhay: 0, quay: 0, quayDich: 0,
   };
@@ -288,17 +309,59 @@ function mood(id, m, huong) {
 }
 
 function fall(id) {
-  const nv = NV.get(id); if (!nv) return;
-  mood(id, 'buon');
+  const nv = NV.get(id); if (!nv || nv.roi) return;
+  const a = nv.hd[DT_XUONG], c = RAW.clips[DT_XUONG];
+  if (!a || !c || !c.hip) {                            // thiếu clip ⇒ run rồi ngã nhào (cũ)
+    mood(id, 'buon');
+    nv.roi = performance.now();
+    setTimeout(() => remove(id), 2600);
+    return;
+  }
+  // đang nhảy giữa hai bục thì dừng tại chỗ đích, quay mặt ra trước
+  nv.den = null; nv.roiXuong = null; nv.vo.position.copy(nv.pos);
+  nv.mood = 'buon'; nv.kieu = DT_XUONG; nv.quayDich = 0;
+  a.reset().setLoop(THREE.LoopOnce, 1).setEffectiveWeight(1).play();
+  a.clampWhenFinished = true;
+  if (nv.clipDang && nv.clipDang !== a) nv.clipDang.crossFadeTo(a, 0.25, false);
+  nv.clipDang = a;
+  /* Lúc bay (hông lên cao nhất → thấp nhất) bù phần chênh giữa độ cao mặt bục và độ cao "gờ" của clip.
+     ⚠ Độ cao gờ = hông KHUNG ĐẦU (clip bắt đầu đứng trên gờ, chân chạm đất ở hông 0) — KHÔNG phải
+     (khung đầu − khung cuối): cuối clip hông thấp hơn nữa là vì KHUỴU GỐI, chân vẫn trên đất (đo bằng
+     xương bàn chân 17/11: dùng nhầm công thức đó thì chân lơ lửng cao hơn thảm ~0,38). */
+  const y = c.hip.filter((_, i) => i % 3 === 1), fps = RAW.fps;
+  let iMax = 0; y.forEach((v, i) => { if (v > y[iMax]) iMax = i; });
+  let iMin = iMax; for (let i = iMax; i < y.length; i++) if (y[i] < y[iMin]) iMin = i;
+  const tu = nv.vo.position.y;
+  const tuHa = y[0] * nv.hipDv * nv.scale;
+  // them < 0 khi bục thấp hơn gờ của clip ⇒ nâng bù trong lúc bay để chân đáp đúng mặt thảm
+  // ⚠ Bám THỜI GIAN CỦA CLIP (a.time), không bám đồng hồ thật: máy yếu / cửa sổ ẩn vẽ ít khung, dt bị chặn
+  // 0,05 s ⇒ clip chạy chậm hơn đồng hồ ⇒ rơi xong trước khi kịp nhảy (đã gặp khi chạy thử).
+  nv.xuongBuc = { a, tA: iMax / fps, tB: Math.max(iMin, iMax + 1) / fps, tu, them: tu - SAN_Y - tuHa, dur: c.dur, sau: 0 };
   nv.roi = performance.now();
-  setTimeout(() => remove(id), 2600);
+  setTimeout(() => remove(id), (c.dur + 1.4) * 1000 + 8000);   // chốt an toàn; bình thường tự xoá khi mờ hết
 }
 function remove(id) {
   const nv = NV.get(id); if (!nv) return;
   scene.remove(nv.vo);
   nv.mixer.stopAllAction();
-  // ⚠ KHÔNG dispose vật liệu: các nhân vật cùng loại dùng CHUNG vật liệu/texture của GLB
+  // ⚠ KHÔNG dispose vật liệu dùng chung (các nhân vật cùng loại dùng CHUNG vật liệu/texture của GLB);
+  // chỉ dispose bản sao riêng tạo lúc mờ dần sau khi nhảy xuống
+  (nv.vlRieng || []).forEach(m => m.dispose());
   NV.delete(id);
+}
+/* Mờ dần sau khi đáp xuống thảm: sao vật liệu RIÊNG cho nhân vật này (vật liệu gốc dùng chung) */
+function moDan(nv, k) {
+  if (!nv.vlRieng) {
+    nv.vlRieng = [];
+    const sao = new Map();
+    nv.vo.traverse(o => {
+      if (!o.isMesh) return;
+      const doi = m => { if (!sao.has(m)) { const n = m.clone(); n.transparent = true; sao.set(m, n); nv.vlRieng.push(n); } return sao.get(m); };
+      o.material = Array.isArray(o.material) ? o.material.map(doi) : doi(o.material);
+      o.castShadow = false;
+    });
+  }
+  nv.vlRieng.forEach(m => { m.opacity = k; m.depthWrite = k > 0.95; });
 }
 function clear() { [...NV.keys()].forEach(remove); }
 
@@ -377,8 +440,19 @@ function veKhung() {
       if (nv.mood === 'vui') hop = Math.abs(Math.sin(t * 3.4 + nv.tre)) * 0.12;
       nv.vo.position.y = y0 + hop;
     }
-    // rơi khỏi bục: run lên rồi ngã nhào xuống phía trước
-    if (nv.roi) {
+    // bị thay chỗ: nhảy từ bục xuống thảm (Jumping Down), đứng một lúc rồi mờ dần
+    if (nv.roi && nv.xuongBuc) {
+      const r = nv.xuongBuc, s = r.a.time;
+      const p = Math.min(1, Math.max(0, (s - r.tA) / (r.tB - r.tA)));
+      nv.vo.position.y = r.tu - r.them * p * p;
+      if (s >= r.dur - 0.02) r.sau += dt;                 // đã đáp, đứng thêm 0,4 s rồi mờ dần 0,9 s
+      if (r.sau > 0.4) {
+        const k = Math.max(0, 1 - (r.sau - 0.4) / 0.9);
+        moDan(nv, k);
+        if (k <= 0) { remove(nv.id); return; }
+      }
+    } else if (nv.roi) {
+      // (thiếu clip Jumping Down) rơi khỏi bục: run lên rồi ngã nhào xuống phía trước
       const s = (now - nv.roi) / 1000;
       if (s < 0.8) nv.tile.rotation.z = Math.sin(s * 40) * 0.05;
       else {
